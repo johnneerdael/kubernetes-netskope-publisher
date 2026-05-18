@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.1 — 2026-05-18Flip enrollment.api.cleanupOnDelete to default off. The NetskopeAPI ref">
+    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.2 — 2026-05-19Ship values.schema.json at the chart root.  Helm now validates --set &amp;#">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Changelog">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/reference/changelog">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.1 — 2026-05-18Flip enrollment.api.cleanupOnDelete to default off. The NetskopeAPI ref">
+<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.2 — 2026-05-19Ship values.schema.json at the chart root.  Helm now validates --set &amp;#">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T21:59:19.394Z">
+<meta property="article:modified_time" content="2026-05-18T22:01:41.590Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -99,6 +99,12 @@
   <div class="content" itemprop="articleBody">
       
           <p>Hand-maintained — mirrors <code>Chart.yaml</code> <code>version:</code> bumps. See the<br>GitHub Releases page for the published artifacts.</p>
+<h2><span id="v132-2026-05-19">v1.3.2 — 2026-05-19</span></h2><p>Ship <code>values.schema.json</code> at the chart root.</p>
+<ul>
+<li>Helm now validates <code>--set</code> &#x2F; <code>-f</code> overrides against the schema on<br>install and upgrade — typos and wrong-type values fail loudly<br>instead of rendering quietly bad manifests.</li>
+<li>Artifact Hub renders the schema as an interactive <strong>Values<br>schema</strong> tab on the listing.</li>
+</ul>
+<p>The schema covers every key the chart actually exposes (image,<br>workload, hpa, enrollment, networking, persistence, proxy, bind,<br>etc.) with enum constraints on <code>enrollment.mode</code>, <code>networking.mode</code>,<br><code>workload.type</code>, and <code>image.pullPolicy</code>. <code>resources</code> and <code>affinity</code><br>stay permissive (pass-through to Kubernetes types).</p>
 <h2><span id="v131-2026-05-18">v1.3.1 — 2026-05-18</span></h2><p>Flip <code>enrollment.api.cleanupOnDelete</code> to default <strong>off</strong>. The Netskope<br>API refuses to delete a Publisher with Private Apps attached, so the<br>1.3.0 default of <code>true</code> could silently fail on scale-down — leaving<br>orphan Publisher records <em>and</em> stranded app assignments to chase. The<br>hook is still available; you just have to opt in (<code>cleanupOnDelete: true</code>) and confirm that your auto-scaled replicas never carry app<br>assignments.</p>
 <p>If you’re already on 1.3.0, the new release also pulls in the<br>slimmed example values and the AH-aligned install path from the<br>1.1.1 docs work.</p>
 <h2><span id="v130-2026-05-18">v1.3.0 — 2026-05-18</span></h2><p>Autoscaling and orphan-Publisher cleanup.</p>
