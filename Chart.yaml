@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.3.1
+version: 1.3.2
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
@@ -34,5 +34,5 @@ annotations:
     - name: John Neerdael
       email: john@neerdael.nl
   artifacthub.io/changes: |
-    - kind: changed
-      description: enrollment.api.cleanupOnDelete now defaults to false. The Netskope API rejects DELETE on a Publisher with Private Apps attached, so the previous default-on could silently fail and leave both orphan records and stranded apps. Opt in explicitly only when scaled replicas never carry app assignments.
+    - kind: added
+      description: values.schema.json. Helm validates --set / -f overrides against it on install/upgrade, and Artifact Hub renders it as an interactive values form on the listing.

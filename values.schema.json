@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "kubernetes-netskope-publisher values",
+  "description": "Values schema for the Netskope Private Access Publisher Helm chart.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] },
+        "tag":        { "type": "string" }
+      },
+      "required": ["repository"]
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": { "name": { "type": "string" } },
+        "required": ["name"]
+      }
+    },
+    "nameOverride":     { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type":     { "type": "string", "enum": ["daemonset", "statefulset"] },
+        "replicas": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["type"]
+    },
+
+    "hpa": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "HorizontalPodAutoscaler (StatefulSet only).",
+      "properties": {
+        "enabled":     { "type": "boolean" },
+        "minReplicas": { "type": "integer", "minimum": 1 },
+        "maxReplicas": { "type": "integer", "minimum": 1 },
+        "targetCPUUtilizationPercentage": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "behavior":    { "type": "object" }
+      },
+      "required": ["enabled"]
+    },
+
+    "registrationToken": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Only used when enrollment.mode=token.",
+      "properties": {
+        "value":             { "type": "string" },
+        "existingSecret":    { "type": "string" },
+        "existingSecretKey": { "type": "string" }
+      }
+    },
+
+    "enrollment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode":       { "type": "string", "enum": ["api", "token"] },
+        "commonName": { "type": "string", "minLength": 1 },
+        "api": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "baseUrl":          { "type": "string", "pattern": "^https?://" },
+            "existingSecret":   { "type": "string", "minLength": 1 },
+            "tokenKey":         { "type": "string", "minLength": 1 },
+            "cleanupOnDelete":  { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["mode"]
+    },
+
+    "tenant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "name": { "type": "string" } }
+    },
+
+    "publisher": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "logLevel":         { "type": "integer", "minimum": 0, "maximum": 5 },
+        "hostOsType":       { "type": "string" },
+        "discoveryRefresh": { "type": "boolean" }
+      }
+    },
+
+    "persistence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled":       { "type": "boolean" },
+        "storageClass":  { "type": "string" },
+        "accessMode":    { "type": "string", "enum": ["ReadWriteOnce", "ReadWriteMany", "ReadOnlyMany", "ReadWriteOncePod"] },
+        "size":          { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?(E|P|T|G|M|K|Ei|Pi|Ti|Gi|Mi|Ki)?$" },
+        "existingClaim": { "type": "string" }
+      },
+      "required": ["enabled"]
+    },
+
+    "networking": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode":         { "type": "string", "enum": ["pod", "host"] },
+        "disableIPv6":  { "type": "boolean" }
+      },
+      "required": ["mode"]
+    },
+
+    "tunDevice": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled":   { "type": "boolean" },
+        "hostPath":  { "type": "string", "minLength": 1 },
+        "mountPath": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "resources": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Pass-through Kubernetes ResourceRequirements."
+    },
+
+    "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
+
+    "nodeSelector": { "type": "object", "additionalProperties": { "type": "string" } },
+    "tolerations":  { "type": "array",  "items": { "type": "object" } },
+    "affinity":     { "type": "object" },
+
+    "serviceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create":      { "type": "boolean" },
+        "annotations": { "type": "object", "additionalProperties": { "type": "string" } },
+        "name":        { "type": "string" }
+      }
+    },
+
+    "podAnnotations": { "type": "object", "additionalProperties": { "type": "string" } },
+    "podLabels":      { "type": "object", "additionalProperties": { "type": "string" } },
+
+    "proxy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled":    { "type": "boolean" },
+        "httpProxy":  { "type": "string" },
+        "httpsProxy": { "type": "string" },
+        "noProxy":    { "type": "string" }
+      }
+    },
+
+    "bind": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "forwarders": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}$|^([0-9a-fA-F:]+)$"
+          }
+        }
+      }
+    },
+
+    "customSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled":       { "type": "boolean" },
+        "configMapName": { "type": "string" }
+      }
+    },
+
+    "initContainer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repository": { "type": "string" },
+            "tag":        { "type": "string" }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

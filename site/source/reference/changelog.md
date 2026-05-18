@@ -6,6 +6,22 @@ date: 2026-05-18
 Hand-maintained — mirrors `Chart.yaml` `version:` bumps. See the
 GitHub Releases page for the published artifacts.
 
+## v1.3.2 — 2026-05-19
+
+Ship `values.schema.json` at the chart root.
+
+- Helm now validates `--set` / `-f` overrides against the schema on
+  install and upgrade — typos and wrong-type values fail loudly
+  instead of rendering quietly bad manifests.
+- Artifact Hub renders the schema as an interactive **Values
+  schema** tab on the listing.
+
+The schema covers every key the chart actually exposes (image,
+workload, hpa, enrollment, networking, persistence, proxy, bind,
+etc.) with enum constraints on `enrollment.mode`, `networking.mode`,
+`workload.type`, and `image.pullPolicy`. `resources` and `affinity`
+stay permissive (pass-through to Kubernetes types).
+
 ## v1.3.1 — 2026-05-18
 
 Flip `enrollment.api.cleanupOnDelete` to default **off**. The Netskope
