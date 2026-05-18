@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.1.1 — 2026-05-18Docs-only release so Artifact Hub picks up the new README.  README lead">
+    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.2.0 — 2026-05-18securityContext, hostNetwork, and dnsPolicy are no longerexposed as val">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Changelog">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/reference/changelog">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.1.1 — 2026-05-18Docs-only release so Artifact Hub picks up the new README.  README lead">
+<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.2.0 — 2026-05-18securityContext, hostNetwork, and dnsPolicy are no longerexposed as val">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T20:42:12.306Z">
+<meta property="article:modified_time" content="2026-05-18T20:49:30.696Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -99,6 +99,33 @@
   <div class="content" itemprop="articleBody">
       
           <p>Hand-maintained — mirrors <code>Chart.yaml</code> <code>version:</code> bumps. See the<br>GitHub Releases page for the published artifacts.</p>
+<h2><span id="v120-2026-05-18">v1.2.0 — 2026-05-18</span></h2><p><code>securityContext</code>, <code>hostNetwork</code>, and <code>dnsPolicy</code> are no longer<br>exposed as values keys. The chart now derives all three from<br><code>networking.mode</code>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>networking.mode: pod</code> (default)</th>
+<th><code>networking.mode: host</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>securityContext</code></td>
+<td><code>privileged: false</code>, <code>NET_ADMIN</code>, <code>NET_RAW</code>, <code>runAsUser: 0</code></td>
+<td><code>privileged: true</code>, <code>NET_ADMIN</code>, <code>NET_RAW</code>, <code>runAsUser: 0</code></td>
+</tr>
+<tr>
+<td><code>hostNetwork</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>dnsPolicy</code></td>
+<td><code>ClusterFirst</code></td>
+<td><code>ClusterFirstWithHostNet</code></td>
+</tr>
+</tbody></table>
+<p>Previously <code>securityContext</code> was overridable via values, but only<br>in host mode — pod mode silently hardcoded its own block. That<br>asymmetry made <code>values.yaml</code> look like it ran the Publisher<br>privileged even in pod mode (which it doesn’t). The new design<br>makes the helper authoritative for both modes, and <code>values.yaml</code><br>honest.</p>
+<p><strong>Upgrade hazard</strong>: if your values file overrode <code>securityContext</code>,<br><code>hostNetwork</code>, or <code>dnsPolicy</code>, those overrides are now silently<br>ignored. Remove them and switch <code>networking.mode</code> instead.</p>
 <h2><span id="v111-2026-05-18">v1.1.1 — 2026-05-18</span></h2><p>Docs-only release so Artifact Hub picks up the new README.</p>
 <ul>
 <li>README leads with the Artifact Hub install path<br>(<code>helm repo add npa … &amp;&amp; helm install npa/kubernetes-netskope-publisher</code>)<br>instead of the local-clone path; local-clone install becomes a<br>developer footnote.</li>

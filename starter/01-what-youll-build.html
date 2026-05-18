@@ -14,7 +14,7 @@
 <meta property="og:description" content="By the end of this guide you’ll have:  A single-node k3s cluster on a Linux host (Ubuntu 22.04 recommended). One NPA Publisher pod running in namespace npa-publisher, enrolledwith your Netskope tenant">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T20:42:12.307Z">
+<meta property="article:modified_time" content="2026-05-18T20:49:30.696Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -108,7 +108,7 @@
 
 <h2><span id="why-k3s-for-the-first-run">Why k3s for the first run?</span></h2><ul>
 <li>Single binary, one command to install, no etcd to babysit.</li>
-<li>The chart’s default <code>hostNetwork: true</code> and privileged settings work<br>on k3s without extra PSP&#x2F;PSA tweaks.</li>
+<li>The chart’s default pod-networking mode renders an unprivileged<br>pod, which k3s schedules without PSP&#x2F;PSA tweaks.</li>
 <li>Same Helm chart works unchanged on EKS&#x2F;AKS&#x2F;GKE later<br>(<a href="/kubernetes-netskope-publisher/admin/chart/distributions/">distributions</a>).</li>
 </ul>
 <h2><span id="what-youll-need">What you’ll need</span></h2><ul>

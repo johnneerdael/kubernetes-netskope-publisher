@@ -14,7 +14,7 @@
 <meta property="og:description" content="Every notable key in values.yaml, grouped by topic. Defaults are shownin parentheses. Image   Key Default Notes    image.repository netskopeprivateaccess&#x2F;publisher_u22 Ubuntu 22 Publisher image.   ima">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T20:42:12.305Z">
+<meta property="article:modified_time" content="2026-05-18T20:49:30.695Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -224,41 +224,8 @@
 <td><code>/dev/net/tun</code></td>
 <td></td>
 </tr>
-<tr>
-<td><code>hostNetwork</code></td>
-<td><code>false</code></td>
-<td>Ignored in <code>mode: pod</code> (template forces <code>false</code>). Set <code>true</code> only with <code>mode: host</code>.</td>
-</tr>
-<tr>
-<td><code>dnsPolicy</code></td>
-<td><code>ClusterFirst</code></td>
-<td>Ignored in <code>mode: pod</code> (template forces <code>ClusterFirst</code>). Use <code>ClusterFirstWithHostNet</code> with <code>mode: host</code>.</td>
-</tr>
 </tbody></table>
-<h2><span id="security-context">Security context</span></h2><table>
-<thead>
-<tr>
-<th>Key</th>
-<th>Default</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>securityContext.privileged</code></td>
-<td><code>true</code></td>
-<td>Required for sysctl + iptables + tun.</td>
-</tr>
-<tr>
-<td><code>securityContext.capabilities.add</code></td>
-<td><code>[NET_ADMIN, NET_RAW]</code></td>
-<td>Required.</td>
-</tr>
-<tr>
-<td><code>securityContext.runAsUser</code></td>
-<td><code>0</code></td>
-<td>Privileged ops require root.</td>
-</tr>
-</tbody></table>
+<p><code>hostNetwork</code>, <code>dnsPolicy</code>, and the container <code>securityContext</code> are<br><strong>not configurable via values</strong> — they’re derived from <code>networking.mode</code>.<br>See the <a href="/kubernetes-netskope-publisher/admin/how-to/pod-vs-host-network/">pod vs host network</a><br>comparison table for what each mode renders.</p>
 <h2><span id="persistence">Persistence</span></h2><table>
 <thead>
 <tr>
