@@ -3,6 +3,46 @@ entries:
   kubernetes-netskope-publisher:
   - annotations:
       artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: added\n  description: HorizontalPodAutoscaler\
+        \ template for the StatefulSet path. CPU-based; enable with hpa.enabled=true\
+        \ and tune hpa.minReplicas/maxReplicas/targetCPUUtilizationPercentage. Ignored\
+        \ for DaemonSets.\n- kind: added\n  description: Pod preStop hook that deletes\
+        \ the tenant-side Publisher record on termination (HPA scale-down, helm uninstall,\
+        \ node drain). Default on in API mode; disable with enrollment.api.cleanupOnDelete=false.\
+        \ Best-effort \u2014 failures do not block pod termination.\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-05-18T21:22:11.559013752Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: 149ad311dad548ae4225ef3e3aa1cbee6a6bd987d00b18b7c92b047dcbb20632
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://johnneerdael.github.io/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.3.0/kubernetes-netskope-publisher-1.3.0.tgz
+    version: 1.3.0
+  - annotations:
+      artifacthub.io/category: networking
       artifacthub.io/changes: "- kind: removed\n  description: securityContext, hostNetwork,\
         \ and dnsPolicy are no longer values keys. The chart now derives all three\
         \ from networking.mode (pod or host) so values.yaml stops misrepresenting\
@@ -188,4 +228,4 @@ entries:
     urls:
     - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
     version: 1.0.0
-generated: '2026-05-18T20:49:58.307565016Z'
+generated: '2026-05-18T21:22:11.557038101Z'
