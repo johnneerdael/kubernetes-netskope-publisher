@@ -3,6 +3,49 @@ entries:
   kubernetes-netskope-publisher:
   - annotations:
       artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: changed\n  description: Default networking.mode\
+        \ flipped from host to pod. hostNetwork now defaults to false and dnsPolicy\
+        \ to ClusterFirst. Upgrade hazard \u2014 pin networking.mode=host in your\
+        \ values if you need the old behaviour.\n- kind: changed\n  description: serviceAccount.create\
+        \ now defaults to false. The chart makes no kube-API calls, so the namespace\
+        \ default ServiceAccount is sufficient.\n- kind: changed\n  description: Memory\
+        \ resources bumped \u2014 limits 1Gi to 1536Mi, requests 384Mi to 1024Mi.\n\
+        - kind: removed\n  description: Dead livenessProbe / readinessProbe value\
+        \ blocks. The DaemonSet template hardcodes the real exec probes; the tcpSocket\
+        \ values were never read.\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-05-18T20:30:22.11624768Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: 62fdc7175890fb8e88c936683bf1abca41cb964a5651c9fc45468c67e022f833
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://johnneerdael.github.io/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.1.0/kubernetes-netskope-publisher-1.1.0.tgz
+    version: 1.1.0
+  - annotations:
+      artifacthub.io/category: networking
       artifacthub.io/changes: "- kind: changed\n  description: Switch icon URL to\
         \ the Pages-hosted favicon (previous URL was a dead Netskope CDN link).\n"
       artifacthub.io/license: MIT
@@ -71,4 +114,4 @@ entries:
     urls:
     - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
     version: 1.0.0
-generated: '2026-05-18T20:08:59.063575995Z'
+generated: '2026-05-18T20:30:22.114987708Z'
