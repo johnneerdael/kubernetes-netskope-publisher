@@ -3,6 +3,41 @@ entries:
   kubernetes-netskope-publisher:
   - annotations:
       artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: changed\n  description: Switch icon URL to\
+        \ the Pages-hosted favicon (previous URL was a dead Netskope CDN link).\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-05-18T20:08:59.064892228Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: 4909d7a3882736e25992a9d38d30d1ec0cf89b684587772210be8ef69830d8a8
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://johnneerdael.github.io/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.1/kubernetes-netskope-publisher-1.0.1.tgz
+    version: 1.0.1
+  - annotations:
+      artifacthub.io/category: networking
       artifacthub.io/changes: "- kind: added\n  description: Initial public release\
         \ of the Helm chart.\n"
       artifacthub.io/license: MIT
@@ -36,4 +71,4 @@ entries:
     urls:
     - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
     version: 1.0.0
-generated: '2026-05-18T19:37:00.036188635Z'
+generated: '2026-05-18T20:08:59.063575995Z'
