@@ -3,9 +3,9 @@ title: Pod vs host network
 date: 2026-05-18
 ---
 
-The chart can run the Publisher in two networking modes. The default
-ships as `host` for backward compatibility with older installs; for new
-clusters, **prefer `pod`**.
+The chart can run the Publisher in two networking modes. **`pod` is
+the default since chart v1.1.0**. `host` is still available for
+clusters that rely on the legacy host-networking layout.
 
 ## Mode comparison
 

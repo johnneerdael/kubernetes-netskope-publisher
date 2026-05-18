@@ -80,12 +80,13 @@ persistence:
   existingClaim: ""
 
 # Network namespace mode.
-# host: legacy mode. Uses host networking and privileged container defaults.
-# pod: runs in the pod network namespace without hostNetwork or privileged mode.
-#      The Publisher still needs NET_ADMIN/NET_RAW and /dev/net/tun for its
-#      container-local tunnel interface, routes, and iptables rules.
+# pod (default): runs in the pod network namespace without hostNetwork or
+#   privileged mode. The Publisher needs NET_ADMIN/NET_RAW and /dev/net/tun
+#   for its container-local tunnel interface, routes, and iptables rules.
+# host: legacy mode. Uses host networking and the full privileged
+#   securityContext defined below.
 networking:
-  mode: "host"
+  mode: "pod"
   # Only applies when mode=pod. Disables IPv6 best-effort inside the pod
   # network namespace before the Publisher creates tun0.
   disableIPv6: true
@@ -96,8 +97,12 @@ tunDevice:
   hostPath: /dev/net/tun
   mountPath: /dev/net/tun
 
-# Security context configuration
-# Publisher requires privileged access for:
+# Host-mode securityContext.
+# IGNORED when networking.mode=pod (the chart renders a minimal pod-mode
+# securityContext: privileged=false, NET_ADMIN + NET_RAW, runAsUser=0).
+# Only adjust this block when you've set networking.mode=host.
+#
+# In host mode the Publisher requires privileged access for:
 # - sysctl tuning (net.ipv4.ip_forward, etc.)
 # - iptables management (SNAT, conntrack)
 # - tun device creation and management
@@ -107,43 +112,30 @@ securityContext:
     add:
       - NET_ADMIN
       - NET_RAW
-  # Run as root (required for privileged operations)
   runAsUser: 0
   runAsNonRoot: false
   allowPrivilegeEscalation: true
 
-# Host network configuration
-# Required for stitcher connectivity and proper routing
-hostNetwork: true
-dnsPolicy: ClusterFirstWithHostNet
+# hostNetwork / dnsPolicy.
+# IGNORED when networking.mode=pod (the chart renders hostNetwork=false and
+# dnsPolicy=ClusterFirst). Adjust only when networking.mode=host, in which
+# case ClusterFirstWithHostNet lets the Publisher resolve via the node's
+# resolvers while keeping cluster DNS reachable.
+hostNetwork: false
+dnsPolicy: ClusterFirst
 
 # Resource limits and requests
 resources:
   limits:
     cpu: 1000m
-    memory: 1Gi
+    memory: 1536Mi
   requests:
     cpu: 500m
-    memory: 384Mi
+    memory: 1024Mi
 
-# Health probe configuration
-livenessProbe:
-  tcpSocket:
-    port: 1234
-  initialDelaySeconds: 60
-  periodSeconds: 10
-  timeoutSeconds: 5
-  successThreshold: 1
-  failureThreshold: 3
-
-readinessProbe:
-  tcpSocket:
-    port: 1234
-  initialDelaySeconds: 30
-  periodSeconds: 5
-  timeoutSeconds: 3
-  successThreshold: 1
-  failureThreshold: 3
+# Health probes are defined directly in the DaemonSet/StatefulSet template
+# (exec probes that verify the publisher process plus its on-disk state).
+# There are no parameterisable probe values in this chart.
 
 # Termination grace period (seconds)
 # Allows time for graceful shutdown of tunnels
@@ -158,11 +150,13 @@ tolerations: []
 # Affinity
 affinity: {}
 
-# Service account
+# Service account.
+# The chart makes no calls to the Kubernetes API, so the namespace's
+# `default` ServiceAccount is sufficient and `create: false` is the
+# default. Enable creation if you want to attach cloud IAM identities
+# (IRSA, Workload Identity, etc.) or per-SA imagePullSecrets.
 serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
+  create: false
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template

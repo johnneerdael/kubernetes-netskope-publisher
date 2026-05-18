@@ -52,7 +52,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{- define "kubernetes-netskope-publisher.networkingMode" -}}
-{{- default "host" .Values.networking.mode -}}
+{{- default "pod" .Values.networking.mode -}}
 {{- end -}}
 
 {{- define "kubernetes-netskope-publisher.isPodNetworking" -}}

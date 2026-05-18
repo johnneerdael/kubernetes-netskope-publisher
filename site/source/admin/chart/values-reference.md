@@ -38,13 +38,13 @@ in parentheses.
 
 | Key | Default | Notes |
 |---|---|---|
-| `networking.mode` | `host` | `host` (legacy, simple) or `pod` (recommended for managed K8s). |
+| `networking.mode` | `pod` | `pod` (default, recommended) or `host` (legacy). |
 | `networking.disableIPv6` | `true` | Only when `mode: pod`. Disables IPv6 in the pod netns. |
 | `tunDevice.enabled` | `true` | Mount `/dev/net/tun` from the node. |
 | `tunDevice.hostPath` | `/dev/net/tun` |  |
 | `tunDevice.mountPath` | `/dev/net/tun` |  |
-| `hostNetwork` | `true` | Set `false` together with `networking.mode: pod`. |
-| `dnsPolicy` | `ClusterFirstWithHostNet` | Pair with `ClusterFirst` when `hostNetwork: false`. |
+| `hostNetwork` | `false` | Ignored in `mode: pod` (template forces `false`). Set `true` only with `mode: host`. |
+| `dnsPolicy` | `ClusterFirst` | Ignored in `mode: pod` (template forces `ClusterFirst`). Use `ClusterFirstWithHostNet` with `mode: host`. |
 
 ## Security context
 
@@ -91,13 +91,16 @@ in parentheses.
 | Key | Default |
 |---|---|
 | `resources.requests.cpu` | `500m` |
-| `resources.requests.memory` | `384Mi` |
+| `resources.requests.memory` | `1024Mi` |
 | `resources.limits.cpu` | `1000m` |
-| `resources.limits.memory` | `1Gi` |
-| `livenessProbe.tcpSocket.port` | `1234` |
-| `readinessProbe.tcpSocket.port` | `1234` |
+| `resources.limits.memory` | `1536Mi` |
 | `terminationGracePeriodSeconds` | `30` |
 | `nodeSelector` / `tolerations` / `affinity` | `{}` / `[]` / `{}` |
+| `serviceAccount.create` | `false` (uses the namespace `default` SA) |
+
+Health probes are hardcoded in the DaemonSet/StatefulSet template (exec
+probes that verify the publisher process plus its on-disk state) and
+are not parameterisable today.
 
 ## Custom settings
 
