@@ -3,6 +3,44 @@ entries:
   kubernetes-netskope-publisher:
   - annotations:
       artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: changed\n  description: enrollment.api.cleanupOnDelete\
+        \ now defaults to false. The Netskope API rejects DELETE on a Publisher with\
+        \ Private Apps attached, so the previous default-on could silently fail and\
+        \ leave both orphan records and stranded apps. Opt in explicitly only when\
+        \ scaled replicas never carry app assignments.\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-05-18T21:42:44.001080408Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: 6f78c096e523b8d370c2ad1e9bc741407f7da65e577f15e09729ef87b4cd4f59
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://johnneerdael.github.io/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.3.1/kubernetes-netskope-publisher-1.3.1.tgz
+    version: 1.3.1
+  - annotations:
+      artifacthub.io/category: networking
       artifacthub.io/changes: "- kind: added\n  description: HorizontalPodAutoscaler\
         \ template for the StatefulSet path. CPU-based; enable with hpa.enabled=true\
         \ and tune hpa.minReplicas/maxReplicas/targetCPUUtilizationPercentage. Ignored\
@@ -228,4 +266,4 @@ entries:
     urls:
     - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
     version: 1.0.0
-generated: '2026-05-18T21:22:11.557038101Z'
+generated: '2026-05-18T21:42:43.999859456Z'
