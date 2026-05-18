@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'site/**'
-      - 'artifact-repo.yml'
+      - 'artifacthub-repo.yml'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -39,11 +39,12 @@ jobs:
         working-directory: site
         run: npx hexo generate
 
-      - name: Copy artifact-repo.yml into the published site
+      - name: Copy artifacthub-repo.yml into the published site
         # Artifact Hub fetches this file from the same URL it was
         # registered with (the Pages URL), so it must live alongside
-        # the site rather than only at the repo root on main.
-        run: cp artifact-repo.yml site/public/artifact-repo.yml
+        # the site rather than only at the repo root on main. AH
+        # specifically expects the filename "artifacthub-repo.yml".
+        run: cp artifacthub-repo.yml site/public/artifacthub-repo.yml
 
       - name: Deploy to gh-pages (preserve helm repo files)
         uses: peaceiris/actions-gh-pages@v3

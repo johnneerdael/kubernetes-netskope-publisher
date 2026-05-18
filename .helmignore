@@ -28,7 +28,7 @@ docs/
 scripts/
 .github/
 .claude/
-artifact-repo.yml
+artifacthub-repo.yml
 kind-config.yaml
 test-chart.sh
 *.tgz
