@@ -66,24 +66,47 @@ identity in the Netskope console.
 
 1. HPA observes CPU below target → patches replicas down.
 2. Kubernetes terminates the highest-ordinal pod first.
-3. The pod's **preStop hook fires** (controlled by
-   `enrollment.api.cleanupOnDelete`, default `true`):
+3. The Publisher record stays in the Netskope tenant. **By default
+   the chart does not delete it** — see the warning below.
 
-   ```bash
-   # Inside the pod, at termination time:
-   curl -X DELETE \
-     -H "Authorization: Bearer $NPA_API_TOKEN" \
-     "$NPA_API_BASE_URL/api/v2/infrastructure/publishers/$(cat /home/resources/publisherid)"
-   ```
+> ⚠️ **Why scale-down doesn't auto-delete by default**
+>
+> The Netskope API refuses to delete a Publisher that has Private
+> Apps attached (`/api/v2/infrastructure/publishers/{id}` returns
+> an error). Many tenants attach apps to every Publisher in a
+> region for load balancing — including the auto-scaled replicas.
+> An automatic DELETE would silently fail on those, leaving both
+> orphan Publisher records and stranded app attachments to chase.
+>
+> Reconciling orphans periodically via the [delete-publisher](/kubernetes-netskope-publisher/admin/how-to/delete-publisher/)
+> flow is safer than racing the lifecycle.
 
-4. The Publisher record is removed from the tenant. No orphan
-   record left in **NG SASE → Steering → Publishers**.
+## Opt-in: auto-delete on scale-down
 
-The hook is **best-effort**. If the API call fails (network glitch,
-expired token, tenant outage), the hook returns 0 anyway so the pod
-terminates promptly. The orphan record can be cleaned up manually
-via the [delete-publisher](/kubernetes-netskope-publisher/admin/how-to/delete-publisher/)
-flow.
+If you're certain auto-scaled replicas **never** carry app
+assignments — e.g. you only attach apps to a fixed baseline
+Publisher and let the scaled replicas inherit traffic via DTLS
+load-balancing only:
+
+```yaml
+enrollment:
+  api:
+    cleanupOnDelete: true
+```
+
+The pod's preStop hook then fires on termination:
+
+```bash
+# Inside the pod, at termination time:
+curl -X DELETE \
+  -H "Authorization: Bearer $NPA_API_TOKEN" \
+  "$NPA_API_BASE_URL/api/v2/infrastructure/publishers/$(cat /home/resources/publisherid)"
+```
+
+The hook is **best-effort**. It exits 0 on any failure (including
+the "Publisher has apps attached" rejection) so the pod terminates
+promptly. If you turn this on and your assumption later changes,
+the worst outcome is silent orphans rather than blocked pods.
 
 ## Why CPU and not tunnel-count
 
@@ -124,17 +147,3 @@ hpa:
           periodSeconds: 120      # at most 1 fewer replica every 2 minutes
 ```
 
-## Disabling cleanup
-
-If you'd rather keep all Publisher records (e.g. for an audit
-window, or because you're running on a tenant where deletion
-requires a change ticket):
-
-```yaml
-enrollment:
-  api:
-    cleanupOnDelete: false
-```
-
-You then prune orphans manually via the API, the admin console, or
-a periodic reconciliation script.

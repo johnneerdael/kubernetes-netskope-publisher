@@ -65,10 +65,20 @@ enrollment:
     existingSecret: "npa-api-token"
     tokenKey: "api-token"
     # Delete the tenant-side Publisher record on pod termination
-    # (HPA scale-down, helm uninstall, node drain). Best-effort —
-    # failures do not block pod termination. Disable if you'd rather
-    # keep orphan Publisher records and prune them manually.
-    cleanupOnDelete: true
+    # (HPA scale-down, helm uninstall, node drain).
+    #
+    # Default OFF: the Netskope API rejects deletion of a Publisher
+    # with Private Apps attached, so if any of your scaled replicas
+    # carry app assignments — including bulk "attach to all
+    # Publishers" patterns common in load-balanced setups — the
+    # cleanup will silently fail and you'll still have orphans plus
+    # stranded apps to chase.
+    #
+    # Only enable this if you're certain auto-scaled replicas never
+    # have Private Apps attached (e.g. apps are only ever attached
+    # to a fixed baseline Publisher). Otherwise prune manually via
+    # the delete-publisher how-to.
+    cleanupOnDelete: false
 
 # Tenant configuration
 tenant:

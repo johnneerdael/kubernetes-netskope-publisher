@@ -44,7 +44,7 @@ for the full setup.
 | `enrollment.api.baseUrl` | `https://tenant.goskope.com` | Tenant URL, no trailing slash. |
 | `enrollment.api.existingSecret` | `npa-api-token` | Secret containing the API token. |
 | `enrollment.api.tokenKey` | `api-token` | Key within that secret. |
-| `enrollment.api.cleanupOnDelete` | `true` | Delete the tenant-side Publisher record on pod termination via preStop hook. Best-effort. |
+| `enrollment.api.cleanupOnDelete` | `false` | Opt-in preStop hook that deletes the tenant-side Publisher record on pod termination. Only safe when scaled replicas never carry Private App attachments — the Netskope API rejects DELETE on Publishers with apps assigned. |
 | `registrationToken.value` | `""` | `mode: token` only — pass via `--set`. |
 | `registrationToken.existingSecret` | `""` | Alternative to inline value. |
 

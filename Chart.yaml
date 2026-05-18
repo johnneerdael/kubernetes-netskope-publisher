@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.3.0
+version: 1.3.1
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
@@ -34,7 +34,5 @@ annotations:
     - name: John Neerdael
       email: john@neerdael.nl
   artifacthub.io/changes: |
-    - kind: added
-      description: HorizontalPodAutoscaler template for the StatefulSet path. CPU-based; enable with hpa.enabled=true and tune hpa.minReplicas/maxReplicas/targetCPUUtilizationPercentage. Ignored for DaemonSets.
-    - kind: added
-      description: Pod preStop hook that deletes the tenant-side Publisher record on termination (HPA scale-down, helm uninstall, node drain). Default on in API mode; disable with enrollment.api.cleanupOnDelete=false. Best-effort — failures do not block pod termination.
+    - kind: changed
+      description: enrollment.api.cleanupOnDelete now defaults to false. The Netskope API rejects DELETE on a Publisher with Private Apps attached, so the previous default-on could silently fail and leave both orphan records and stranded apps. Opt in explicitly only when scaled replicas never carry app assignments.

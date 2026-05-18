@@ -6,6 +6,20 @@ date: 2026-05-18
 Hand-maintained — mirrors `Chart.yaml` `version:` bumps. See the
 GitHub Releases page for the published artifacts.
 
+## v1.3.1 — 2026-05-18
+
+Flip `enrollment.api.cleanupOnDelete` to default **off**. The Netskope
+API refuses to delete a Publisher with Private Apps attached, so the
+1.3.0 default of `true` could silently fail on scale-down — leaving
+orphan Publisher records *and* stranded app assignments to chase. The
+hook is still available; you just have to opt in (`cleanupOnDelete:
+true`) and confirm that your auto-scaled replicas never carry app
+assignments.
+
+If you're already on 1.3.0, the new release also pulls in the
+slimmed example values and the AH-aligned install path from the
+1.1.1 docs work.
+
 ## v1.3.0 — 2026-05-18
 
 Autoscaling and orphan-Publisher cleanup.

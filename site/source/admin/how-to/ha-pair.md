@@ -60,11 +60,12 @@ traffic distribution.
 `helm upgrade --set workload.replicas=3` adds a third member. Each new
 pod enrolls itself via the API; no manual token shuffling.
 
-Scale-down deletes the tenant-side Publisher record automatically via
-the pod's preStop hook (since 1.3.0). Disable with
-`enrollment.api.cleanupOnDelete=false` if you'd rather prune
-manually — see
-[delete-publisher](/kubernetes-netskope-publisher/admin/how-to/delete-publisher/).
+Scale-down leaves the tenant-side Publisher record by default — the
+Netskope API rejects deletion of Publishers with Private Apps
+attached, so opt-in cleanup is safer than racing it. See
+[autoscaling](/kubernetes-netskope-publisher/admin/how-to/autoscaling/)
+and the [delete-publisher](/kubernetes-netskope-publisher/admin/how-to/delete-publisher/)
+flow for manual pruning.
 
 For CPU-driven scaling without manual `helm upgrade` calls, see
 [autoscaling](/kubernetes-netskope-publisher/admin/how-to/autoscaling/).
