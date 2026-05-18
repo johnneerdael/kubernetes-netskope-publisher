@@ -1,0 +1,163 @@
+name: Release Helm chart
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Chart.yaml'
+      - 'values.yaml'
+      - 'templates/**'
+      - 'files/**'
+      - '.helmignore'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create releases, push to gh-pages
+
+# Serialize against pages.yml so we never push to gh-pages concurrently.
+concurrency:
+  group: gh-pages-publish
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Read chart metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          NAME=$(awk '/^name:/ {print $2}' Chart.yaml)
+          VERSION=$(awk '/^version:/ {print $2}' Chart.yaml)
+          echo "name=$NAME"       >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=${NAME}-${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Detected chart $NAME version $VERSION"
+
+      - name: Skip if release already exists
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — nothing to publish."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Lint the chart
+        if: steps.gate.outputs.skip != 'true'
+        run: helm lint .
+
+      - name: Package the chart
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p .cr-release-packages
+          helm package . --destination .cr-release-packages
+
+      - name: Create GitHub Release
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          NAME: ${{ steps.meta.outputs.name }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            --title "$NAME $VERSION" \
+            --notes "Helm chart \`$NAME\` v$VERSION. See [Changelog](https://johnneerdael.github.io/kubernetes-netskope-publisher/reference/changelog/)." \
+            .cr-release-packages/${NAME}-${VERSION}.tgz
+
+      - name: Check out gh-pages branch
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+        continue-on-error: true   # branch may not exist yet on first run
+
+      - name: Initialize gh-pages if missing
+        if: steps.gate.outputs.skip != 'true' && hashFiles('gh-pages/.git') == ''
+        run: |
+          set -euo pipefail
+          mkdir -p gh-pages
+          cd gh-pages
+          git init -b gh-pages
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update index.yaml on gh-pages
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          NAME: ${{ steps.meta.outputs.name }}
+          PAGES_URL: https://johnneerdael.github.io/kubernetes-netskope-publisher
+        run: |
+          set -euo pipefail
+          cp .cr-release-packages/${NAME}-${VERSION}.tgz gh-pages/
+
+          cd gh-pages
+          if [ -f index.yaml ]; then
+            helm repo index . --merge index.yaml --url "$PAGES_URL"
+          else
+            helm repo index . --url "$PAGES_URL"
+          fi
+
+          # Keep only index.yaml; the .tgz lives in the GitHub Release.
+          # If you'd rather host tarballs on gh-pages as well, comment the next line.
+          rm -f ${NAME}-${VERSION}.tgz
+
+      - name: Rewrite chart URLs to point at GitHub Releases
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          NAME: ${{ steps.meta.outputs.name }}
+          REPO_URL: https://github.com/${{ github.repository }}/releases/download
+        run: |
+          set -euo pipefail
+          cd gh-pages
+          # Replace any "<pages>/chart-X.Y.Z.tgz" URL with the release-asset URL.
+          python3 - <<'PY'
+          import os, re, yaml
+          name = os.environ["NAME"]
+          repo_url = os.environ["REPO_URL"]
+          with open("index.yaml") as f:
+              data = yaml.safe_load(f)
+          for cname, entries in data.get("entries", {}).items():
+              for e in entries:
+                  v = e["version"]
+                  e["urls"] = [f"{repo_url}/{cname}-{v}/{cname}-{v}.tgz"]
+          with open("index.yaml", "w") as f:
+              yaml.safe_dump(data, f, sort_keys=False)
+          PY
+
+      - name: Commit and push gh-pages
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          cd gh-pages
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.yaml
+          if git diff --cached --quiet; then
+            echo "index.yaml unchanged — nothing to push."
+          else
+            git commit -m "release: ${{ steps.meta.outputs.name }} ${{ steps.meta.outputs.version }}"
+            git push origin gh-pages
+          fi
