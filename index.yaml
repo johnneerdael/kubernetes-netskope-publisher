@@ -1,0 +1,39 @@
+apiVersion: v1
+entries:
+  kubernetes-netskope-publisher:
+  - annotations:
+      artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: added\n  description: Initial public release\
+        \ of the Helm chart.\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-05-18T19:37:00.037488766Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: da8ed7ce3b7734e9400e34b1fe16da1feedefa5a3d42ffee732394794db6e174
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://www.netskope.com/wp-content/uploads/2021/03/netskope-icon.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
+    version: 1.0.0
+generated: '2026-05-18T19:37:00.036188635Z'
