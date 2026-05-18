@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.1.1
+version: 1.2.0
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
@@ -34,5 +34,5 @@ annotations:
     - name: John Neerdael
       email: john@neerdael.nl
   artifacthub.io/changes: |
-    - kind: changed
-      description: README rewritten to lead with the Artifact Hub install path (helm repo add + helm install npa/kubernetes-netskope-publisher). Slimmer example values that lean on the 1.1.0 defaults.
+    - kind: removed
+      description: securityContext, hostNetwork, and dnsPolicy are no longer values keys. The chart now derives all three from networking.mode (pod or host) so values.yaml stops misrepresenting what's actually rendered. If you had been overriding any of them, remove those overrides — switching networking.mode is the supported knob.

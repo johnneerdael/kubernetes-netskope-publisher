@@ -43,16 +43,11 @@ in parentheses.
 | `tunDevice.enabled` | `true` | Mount `/dev/net/tun` from the node. |
 | `tunDevice.hostPath` | `/dev/net/tun` |  |
 | `tunDevice.mountPath` | `/dev/net/tun` |  |
-| `hostNetwork` | `false` | Ignored in `mode: pod` (template forces `false`). Set `true` only with `mode: host`. |
-| `dnsPolicy` | `ClusterFirst` | Ignored in `mode: pod` (template forces `ClusterFirst`). Use `ClusterFirstWithHostNet` with `mode: host`. |
 
-## Security context
-
-| Key | Default | Notes |
-|---|---|---|
-| `securityContext.privileged` | `true` | Required for sysctl + iptables + tun. |
-| `securityContext.capabilities.add` | `[NET_ADMIN, NET_RAW]` | Required. |
-| `securityContext.runAsUser` | `0` | Privileged ops require root. |
+`hostNetwork`, `dnsPolicy`, and the container `securityContext` are
+**not configurable via values** — they're derived from `networking.mode`.
+See the [pod vs host network](/kubernetes-netskope-publisher/admin/how-to/pod-vs-host-network/)
+comparison table for what each mode renders.
 
 ## Persistence
 

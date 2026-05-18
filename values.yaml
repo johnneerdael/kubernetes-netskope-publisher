@@ -97,32 +97,20 @@ tunDevice:
   hostPath: /dev/net/tun
   mountPath: /dev/net/tun
 
-# Host-mode securityContext.
-# IGNORED when networking.mode=pod (the chart renders a minimal pod-mode
-# securityContext: privileged=false, NET_ADMIN + NET_RAW, runAsUser=0).
-# Only adjust this block when you've set networking.mode=host.
+# securityContext, hostNetwork, and dnsPolicy are derived from
+# networking.mode and are not customisable via values:
 #
-# In host mode the Publisher requires privileged access for:
-# - sysctl tuning (net.ipv4.ip_forward, etc.)
-# - iptables management (SNAT, conntrack)
-# - tun device creation and management
-securityContext:
-  privileged: true
-  capabilities:
-    add:
-      - NET_ADMIN
-      - NET_RAW
-  runAsUser: 0
-  runAsNonRoot: false
-  allowPrivilegeEscalation: true
-
-# hostNetwork / dnsPolicy.
-# IGNORED when networking.mode=pod (the chart renders hostNetwork=false and
-# dnsPolicy=ClusterFirst). Adjust only when networking.mode=host, in which
-# case ClusterFirstWithHostNet lets the Publisher resolve via the node's
-# resolvers while keeping cluster DNS reachable.
-hostNetwork: false
-dnsPolicy: ClusterFirst
+#   networking.mode=pod  (default):
+#     securityContext: privileged=false, allowPrivilegeEscalation=false,
+#                      NET_ADMIN + NET_RAW, runAsUser=0
+#     hostNetwork:     false
+#     dnsPolicy:       ClusterFirst
+#
+#   networking.mode=host:
+#     securityContext: privileged=true,  allowPrivilegeEscalation=true,
+#                      NET_ADMIN + NET_RAW, runAsUser=0
+#     hostNetwork:     true
+#     dnsPolicy:       ClusterFirstWithHostNet
 
 # Resource limits and requests
 resources:

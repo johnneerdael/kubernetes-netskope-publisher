@@ -60,11 +60,11 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{- define "kubernetes-netskope-publisher.hostNetwork" -}}
-{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}false{{- else -}}{{ .Values.hostNetwork }}{{- end -}}
+{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}false{{- else -}}true{{- end -}}
 {{- end -}}
 
 {{- define "kubernetes-netskope-publisher.dnsPolicy" -}}
-{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}ClusterFirst{{- else -}}{{ .Values.dnsPolicy }}{{- end -}}
+{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}ClusterFirst{{- else -}}ClusterFirstWithHostNet{{- end -}}
 {{- end -}}
 
 {{- define "kubernetes-netskope-publisher.securityContext" -}}
@@ -78,7 +78,14 @@ privileged: false
 runAsNonRoot: false
 runAsUser: 0
 {{- else -}}
-{{- toYaml .Values.securityContext -}}
+allowPrivilegeEscalation: true
+capabilities:
+  add:
+    - NET_ADMIN
+    - NET_RAW
+privileged: true
+runAsNonRoot: false
+runAsUser: 0
 {{- end -}}
 {{- end -}}
 

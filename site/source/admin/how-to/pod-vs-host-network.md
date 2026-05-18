@@ -20,38 +20,45 @@ clusters that rely on the legacy host-networking layout.
 | Works with PSA `restricted` | no — `hostNetwork: true` blocked | partial — still needs `privileged: true` |
 | Multi-replica per node | no (single host netns) | yes |
 
+> Since chart 1.2.0, `hostNetwork`, `dnsPolicy`, and the container
+> `securityContext` are derived from `networking.mode` and are no
+> longer settable in values. Flipping the mode is the only knob.
+
 ## Pod mode values
 
 ```yaml
 networking:
-  mode: pod
-  disableIPv6: true       # disable v6 in the pod netns before tun0 setup
+  mode: pod              # (default — can be omitted)
+  disableIPv6: true      # disable v6 in the pod netns before tun0 setup
 
 tunDevice:
   enabled: true
   hostPath: /dev/net/tun
   mountPath: /dev/net/tun
-
-hostNetwork: false
-dnsPolicy: ClusterFirst
 ```
 
 The `tunDevice` mount is critical — the pod's tun0 interface needs the
 host's `/dev/net/tun` exposed as a hostPath. Without it the Publisher
 fails on startup with `cannot open /dev/net/tun`.
 
+The chart automatically renders `hostNetwork: false`, `dnsPolicy:
+ClusterFirst`, and a minimal `securityContext` (`privileged: false`,
+`NET_ADMIN`, `NET_RAW`, `runAsUser: 0`).
+
 ## Host mode values
 
 ```yaml
 networking:
   mode: host
-
-hostNetwork: true
-dnsPolicy: ClusterFirstWithHostNet
 ```
 
-Use this when the cluster is k3s/single-node and host networking is
-acceptable, or when you have legacy installs to maintain.
+Use this on k3s/single-node clusters where host networking is
+acceptable, or for legacy installs you're maintaining.
+
+The chart automatically renders `hostNetwork: true`, `dnsPolicy:
+ClusterFirstWithHostNet`, and a privileged `securityContext`
+(`privileged: true`, `allowPrivilegeEscalation: true`, `NET_ADMIN`,
+`NET_RAW`, `runAsUser: 0`).
 
 ## Picking
 

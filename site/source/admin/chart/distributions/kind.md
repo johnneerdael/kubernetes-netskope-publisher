@@ -32,8 +32,6 @@ networking:
 tunDevice:
   enabled: true
 
-hostNetwork: false
-dnsPolicy: ClusterFirst
 
 persistence:
   enabled: false

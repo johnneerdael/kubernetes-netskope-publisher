@@ -43,8 +43,6 @@ networking:
 tunDevice:
   enabled: true
 
-hostNetwork: false
-dnsPolicy: ClusterFirst
 ```
 
 ## Quirks

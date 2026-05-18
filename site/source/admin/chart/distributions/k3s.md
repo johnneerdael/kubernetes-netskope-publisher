@@ -24,12 +24,14 @@ workload:
 
 networking:
   mode: host     # k3s, single node — host network is the simplest path
-hostNetwork: true
-dnsPolicy: ClusterFirstWithHostNet
 
 persistence:
   enabled: false
 ```
+
+> `hostNetwork: true` and `dnsPolicy: ClusterFirstWithHostNet` are
+> applied automatically when `networking.mode=host`. You no longer
+> set them explicitly.
 
 ## Quirks
 

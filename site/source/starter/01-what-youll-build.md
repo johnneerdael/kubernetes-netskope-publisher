@@ -24,8 +24,8 @@ By the end of this guide you'll have:
 ## Why k3s for the first run?
 
 - Single binary, one command to install, no etcd to babysit.
-- The chart's default `hostNetwork: true` and privileged settings work
-  on k3s without extra PSP/PSA tweaks.
+- The chart's default pod-networking mode renders an unprivileged
+  pod, which k3s schedules without PSP/PSA tweaks.
 - Same Helm chart works unchanged on EKS/AKS/GKE later
   ([distributions](/kubernetes-netskope-publisher/admin/chart/distributions/)).
 

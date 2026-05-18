@@ -17,8 +17,6 @@ networking:
 tunDevice:
   enabled: true
 
-hostNetwork: false
-dnsPolicy: ClusterFirst
 ```
 
 ## Node image

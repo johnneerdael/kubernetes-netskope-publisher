@@ -6,6 +6,29 @@ date: 2026-05-18
 Hand-maintained — mirrors `Chart.yaml` `version:` bumps. See the
 GitHub Releases page for the published artifacts.
 
+## v1.2.0 — 2026-05-18
+
+`securityContext`, `hostNetwork`, and `dnsPolicy` are no longer
+exposed as values keys. The chart now derives all three from
+`networking.mode`:
+
+|  | `networking.mode: pod` (default) | `networking.mode: host` |
+|---|---|---|
+| `securityContext` | `privileged: false`, `NET_ADMIN`, `NET_RAW`, `runAsUser: 0` | `privileged: true`, `NET_ADMIN`, `NET_RAW`, `runAsUser: 0` |
+| `hostNetwork` | `false` | `true` |
+| `dnsPolicy` | `ClusterFirst` | `ClusterFirstWithHostNet` |
+
+Previously `securityContext` was overridable via values, but only
+in host mode — pod mode silently hardcoded its own block. That
+asymmetry made `values.yaml` look like it ran the Publisher
+privileged even in pod mode (which it doesn't). The new design
+makes the helper authoritative for both modes, and `values.yaml`
+honest.
+
+**Upgrade hazard**: if your values file overrode `securityContext`,
+`hostNetwork`, or `dnsPolicy`, those overrides are now silently
+ignored. Remove them and switch `networking.mode` instead.
+
 ## v1.1.1 — 2026-05-18
 
 Docs-only release so Artifact Hub picks up the new README.
