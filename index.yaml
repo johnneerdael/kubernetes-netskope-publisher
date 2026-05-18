@@ -3,6 +3,44 @@ entries:
   kubernetes-netskope-publisher:
   - annotations:
       artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: removed\n  description: securityContext, hostNetwork,\
+        \ and dnsPolicy are no longer values keys. The chart now derives all three\
+        \ from networking.mode (pod or host) so values.yaml stops misrepresenting\
+        \ what's actually rendered. If you had been overriding any of them, remove\
+        \ those overrides \u2014 switching networking.mode is the supported knob.\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-05-18T20:49:58.308703683Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: 6aca01ae11fca03dfbf6104b813d23a90f2c1d2cceeec3a63fdcc3d3766e1702
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://johnneerdael.github.io/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.2.0/kubernetes-netskope-publisher-1.2.0.tgz
+    version: 1.2.0
+  - annotations:
+      artifacthub.io/category: networking
       artifacthub.io/changes: "- kind: changed\n  description: README rewritten to\
         \ lead with the Artifact Hub install path (helm repo add + helm install npa/kubernetes-netskope-publisher).\
         \ Slimmer example values that lean on the 1.1.0 defaults.\n"
@@ -150,4 +188,4 @@ entries:
     urls:
     - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
     version: 1.0.0
-generated: '2026-05-18T20:42:00.960930409Z'
+generated: '2026-05-18T20:49:58.307565016Z'
