@@ -15,7 +15,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T22:01:41.590Z">
+<meta property="article:modified_time" content="2026-05-18T22:35:06.342Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher">
@@ -107,7 +107,12 @@
 <li>Looking for chart values, distribution notes? → <a href="/kubernetes-netskope-publisher/admin/">Admin Guides</a></li>
 <li>Kubernetes&#x2F;Helm matrix, changelog, roadmap → <a href="/kubernetes-netskope-publisher/reference/">Reference</a></li>
 </ul>
-<h2><span id="install">Install</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher</span><br><span class="line">helm repo update</span><br><span class="line">helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \</span><br><span class="line">  --namespace npa-publisher --create-namespace \</span><br><span class="line">  -f my-values.yaml</span><br></pre></td></tr></table></figure>
+<h2><span id="install">Install</span></h2><p>Pick the install source that suits your Helm version. Both ship the<br>same chart from the same release.</p>
+<p><strong>Classic Helm repo</strong> (works on any Helm 3.x):</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher</span><br><span class="line">helm repo update</span><br><span class="line">helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \</span><br><span class="line">  --namespace npa-publisher --create-namespace \</span><br><span class="line">  -f my-values.yaml</span><br></pre></td></tr></table></figure>
+
+<p><strong>OCI registry</strong> (Helm 3.8+, no <code>repo add</code> step):</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">helm install kubernetes-netskope-publisher \</span><br><span class="line">  oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \</span><br><span class="line">  --version 1.4.0 \</span><br><span class="line">  --namespace npa-publisher --create-namespace \</span><br><span class="line">  -f my-values.yaml</span><br></pre></td></tr></table></figure>
 
 <p>A working <code>my-values.yaml</code> for API enrollment is in the<br><a href="/kubernetes-netskope-publisher/starter/06-first-publisher/">Quickstart</a>.</p>
 

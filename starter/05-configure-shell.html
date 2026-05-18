@@ -14,7 +14,7 @@
 <meta property="og:description" content="Two things need to be in place before helm install:  kubectl can talk to the cluster. The Helm chart repository is added locally.  kubectlIf you installed k3s on the same host you’re running commands">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T22:01:41.590Z">
+<meta property="article:modified_time" content="2026-05-18T22:35:06.343Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -107,14 +107,19 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> <span class="built_in">cp</span> /etc/rancher/k3s/k3s.yaml ~/.kube/config</span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">chown</span> $(<span class="built_in">id</span> -u):$(<span class="built_in">id</span> -g) ~/.kube/config</span><br><span class="line"><span class="built_in">chmod</span> 600 ~/.kube/config</span><br><span class="line">kubectl get nodes</span><br></pre></td></tr></table></figure>
 
 <p>If you’re running <code>kubectl</code> from a different machine, copy<br><code>/etc/rancher/k3s/k3s.yaml</code>, replace <code>127.0.0.1</code> in the <code>server:</code> field<br>with the VM’s reachable IP, and set <code>KUBECONFIG</code> to that file.</p>
-<h2><span id="helm-repository">Helm repository</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher</span><br><span class="line">helm repo update</span><br><span class="line">helm search repo npa/kubernetes-netskope-publisher</span><br></pre></td></tr></table></figure>
+<h2><span id="helm-chart-source">Helm chart source</span></h2><p>The chart is published in two places that ship the same release —<br>pick whichever your Helm client supports.</p>
+<h3><span id="option-a-classic-helm-repository-works-on-any-helm-3x">Option A — Classic Helm repository (works on any Helm 3.x)</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher</span><br><span class="line">helm repo update</span><br><span class="line">helm search repo npa/kubernetes-netskope-publisher</span><br></pre></td></tr></table></figure>
 
 <p>You should see:</p>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NAME                 CHART VERSION  APP VERSION  DESCRIPTION</span><br><span class="line">npa/kubernetes-netskope-publisher    1.0.0          1.0.0        Netskope Private Access Publisher for Kubernetes</span><br></pre></td></tr></table></figure>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NAME                                 CHART VERSION  APP VERSION  DESCRIPTION</span><br><span class="line">npa/kubernetes-netskope-publisher    1.4.0          1.4.0        Netskope Private Access Publisher for Kubernetes</span><br></pre></td></tr></table></figure>
 
 <blockquote>
-<p>If the repo doesn’t list yet (404 on <code>index.yaml</code>), the first chart<br>release workflow hasn’t run yet. You can install directly from the<br>repo as a fallback: <code>git clone … &amp;&amp; helm install kubernetes-netskope-publisher ./kubernetes-netskope-publisher</code>.</p>
+<p>If the repo doesn’t list yet (404 on <code>index.yaml</code>), the first chart<br>release workflow hasn’t run yet. You can install directly from the<br>source as a fallback: <code>git clone … &amp;&amp; helm install kubernetes-netskope-publisher ./kubernetes-netskope-publisher</code>.</p>
 </blockquote>
+<h3><span id="option-b-oci-registry-helm-38-no-repo-add-step">Option B — OCI registry (Helm 3.8+, no <code>repo add</code> step)</span></h3><p>The chart is also pushed to GitHub Container Registry as an OCI<br>artifact. There’s no equivalent of <code>helm search repo</code> for OCI, but<br><code>helm show chart</code> works against the OCI URL directly:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm show chart oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher --version 1.4.0</span><br></pre></td></tr></table></figure>
+
+<p>You’ll use this URL in place of <code>npa/kubernetes-netskope-publisher</code> in<br>the subsequent <code>helm install</code> step.</p>
 
         
   </div>
