@@ -1,5 +1,7 @@
 # Netskope NPA Publisher — Kubernetes Deployment Guide
 
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher)](https://artifacthub.io/packages/search?repo=kubernetes-netskope-publisher)
+
 This guide walks you through deploying the Netskope Private Access (NPA) Publisher with Helm. The recommended beginner path uses a single-node k3s cluster because it keeps the Kubernetes setup small, local to one Linux host, and friendly to operators who have not run Kubernetes before.
 
 The same Helm chart can also run on managed or self-managed Kubernetes platforms. Those architectures are covered as reference options after the k3s path so the first deployment stays simple.
