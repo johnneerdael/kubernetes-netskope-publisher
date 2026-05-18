@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.1.0 — 2026-05-18Defaults overhaul. Values surface unchanged — only defaults moved.  net">
+    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.1.1 — 2026-05-18Docs-only release so Artifact Hub picks up the new README.  README lead">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Changelog">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/reference/changelog">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.1.0 — 2026-05-18Defaults overhaul. Values surface unchanged — only defaults moved.  net">
+<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.1.1 — 2026-05-18Docs-only release so Artifact Hub picks up the new README.  README lead">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T20:41:04.673Z">
+<meta property="article:modified_time" content="2026-05-18T20:42:12.306Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -99,6 +99,14 @@
   <div class="content" itemprop="articleBody">
       
           <p>Hand-maintained — mirrors <code>Chart.yaml</code> <code>version:</code> bumps. See the<br>GitHub Releases page for the published artifacts.</p>
+<h2><span id="v111-2026-05-18">v1.1.1 — 2026-05-18</span></h2><p>Docs-only release so Artifact Hub picks up the new README.</p>
+<ul>
+<li>README leads with the Artifact Hub install path<br>(<code>helm repo add npa … &amp;&amp; helm install npa/kubernetes-netskope-publisher</code>)<br>instead of the local-clone path; local-clone install becomes a<br>developer footnote.</li>
+<li>Slimmed example values to only the keys that aren’t covered by<br>1.1.0 defaults (pod networking, tunDevice, persistence: false, and<br>IPv6-disable are all default now).</li>
+<li>Replaced every remaining local-path install&#x2F;upgrade example in the<br>deep-dive sections so the advice stays consistent end-to-end.</li>
+<li>Fixed a stale clone URL in the k3s setup section.</li>
+<li><code>release.yml</code> now also fires on <code>README.md</code> changes so future<br>README updates ship to Artifact Hub on the next push.</li>
+</ul>
 <h2><span id="v110-2026-05-18">v1.1.0 — 2026-05-18</span></h2><p>Defaults overhaul. Values surface unchanged — only defaults moved.</p>
 <ul>
 <li><strong><code>networking.mode</code></strong> defaults to <strong><code>pod</code></strong> (was <code>host</code>). Together<br>with this, the default <code>hostNetwork</code> flips to <code>false</code> and<br><code>dnsPolicy</code> to <code>ClusterFirst</code>. This makes the out-of-the-box install<br>work on EKS &#x2F; AKS &#x2F; GKE &#x2F; OpenShift without privileged-host-network<br>exemptions. <strong>Upgrade hazard for existing 1.0.x installs</strong> — if<br>you’ve been running host-mode and haven’t pinned <code>networking.mode</code>,<br>set it explicitly in your values before <code>helm upgrade</code>.</li>
