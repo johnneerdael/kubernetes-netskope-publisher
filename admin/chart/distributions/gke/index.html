@@ -14,7 +14,7 @@
 <meta property="og:description" content="Recommended values1234567891011workload:  type: statefulset  replicas: 2networking:  mode: pod  disableIPv6: truetunDevice:  enabled: true  Node image Container-Optimized OS (cos_containerd): &#x2F;dev&#x2F;net">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T20:54:07.996Z">
+<meta property="article:modified_time" content="2026-05-18T21:00:27.404Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -103,7 +103,7 @@
 <h2><span id="node-image">Node image</span></h2><ul>
 <li><strong>Container-Optimized OS (cos_containerd):</strong> <code>/dev/net/tun</code> is<br>available. <strong>Default and recommended.</strong></li>
 <li><strong>Ubuntu (ubuntu_containerd):</strong> also works.</li>
-<li><strong>GKE Autopilot:</strong> <strong>unsupported.</strong> Autopilot blocks <code>privileged: true</code><br>pods and <code>hostPath</code> mounts. Use Standard GKE.</li>
+<li><strong>GKE Autopilot:</strong> <strong>unsupported.</strong> Pod mode is unprivileged, but<br>Autopilot still blocks two things the chart needs:<br>the <code>hostPath</code> mount for <code>/dev/net/tun</code>, and the<br><code>NET_ADMIN</code>&#x2F;<code>NET_RAW</code> container capabilities. See the<br><a href="/kubernetes-netskope-publisher/reference/roadmap/">roadmap</a> for<br>what would have to change upstream. Use Standard GKE.</li>
 </ul>
 <h2><span id="egress">Egress</span></h2><p>Use <strong>Cloud NAT</strong> with a reserved static external IP for the node pool<br>running the Publisher. Without it, GKE assigns ephemeral SNAT IPs that<br>change.</p>
 <h2><span id="podsecurity-gke-125">PodSecurity (GKE 1.25+)</span></h2><p>The install namespace must allow <code>privileged</code>:</p>
