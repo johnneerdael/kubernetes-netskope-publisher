@@ -24,7 +24,7 @@ affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchLabels:
-            app.kubernetes.io/name: npa-publisher
+            app.kubernetes.io/name: kubernetes-netskope-publisher
         topologyKey: kubernetes.io/hostname  # spread across nodes
         # use topology.kubernetes.io/zone in multi-AZ clusters
 
@@ -40,7 +40,7 @@ resources:
 ## Apply
 
 ```bash
-helm upgrade --install npa-publisher npa/npa-publisher \
+helm upgrade --install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   -n npa-publisher -f my-values.yaml
 ```
 

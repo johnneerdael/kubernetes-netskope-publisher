@@ -1,14 +1,14 @@
-{{- if include "npa-publisher.isStatefulSet" . -}}
+{{- if include "kubernetes-netskope-publisher.isStatefulSet" . -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "npa-publisher.fullname" . }}-headless
+  name: {{ include "kubernetes-netskope-publisher.fullname" . }}-headless
   labels:
-    {{- include "npa-publisher.labels" . | nindent 4 }}
+    {{- include "kubernetes-netskope-publisher.labels" . | nindent 4 }}
 spec:
   clusterIP: None
   selector:
-    app.kubernetes.io/name: {{ include "npa-publisher.name" . }}
+    app.kubernetes.io/name: {{ include "kubernetes-netskope-publisher.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
     - name: health

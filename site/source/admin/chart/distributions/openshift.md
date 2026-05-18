@@ -11,22 +11,22 @@ the Publisher needs. The chart's ServiceAccount must be granted the
 
 ```bash
 oc create namespace npa-publisher
-helm install npa-publisher npa/npa-publisher \
+helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher \
   -f my-values.yaml
 
 # Grant privileged SCC to the ServiceAccount the chart created
 oc adm policy add-scc-to-user privileged \
   -z $(kubectl get sa -n npa-publisher \
-       -l app.kubernetes.io/name=npa-publisher \
+       -l app.kubernetes.io/name=kubernetes-netskope-publisher \
        -o jsonpath='{.items[0].metadata.name}') \
   -n npa-publisher
 
 # Force pods to be recreated under the new SCC
 kubectl rollout restart -n npa-publisher \
-  daemonset/npa-publisher || \
+  daemonset/kubernetes-netskope-publisher || \
   kubectl rollout restart -n npa-publisher \
-  statefulset/npa-publisher
+  statefulset/kubernetes-netskope-publisher
 ```
 
 ## Recommended values

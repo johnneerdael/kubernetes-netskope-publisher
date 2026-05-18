@@ -63,7 +63,7 @@ bind:
 ## 3. Install
 
 ```bash
-helm install npa-publisher npa/npa-publisher \
+helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher \
   -f my-values.yaml
 ```

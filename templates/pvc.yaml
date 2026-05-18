@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "npa-publisher.fullname" . }}-data
+  name: {{ include "kubernetes-netskope-publisher.fullname" . }}-data
   labels:
-    {{- include "npa-publisher.labels" . | nindent 4 }}
+    {{- include "kubernetes-netskope-publisher.labels" . | nindent 4 }}
 spec:
   accessModes:
     - {{ .Values.persistence.accessMode }}

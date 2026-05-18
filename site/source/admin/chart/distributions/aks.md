@@ -25,7 +25,7 @@ affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchLabels:
-            app.kubernetes.io/name: npa-publisher
+            app.kubernetes.io/name: kubernetes-netskope-publisher
         topologyKey: topology.kubernetes.io/zone
 ```
 

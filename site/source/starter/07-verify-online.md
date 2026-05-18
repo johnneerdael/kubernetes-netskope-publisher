@@ -15,7 +15,7 @@ Wait for `1/1 Running`. The init container `npa-bootstrap` may run for
 ## 2. Follow the Publisher logs
 
 ```bash
-kubectl logs -l app.kubernetes.io/name=npa-publisher \
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher \
   -n npa-publisher \
   -c publisher \
   -f

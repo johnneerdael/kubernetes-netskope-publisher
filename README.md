@@ -49,7 +49,7 @@ bind:
     - "8.8.4.4"
 EOF
 
-helm install npa-publisher ./kubernetes-publisher \
+helm install kubernetes-netskope-publisher . \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-config.yaml
@@ -60,7 +60,7 @@ Watch the pod and then follow the publisher container logs:
 ```bash
 kubectl get pods -n npa-publisher -w
 
-kubectl logs -l app.kubernetes.io/name=npa-publisher \
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher \
   -n npa-publisher \
   -c publisher \
   -f
@@ -205,9 +205,9 @@ enrollment:
 three replicas create or reuse Publisher identities like:
 
 ```text
-prod-k8s-publisher-npa-publisher-0
-prod-k8s-publisher-npa-publisher-1
-prod-k8s-publisher-npa-publisher-2
+prod-k8s-publisher-kubernetes-netskope-publisher-0
+prod-k8s-publisher-kubernetes-netskope-publisher-1
+prod-k8s-publisher-kubernetes-netskope-publisher-2
 ```
 
 ### Scaled API Values Example
@@ -305,7 +305,7 @@ resources:
 Install or upgrade with the scaled values file:
 
 ```bash
-helm upgrade --install npa-publisher ./kubernetes-publisher \
+helm upgrade --install kubernetes-netskope-publisher . \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-statefulset-config.yaml
@@ -314,14 +314,14 @@ helm upgrade --install npa-publisher ./kubernetes-publisher \
 Validate the StatefulSet and pods:
 
 ```bash
-kubectl get statefulset npa-publisher -n npa-publisher
-kubectl get pods -n npa-publisher -l app.kubernetes.io/name=npa-publisher -o wide
+kubectl get statefulset kubernetes-netskope-publisher -n npa-publisher
+kubectl get pods -n npa-publisher -l app.kubernetes.io/name=kubernetes-netskope-publisher -o wide
 ```
 
 Validate that every replica enrolled and connected:
 
 ```bash
-kubectl logs -n npa-publisher -l app.kubernetes.io/name=npa-publisher -c publisher \
+kubectl logs -n npa-publisher -l app.kubernetes.io/name=kubernetes-netskope-publisher -c publisher \
   | grep -E 'API enrollment mode active|NPACONNECTED|ConnectedResolvedByGSLB'
 ```
 
@@ -382,7 +382,7 @@ For storage, API mode defaults to pod-local `emptyDir` storage and re-enrolls wh
 | DaemonSet | `workload.type=daemonset` | `api` or `token` | One Publisher pod per matching node |
 | StatefulSet | `workload.type=statefulset` | `api` only | Multiple Publisher pods with stable identities, including multiple pods on one node |
 
-StatefulSet mode requires `networking.mode=pod`. Each replica gets a stable pod name and appends it to `enrollment.commonName`; for example, `prod-k8s-publisher-npa-publisher-0`. This gives every Publisher instance a unique API-created identity while allowing Kubernetes to restart the same replica with the same name.
+StatefulSet mode requires `networking.mode=pod`. Each replica gets a stable pod name and appends it to `enrollment.commonName`; for example, `prod-k8s-publisher-kubernetes-netskope-publisher-0`. This gives every Publisher instance a unique API-created identity while allowing Kubernetes to restart the same replica with the same name.
 
 ---
 
@@ -700,21 +700,21 @@ If the Publisher needs to reach both internal private apps **and** the Netskope 
 From the directory containing both the chart folder (`./kubernetes/`) and your config file (`./my-api-config.yaml`), run:
 
 ```bash
-helm install npa-publisher ./kubernetes-publisher \
+helm install kubernetes-netskope-publisher . \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-config.yaml
 ```
 
 What each part does:
-- `npa-publisher` — the name of this Helm release (used in all future `helm upgrade`/`uninstall` commands)
+- `kubernetes-netskope-publisher` — the name of this Helm release (used in all future `helm upgrade`/`uninstall` commands)
 - `./kubernetes` — path to the chart folder
 - `--namespace npa-publisher --create-namespace` — deploys into an isolated namespace, creating it if it doesn't exist
 - `-f my-api-config.yaml` — applies your tenant URL, API token Secret name, Publisher name, and DNS settings on top of the chart defaults. The default image is `netskopeprivateaccess/publisher_u22:latest`.
 
 Expected output:
 ```
-NAME: npa-publisher
+NAME: kubernetes-netskope-publisher
 LAST DEPLOYED: ...
 NAMESPACE: npa-publisher
 STATUS: deployed
@@ -726,7 +726,7 @@ If you see `Error: INSTALLATION FAILED`, check the error message — the most co
 For token mode:
 
 ```bash
-helm install npa-publisher ./kubernetes-publisher \
+helm install kubernetes-netskope-publisher . \
   --namespace npa-publisher \
   --create-namespace \
   -f my-token-config.yaml
@@ -759,7 +759,7 @@ Press `Ctrl+C` to stop watching once you see `1/1 Running`. The transition from 
 In API mode, enrollment logs are in the main container because there is no `enroll` init container:
 
 ```bash
-kubectl logs -l app.kubernetes.io/name=npa-publisher \
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher \
   -n npa-publisher \
   -c publisher
 ```
@@ -767,7 +767,7 @@ kubectl logs -l app.kubernetes.io/name=npa-publisher \
 In token mode, the init container handles registration. Check its logs:
 
 ```bash
-kubectl logs -l app.kubernetes.io/name=npa-publisher -n npa-publisher -c enroll
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher -c enroll
 ```
 
 Look for:
@@ -800,7 +800,7 @@ You should see: `publisherid`, `sslcert/`, `settings.json`, `nsconfig.json`, `te
 ### Step 3: Check the Publisher Logs
 
 ```bash
-kubectl logs -l app.kubernetes.io/name=npa-publisher -n npa-publisher -c publisher -f
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher -c publisher -f
 ```
 
 A healthy publisher shows periodic NsConfig pulls:
@@ -827,26 +827,26 @@ Edit your values file, then run `helm upgrade` with the same file you used for i
 
 For API mode:
 ```bash
-helm upgrade npa-publisher ./kubernetes-publisher \
+helm upgrade kubernetes-netskope-publisher . \
   --namespace npa-publisher \
   -f my-api-config.yaml
 ```
 
 For token mode:
 ```bash
-helm upgrade npa-publisher ./kubernetes-publisher \
+helm upgrade kubernetes-netskope-publisher . \
   --namespace npa-publisher \
   -f my-token-config.yaml
 ```
 
 If pods do not restart automatically after the upgrade:
 ```bash
-kubectl rollout restart daemonset/npa-publisher -n npa-publisher
+kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher
 ```
 
 For StatefulSet mode:
 ```bash
-kubectl rollout restart statefulset/npa-publisher -n npa-publisher
+kubectl rollout restart statefulset/kubernetes-netskope-publisher -n npa-publisher
 ```
 
 ### Pin or Change the Publisher Image
@@ -880,7 +880,7 @@ API mode generates a fresh registration token during pod startup. If you need to
 1. Confirm the Publisher is not currently connected in Netskope.
 2. Delete the pod-local state by restarting or recreating the pod:
 ```bash
-kubectl rollout restart daemonset/npa-publisher -n npa-publisher
+kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher
 ```
 3. The main container will look up `enrollment.commonName`, request a new registration token, enroll, and then start the Publisher.
 
@@ -890,7 +890,7 @@ kubectl rollout restart daemonset/npa-publisher -n npa-publisher
 
 ```bash
 # Remove the Helm release and all Kubernetes resources
-helm uninstall npa-publisher -n npa-publisher
+helm uninstall kubernetes-netskope-publisher -n npa-publisher
 
 # Delete the namespace (also removes the PVC and stored certificates)
 kubectl delete namespace npa-publisher
@@ -906,7 +906,7 @@ kubectl delete namespace npa-publisher
 
 The init container may have exited immediately without output. Check its exit status:
 ```bash
-kubectl describe pod -l app.kubernetes.io/name=npa-publisher -n npa-publisher | grep -A 20 "Init Containers"
+kubectl describe pod -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher | grep -A 20 "Init Containers"
 ```
 
 If `Exit Code` is `0` but completed in under 2 seconds, the registration token was likely empty. Verify:
@@ -922,8 +922,8 @@ The Publisher cannot resolve the Netskope stitcher hostname. This is a DNS confi
 
 Fix `bind.forwarders` in your values file with DNS servers that work in your network, then:
 ```bash
-helm upgrade npa-publisher ./kubernetes-publisher -n npa-publisher -f my-api-config.yaml
-kubectl rollout restart daemonset/npa-publisher -n npa-publisher
+helm upgrade kubernetes-netskope-publisher . -n npa-publisher -f my-api-config.yaml
+kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher
 ```
 
 To test DNS resolution from inside the pod before restarting:
@@ -937,7 +937,7 @@ kubectl exec -n npa-publisher \
 
 Retrieve logs from the previous (crashed) container instance:
 ```bash
-kubectl logs -l app.kubernetes.io/name=npa-publisher -n npa-publisher -c publisher --previous
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher -c publisher --previous
 ```
 
 Common causes:
@@ -950,7 +950,7 @@ Common causes:
 Check the previous main container logs:
 
 ```bash
-kubectl logs -l app.kubernetes.io/name=npa-publisher \
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher \
   -n npa-publisher \
   -c publisher \
   --previous
@@ -966,7 +966,7 @@ Common causes:
 ### Pod stuck in `Pending`
 
 ```bash
-kubectl describe pod -l app.kubernetes.io/name=npa-publisher -n npa-publisher
+kubectl describe pod -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher
 ```
 
 Check the **Events** section at the bottom. Common causes:
@@ -1011,30 +1011,30 @@ Use a narrower policy exception when your policy engine supports one.
 kubectl get pods -n npa-publisher
 
 # Watch pod events and status in real time
-kubectl describe pod -l app.kubernetes.io/name=npa-publisher -n npa-publisher
+kubectl describe pod -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher
 
 # Enrollment logs in token mode (init container)
-kubectl logs -l app.kubernetes.io/name=npa-publisher -n npa-publisher -c enroll
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher -c enroll
 
 # Enrollment logs in API mode (main container)
-kubectl logs -l app.kubernetes.io/name=npa-publisher -n npa-publisher -c publisher
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher -c publisher
 
 # Publisher logs (main container, follow mode)
-kubectl logs -l app.kubernetes.io/name=npa-publisher -n npa-publisher -c publisher -f
+kubectl logs -l app.kubernetes.io/name=kubernetes-netskope-publisher -n npa-publisher -c publisher -f
 
 # Check registration files on the volume
 kubectl exec -n npa-publisher $(kubectl get pod -n npa-publisher -o name) \
   -c publisher -- ls /home/resources/
 
 # Upgrade after API mode config change
-helm upgrade npa-publisher ./kubernetes-publisher -n npa-publisher -f my-api-config.yaml
+helm upgrade kubernetes-netskope-publisher . -n npa-publisher -f my-api-config.yaml
 
 # Upgrade after token mode config change
-helm upgrade npa-publisher ./kubernetes-publisher -n npa-publisher -f my-token-config.yaml
+helm upgrade kubernetes-netskope-publisher . -n npa-publisher -f my-token-config.yaml
 
 # Force pod restart without config change
-kubectl rollout restart daemonset/npa-publisher -n npa-publisher
+kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher
 
 # Remove everything including PVC
-helm uninstall npa-publisher -n npa-publisher && kubectl delete namespace npa-publisher
+helm uninstall kubernetes-netskope-publisher -n npa-publisher && kubectl delete namespace npa-publisher
 ```

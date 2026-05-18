@@ -14,7 +14,7 @@ You can move them independently.
 ## Upgrading the Publisher binary
 
 ```bash
-helm upgrade npa-publisher npa/npa-publisher \
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   -n npa-publisher \
   -f my-values.yaml \
   --set image.tag=100.0.0.5678
@@ -34,7 +34,7 @@ replaced wholesale, and the pod restarts.
 
 ```bash
 helm repo update
-helm upgrade npa-publisher npa/npa-publisher \
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   -n npa-publisher \
   -f my-values.yaml
 ```
@@ -54,10 +54,10 @@ allowed in a given window. If your tenant has profiles configured:
 ## Rollback
 
 ```bash
-helm rollback npa-publisher <revision> -n npa-publisher
+helm rollback kubernetes-netskope-publisher <revision> -n npa-publisher
 ```
 
-Helm tracks revision history. `helm history npa-publisher -n npa-publisher`
+Helm tracks revision history. `helm history kubernetes-netskope-publisher -n npa-publisher`
 shows what's available.
 
 ## Drain windows

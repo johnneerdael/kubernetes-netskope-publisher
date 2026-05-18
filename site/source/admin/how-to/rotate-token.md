@@ -25,8 +25,8 @@ kubectl create secret generic npa-api-token \
 
 ```bash
 kubectl rollout restart -n npa-publisher \
-  daemonset/npa-publisher \
-  || kubectl rollout restart -n npa-publisher statefulset/npa-publisher
+  daemonset/kubernetes-netskope-publisher \
+  || kubectl rollout restart -n npa-publisher statefulset/kubernetes-netskope-publisher
 ```
 
 Each pod re-runs the init container, which calls the API with the new

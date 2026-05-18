@@ -54,7 +54,7 @@ image:
 
 ```bash
 kubectl exec -n npa-publisher \
-  $(kubectl get pod -n npa-publisher -l app.kubernetes.io/name=npa-publisher -o jsonpath='{.items[0].metadata.name}') \
+  $(kubectl get pod -n npa-publisher -l app.kubernetes.io/name=kubernetes-netskope-publisher -o jsonpath='{.items[0].metadata.name}') \
   -c publisher -- /usr/local/bin/npa_publisher --version
 ```
 

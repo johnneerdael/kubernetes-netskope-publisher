@@ -1,12 +1,12 @@
-{{- define "npa-publisher.name" -}}
+{{- define "kubernetes-netskope-publisher.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "npa-publisher.fullname" -}}
+{{- define "kubernetes-netskope-publisher.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- $name := include "npa-publisher.name" . -}}
+{{- $name := include "kubernetes-netskope-publisher.name" . -}}
 {{- if contains $name .Release.Name -}}
 {{- .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -15,60 +15,60 @@
 {{- end -}}
 {{- end -}}
 
-{{- define "npa-publisher.chart" -}}
+{{- define "kubernetes-netskope-publisher.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" -}}
 {{- end -}}
 
-{{- define "npa-publisher.serviceAccountName" -}}
+{{- define "kubernetes-netskope-publisher.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-{{ default (include "npa-publisher.fullname" .) .Values.serviceAccount.name }}
+{{ default (include "kubernetes-netskope-publisher.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
 {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
 
-{{- define "npa-publisher.labels" -}}
-helm.sh/chart: {{ include "npa-publisher.chart" . }}
-app.kubernetes.io/name: {{ include "npa-publisher.name" . }}
+{{- define "kubernetes-netskope-publisher.labels" -}}
+helm.sh/chart: {{ include "kubernetes-netskope-publisher.chart" . }}
+app.kubernetes.io/name: {{ include "kubernetes-netskope-publisher.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Chart.AppVersion }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
-{{- define "npa-publisher.enrollmentMode" -}}
+{{- define "kubernetes-netskope-publisher.enrollmentMode" -}}
 {{- default "api" .Values.enrollment.mode -}}
 {{- end -}}
 
-{{- define "npa-publisher.isApiEnrollment" -}}
-{{- if eq (include "npa-publisher.enrollmentMode" .) "api" -}}true{{- end -}}
+{{- define "kubernetes-netskope-publisher.isApiEnrollment" -}}
+{{- if eq (include "kubernetes-netskope-publisher.enrollmentMode" .) "api" -}}true{{- end -}}
 {{- end -}}
 
-{{- define "npa-publisher.workloadType" -}}
+{{- define "kubernetes-netskope-publisher.workloadType" -}}
 {{- default "daemonset" .Values.workload.type -}}
 {{- end -}}
 
-{{- define "npa-publisher.isStatefulSet" -}}
-{{- if eq (include "npa-publisher.workloadType" .) "statefulset" -}}true{{- end -}}
+{{- define "kubernetes-netskope-publisher.isStatefulSet" -}}
+{{- if eq (include "kubernetes-netskope-publisher.workloadType" .) "statefulset" -}}true{{- end -}}
 {{- end -}}
 
-{{- define "npa-publisher.networkingMode" -}}
+{{- define "kubernetes-netskope-publisher.networkingMode" -}}
 {{- default "host" .Values.networking.mode -}}
 {{- end -}}
 
-{{- define "npa-publisher.isPodNetworking" -}}
-{{- if eq (include "npa-publisher.networkingMode" .) "pod" -}}true{{- end -}}
+{{- define "kubernetes-netskope-publisher.isPodNetworking" -}}
+{{- if eq (include "kubernetes-netskope-publisher.networkingMode" .) "pod" -}}true{{- end -}}
 {{- end -}}
 
-{{- define "npa-publisher.hostNetwork" -}}
-{{- if include "npa-publisher.isPodNetworking" . -}}false{{- else -}}{{ .Values.hostNetwork }}{{- end -}}
+{{- define "kubernetes-netskope-publisher.hostNetwork" -}}
+{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}false{{- else -}}{{ .Values.hostNetwork }}{{- end -}}
 {{- end -}}
 
-{{- define "npa-publisher.dnsPolicy" -}}
-{{- if include "npa-publisher.isPodNetworking" . -}}ClusterFirst{{- else -}}{{ .Values.dnsPolicy }}{{- end -}}
+{{- define "kubernetes-netskope-publisher.dnsPolicy" -}}
+{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}ClusterFirst{{- else -}}{{ .Values.dnsPolicy }}{{- end -}}
 {{- end -}}
 
-{{- define "npa-publisher.securityContext" -}}
-{{- if include "npa-publisher.isPodNetworking" . -}}
+{{- define "kubernetes-netskope-publisher.securityContext" -}}
+{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}
 allowPrivilegeEscalation: false
 capabilities:
   add:
@@ -82,19 +82,19 @@ runAsUser: 0
 {{- end -}}
 {{- end -}}
 
-{{- define "npa-publisher.validateEnrollment" -}}
-{{- $mode := include "npa-publisher.enrollmentMode" . -}}
+{{- define "kubernetes-netskope-publisher.validateEnrollment" -}}
+{{- $mode := include "kubernetes-netskope-publisher.enrollmentMode" . -}}
 {{- if not (or (eq $mode "token") (eq $mode "api")) -}}
 {{- fail "enrollment.mode must be either 'token' or 'api'" -}}
 {{- end -}}
-{{- $workloadType := include "npa-publisher.workloadType" . -}}
+{{- $workloadType := include "kubernetes-netskope-publisher.workloadType" . -}}
 {{- if not (or (eq $workloadType "daemonset") (eq $workloadType "statefulset")) -}}
 {{- fail "workload.type must be either 'daemonset' or 'statefulset'" -}}
 {{- end -}}
 {{- if and (eq $workloadType "statefulset") (ne $mode "api") -}}
 {{- fail "workload.type=statefulset is only supported when enrollment.mode=api" -}}
 {{- end -}}
-{{- $networkingMode := include "npa-publisher.networkingMode" . -}}
+{{- $networkingMode := include "kubernetes-netskope-publisher.networkingMode" . -}}
 {{- if not (or (eq $networkingMode "host") (eq $networkingMode "pod")) -}}
 {{- fail "networking.mode must be either 'host' or 'pod'" -}}
 {{- end -}}

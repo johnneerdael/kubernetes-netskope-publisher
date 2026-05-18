@@ -11,9 +11,9 @@ participant in the Netskope mesh.
 ## Pattern
 
 ```text
-eu-cluster   → helm release npa-publisher  → commonName: prod-eu-publisher (replicas: 2)
-us-cluster   → helm release npa-publisher  → commonName: prod-us-publisher (replicas: 2)
-apac-cluster → helm release npa-publisher  → commonName: prod-apac-publisher (replicas: 2)
+eu-cluster   → helm release kubernetes-netskope-publisher  → commonName: prod-eu-publisher (replicas: 2)
+us-cluster   → helm release kubernetes-netskope-publisher  → commonName: prod-us-publisher (replicas: 2)
+apac-cluster → helm release kubernetes-netskope-publisher  → commonName: prod-apac-publisher (replicas: 2)
 ```
 
 Each cluster needs its **own API token Secret** with a tenant-scoped

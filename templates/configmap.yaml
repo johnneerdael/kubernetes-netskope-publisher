@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "npa-publisher.fullname" . }}-config
+  name: {{ include "kubernetes-netskope-publisher.fullname" . }}-config
   labels:
-    {{- include "npa-publisher.labels" . | nindent 4 }}
+    {{- include "kubernetes-netskope-publisher.labels" . | nindent 4 }}
 data:
   LOG_LEVEL: {{ .Values.publisher.logLevel | quote }}
   HOST_OS_TYPE: {{ .Values.publisher.hostOsType | quote }}
@@ -21,7 +21,7 @@ data:
   {{- if .Values.bind.forwarders }}
   BIND_FORWARDERS: {{ join "," .Values.bind.forwarders | quote }}
   {{- end }}
-  {{- if include "npa-publisher.isApiEnrollment" . }}
+  {{- if include "kubernetes-netskope-publisher.isApiEnrollment" . }}
   ENROLLMENT_MODE: "api"
   NPA_PUBLISHER_COMMON_NAME: {{ .Values.enrollment.commonName | quote }}
   NPA_API_BASE_URL: {{ trimSuffix "/" .Values.enrollment.api.baseUrl | quote }}

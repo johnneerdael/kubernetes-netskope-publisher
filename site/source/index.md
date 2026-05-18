@@ -16,7 +16,7 @@ OpenShift, or bare-metal.
 ```bash
 helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher
 helm repo update
-helm install npa-publisher npa/npa-publisher \
+helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher --create-namespace \
   -f my-values.yaml
 ```

@@ -28,16 +28,16 @@ with the VM's reachable IP, and set `KUBECONFIG` to that file.
 ```bash
 helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher
 helm repo update
-helm search repo npa/npa-publisher
+helm search repo npa/kubernetes-netskope-publisher
 ```
 
 You should see:
 
 ```text
 NAME                 CHART VERSION  APP VERSION  DESCRIPTION
-npa/npa-publisher    1.0.0          1.0.0        Netskope Private Access Publisher for Kubernetes
+npa/kubernetes-netskope-publisher    1.0.0          1.0.0        Netskope Private Access Publisher for Kubernetes
 ```
 
 > If the repo doesn't list yet (404 on `index.yaml`), the first chart
 > release workflow hasn't run yet. You can install directly from the
-> repo as a fallback: `git clone … && helm install npa-publisher ./kubernetes-netskope-publisher`.
+> repo as a fallback: `git clone … && helm install kubernetes-netskope-publisher ./kubernetes-netskope-publisher`.

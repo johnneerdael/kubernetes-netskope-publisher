@@ -8,7 +8,7 @@ When you're done experimenting:
 ## 1. Uninstall the chart
 
 ```bash
-helm uninstall npa-publisher -n npa-publisher
+helm uninstall kubernetes-netskope-publisher -n npa-publisher
 kubectl delete namespace npa-publisher
 ```
 
