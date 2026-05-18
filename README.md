@@ -1,4 +1,4 @@
-# Netskope NPA Publisher — Kubernetes Deployment Guide
+# Unoffical Netskope NPA Publisher — Kubernetes Deployment Guide
 
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher)](https://artifacthub.io/packages/search?repo=kubernetes-netskope-publisher)
 
