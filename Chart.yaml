@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.3.2
+version: 1.4.0
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
