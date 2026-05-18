@@ -1,0 +1,34 @@
+# Patterns to ignore when building the chart package.
+# Shell glob matching; one pattern per line.
+
+# VCS
+.git/
+.gitignore
+.bzr/
+.bzrignore
+.hg/
+.hgignore
+.svn/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*.bak
+*.tmp
+*.orig
+*~
+.project
+.idea/
+*.tmproj
+.vscode/
+
+# Repo content that is not part of the chart
+site/
+docs/
+scripts/
+.github/
+.claude/
+artifact-repo.yml
+kind-config.yaml
+test-chart.sh
+*.tgz

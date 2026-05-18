@@ -4,16 +4,35 @@ description: Netskope Private Access Publisher for Kubernetes
 type: application
 version: 1.0.0
 appVersion: "1.0.0"
+kubeVersion: ">=1.27.0-0"
 keywords:
   - netskope
   - npa
   - publisher
   - private-access
   - zero-trust
-home: https://www.netskope.com
+  - sase
+  - ztna
+home: https://johnneerdael.github.io/kubernetes-netskope-publisher
 sources:
-  - https://github.com/netskope/npa-publisher
+  - https://github.com/johnneerdael/kubernetes-netskope-publisher
 maintainers:
-  - name: Netskope Platform Engineering
-    email: platform-eng@netskope.com
+  - name: John Neerdael
+    email: john@neerdael.nl
+    url: https://github.com/johnneerdael
 icon: https://www.netskope.com/wp-content/uploads/2021/03/netskope-icon.png
+annotations:
+  # See https://artifacthub.io/docs/topics/annotations/helm/
+  artifacthub.io/category: networking
+  artifacthub.io/license: MIT
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    - name: Source
+      url: https://github.com/johnneerdael/kubernetes-netskope-publisher
+  artifacthub.io/maintainers: |
+    - name: John Neerdael
+      email: john@neerdael.nl
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial public release of the Helm chart.

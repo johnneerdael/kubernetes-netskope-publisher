@@ -1,0 +1,16 @@
+# Artifact Hub repository metadata file.
+#
+# This file lives at the root of the repository. After you add the
+# repository to Artifact Hub, paste the `repositoryID` it generates
+# below to claim verified-publisher status.
+#
+# Docs: https://artifacthub.io/docs/topics/repositories/#repository-metadata-file
+repositoryID: ""   # Fill in after the repo is added on artifacthub.io
+
+owners:
+  - name: John Neerdael
+    email: john@neerdael.nl
+
+# ignore: # Uncomment to exclude specific packages/versions
+#   - name: package-name
+#     version: ^0\\.        # regex over versions
