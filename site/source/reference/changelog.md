@@ -6,6 +6,11 @@ date: 2026-05-18
 Hand-maintained — mirrors `Chart.yaml` `version:` bumps. See the
 GitHub Releases page for the published artifacts.
 
+## v1.0.1 — 2026-05-18
+
+- Switch chart icon to the Pages-hosted favicon (the previous Netskope
+  CDN URL had 404'd). No functional change.
+
 ## v1.0.0 — 2026-05-18
 
 - Initial public release of the Helm chart.
