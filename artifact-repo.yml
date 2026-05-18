@@ -5,7 +5,7 @@
 # below to claim verified-publisher status.
 #
 # Docs: https://artifacthub.io/docs/topics/repositories/#repository-metadata-file
-repositoryID: ""   # Fill in after the repo is added on artifacthub.io
+repositoryID: a29d7411-9306-45cc-804c-0f49c22dccb6
 
 owners:
   - name: John Neerdael
