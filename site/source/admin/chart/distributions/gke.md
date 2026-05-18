@@ -24,8 +24,12 @@ tunDevice:
 - **Container-Optimized OS (cos_containerd):** `/dev/net/tun` is
   available. **Default and recommended.**
 - **Ubuntu (ubuntu_containerd):** also works.
-- **GKE Autopilot:** **unsupported.** Autopilot blocks `privileged: true`
-  pods and `hostPath` mounts. Use Standard GKE.
+- **GKE Autopilot:** **unsupported.** Pod mode is unprivileged, but
+  Autopilot still blocks two things the chart needs:
+  the `hostPath` mount for `/dev/net/tun`, and the
+  `NET_ADMIN`/`NET_RAW` container capabilities. See the
+  [roadmap](/kubernetes-netskope-publisher/reference/roadmap/) for
+  what would have to change upstream. Use Standard GKE.
 
 ## Egress
 

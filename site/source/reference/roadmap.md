@@ -23,11 +23,20 @@ matter to you and you'd like to influence priority.
 
 ## Mid-term
 
-- **GKE Autopilot** path. Currently unsupported because Autopilot
-  blocks `privileged: true` and `hostPath` mounts. Either Autopilot
-  needs to relax this for `cluster-admin`-managed namespaces, or
-  Netskope needs to ship a non-privileged Publisher variant — neither
-  is in chart scope.
+- **GKE Autopilot** path. Pod mode is already unprivileged, but
+  Autopilot still blocks the chart for two other reasons that aren't
+  in chart scope to fix:
+  - **`hostPath` volumes are disallowed** — pod mode mounts
+    `/dev/net/tun` from the node so the Publisher can create `tun0`
+    inside the pod netns. There is no Autopilot-supported alternative
+    that exposes the host tun device.
+  - **`capabilities.add` is restricted** to `NET_BIND_SERVICE` —
+    Autopilot rejects `NET_ADMIN` and `NET_RAW`, both of which the
+    Publisher needs for iptables and raw sockets on `tun0`.
+  Unblocking either requires upstream work: Autopilot needs to
+  whitelist these for cluster-admin-managed namespaces, or Netskope
+  needs to ship a userspace-networking Publisher variant that
+  doesn't need a tun device or raw capabilities.
 - **Cilium NetworkPolicy** examples for egress-only restriction.
 - **Prometheus metrics endpoint**. *Upstream-blocked* — the Publisher
   binary doesn't expose one today. If Netskope adds one, the chart
