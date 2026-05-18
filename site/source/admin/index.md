@@ -24,6 +24,7 @@ running `kubernetes-netskope-publisher` in production.
 
 ## How-to
 - [Run an HA pair](/kubernetes-netskope-publisher/admin/how-to/ha-pair/)
+- [Autoscaling (HPA)](/kubernetes-netskope-publisher/admin/how-to/autoscaling/)
 - [Bring your own image](/kubernetes-netskope-publisher/admin/how-to/byo-image/)
 - [Rotate the API token](/kubernetes-netskope-publisher/admin/how-to/rotate-token/)
 - [Delete a Publisher cleanly](/kubernetes-netskope-publisher/admin/how-to/delete-publisher/)

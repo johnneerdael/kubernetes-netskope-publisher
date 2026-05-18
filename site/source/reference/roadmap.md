@@ -8,8 +8,11 @@ matter to you and you'd like to influence priority.
 
 ## Near-term
 
-- **HorizontalPodAutoscaler** support for the StatefulSet path, driven
-  by tunnel count or CPU.
+- **Tunnel-count HPA**. CPU-based HPA shipped in 1.3.0 —
+  see [autoscaling](/kubernetes-netskope-publisher/admin/how-to/autoscaling/).
+  The next step is letting the HPA target `num_snat_conns` from the
+  Publisher's internal metrics file, which needs a Prometheus
+  sidecar + `prometheus-adapter` (or KEDA) in the cluster.
 - **Tunnel-aware readiness probe**. The current exec probe checks the
   publisher process plus on-disk config (`publisherid`, `agent.pem`,
   `nsconfig.json`, `loglevel`) — good for "did the agent start", but

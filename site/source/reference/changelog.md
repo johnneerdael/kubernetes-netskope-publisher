@@ -6,6 +6,26 @@ date: 2026-05-18
 Hand-maintained — mirrors `Chart.yaml` `version:` bumps. See the
 GitHub Releases page for the published artifacts.
 
+## v1.3.0 — 2026-05-18
+
+Autoscaling and orphan-Publisher cleanup.
+
+- **HorizontalPodAutoscaler** template for the StatefulSet path.
+  CPU-based, autoscaling/v2 API. Enable with `hpa.enabled=true` and
+  tune `hpa.minReplicas` / `hpa.maxReplicas` /
+  `hpa.targetCPUUtilizationPercentage`. Optional `hpa.behavior`
+  block for scale-up/scale-down policies. Silently ignored when
+  `workload.type=daemonset`.
+- **Pod preStop hook** in API mode that deletes the tenant-side
+  Publisher record on every pod termination (HPA scale-down,
+  `helm uninstall`, node drain). Best-effort: failures do not
+  block termination, so a network glitch or expired token just
+  leaves the record for manual cleanup. Disable with
+  `enrollment.api.cleanupOnDelete=false`.
+
+See [autoscaling](/kubernetes-netskope-publisher/admin/how-to/autoscaling/)
+for the full setup.
+
 ## v1.2.0 — 2026-05-18
 
 `securityContext`, `hostNetwork`, and `dnsPolicy` are no longer

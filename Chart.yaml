@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.2.0
+version: 1.3.0
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
@@ -34,5 +34,7 @@ annotations:
     - name: John Neerdael
       email: john@neerdael.nl
   artifacthub.io/changes: |
-    - kind: removed
-      description: securityContext, hostNetwork, and dnsPolicy are no longer values keys. The chart now derives all three from networking.mode (pod or host) so values.yaml stops misrepresenting what's actually rendered. If you had been overriding any of them, remove those overrides — switching networking.mode is the supported knob.
+    - kind: added
+      description: HorizontalPodAutoscaler template for the StatefulSet path. CPU-based; enable with hpa.enabled=true and tune hpa.minReplicas/maxReplicas/targetCPUUtilizationPercentage. Ignored for DaemonSets.
+    - kind: added
+      description: Pod preStop hook that deletes the tenant-side Publisher record on termination (HPA scale-down, helm uninstall, node drain). Default on in API mode; disable with enrollment.api.cleanupOnDelete=false. Best-effort — failures do not block pod termination.

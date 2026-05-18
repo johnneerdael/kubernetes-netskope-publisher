@@ -58,9 +58,13 @@ traffic distribution.
 ## Scaling
 
 `helm upgrade --set workload.replicas=3` adds a third member. Each new
-pod enrolls itself; no manual token shuffling.
+pod enrolls itself via the API; no manual token shuffling.
 
-> ⚠️ Don't scale down by deleting the StatefulSet PVC or kubectl
-> deleting pods. Use `helm upgrade --set workload.replicas=N`. The
-> orphaned Publisher records in the tenant should then be deleted via
-> [delete-publisher](/kubernetes-netskope-publisher/admin/how-to/delete-publisher/).
+Scale-down deletes the tenant-side Publisher record automatically via
+the pod's preStop hook (since 1.3.0). Disable with
+`enrollment.api.cleanupOnDelete=false` if you'd rather prune
+manually — see
+[delete-publisher](/kubernetes-netskope-publisher/admin/how-to/delete-publisher/).
+
+For CPU-driven scaling without manual `helm upgrade` calls, see
+[autoscaling](/kubernetes-netskope-publisher/admin/how-to/autoscaling/).

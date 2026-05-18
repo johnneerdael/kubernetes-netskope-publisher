@@ -26,6 +26,20 @@ workload:
   type: "daemonset"
   replicas: 1
 
+# HorizontalPodAutoscaler.
+# Only meaningful when workload.type=statefulset. The HPA scales the
+# StatefulSet on CPU utilisation; each new replica enrols itself via the
+# API. Scale-down deletes the tenant-side Publisher record via the
+# preStop hook (controlled by enrollment.api.cleanupOnDelete).
+hpa:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+  # Optional autoscaling/v2 behavior block (stabilizationWindow,
+  # scaleDown/scaleUp policies). Leave empty to use Kubernetes defaults.
+  behavior: {}
+
 # Registration token configuration
 # Only used when enrollment.mode=token.
 registrationToken:
@@ -50,6 +64,11 @@ enrollment:
     # Required when mode=api. Secret must contain the Netskope API token.
     existingSecret: "npa-api-token"
     tokenKey: "api-token"
+    # Delete the tenant-side Publisher record on pod termination
+    # (HPA scale-down, helm uninstall, node drain). Best-effort —
+    # failures do not block pod termination. Disable if you'd rather
+    # keep orphan Publisher records and prune them manually.
+    cleanupOnDelete: true
 
 # Tenant configuration
 tenant:

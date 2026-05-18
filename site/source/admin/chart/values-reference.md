@@ -22,6 +22,19 @@ in parentheses.
 | `workload.type` | `daemonset` | `daemonset` or `statefulset`. See [workload modes](/kubernetes-netskope-publisher/admin/concepts/workload-modes/). |
 | `workload.replicas` | `1` | StatefulSet only. |
 
+## Autoscaling
+
+| Key | Default | Notes |
+|---|---|---|
+| `hpa.enabled` | `false` | Renders an `HorizontalPodAutoscaler` for the StatefulSet. Ignored for DaemonSets. |
+| `hpa.minReplicas` | `2` |  |
+| `hpa.maxReplicas` | `6` |  |
+| `hpa.targetCPUUtilizationPercentage` | `70` | Scale up when average CPU exceeds this. |
+| `hpa.behavior` | `{}` | Optional autoscaling/v2 `behavior` block (scale-up / scale-down policies). |
+
+See [autoscaling](/kubernetes-netskope-publisher/admin/how-to/autoscaling/)
+for the full setup.
+
 ## Enrollment
 
 | Key | Default | Notes |
@@ -31,6 +44,7 @@ in parentheses.
 | `enrollment.api.baseUrl` | `https://tenant.goskope.com` | Tenant URL, no trailing slash. |
 | `enrollment.api.existingSecret` | `npa-api-token` | Secret containing the API token. |
 | `enrollment.api.tokenKey` | `api-token` | Key within that secret. |
+| `enrollment.api.cleanupOnDelete` | `true` | Delete the tenant-side Publisher record on pod termination via preStop hook. Best-effort. |
 | `registrationToken.value` | `""` | `mode: token` only — pass via `--set`. |
 | `registrationToken.existingSecret` | `""` | Alternative to inline value. |
 

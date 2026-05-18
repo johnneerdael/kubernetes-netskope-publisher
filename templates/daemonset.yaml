@@ -166,6 +166,30 @@ spec:
             failureThreshold: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if and (include "kubernetes-netskope-publisher.isApiEnrollment" .) .Values.enrollment.api.cleanupOnDelete }}
+          lifecycle:
+            preStop:
+              exec:
+                # Delete this pod's Publisher record in the Netskope tenant
+                # so HPA scale-down, helm uninstall, and node drains don't
+                # leave orphan Publishers behind. Best-effort: failures don't
+                # block pod termination.
+                command:
+                  - /bin/bash
+                  - -c
+                  - |
+                    set -u
+                    pid_file=/home/resources/publisherid
+                    [ -s "$pid_file" ] || exit 0
+                    pid="$(cat "$pid_file" 2>/dev/null || true)"
+                    [ -n "$pid" ] || exit 0
+                    curl --silent --show-error --max-time 10 \
+                      --request DELETE \
+                      --header "Authorization: Bearer ${NPA_API_TOKEN}" \
+                      "${NPA_API_BASE_URL}/api/v2/infrastructure/publishers/${pid}" \
+                      >/dev/null 2>&1 || true
+                    exit 0
+          {{- end }}
       volumes:
         - name: resources
           {{- if .Values.persistence.enabled }}

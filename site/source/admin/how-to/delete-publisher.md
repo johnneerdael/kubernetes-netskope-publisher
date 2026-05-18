@@ -3,8 +3,17 @@ title: Delete a Publisher cleanly
 date: 2026-05-18
 ---
 
-`helm uninstall` removes the pod but leaves the Publisher record in the
-Netskope tenant. To delete both:
+Since chart 1.3.0, **`helm uninstall` (and any pod termination)
+automatically deletes the tenant-side Publisher record** via the pod's
+preStop hook. The flow below is for cases where:
+
+- You ran `enrollment.api.cleanupOnDelete: false`
+- The preStop hook failed (network glitch, expired token, tenant outage)
+- You're cleaning up records from before 1.3.0
+- You're using `enrollment.mode: token` (preStop only applies in API mode)
+
+If the automatic cleanup ran successfully, the record is already gone —
+you can skip step 2.
 
 ## 1. Uninstall the Helm release
 
