@@ -14,7 +14,7 @@
 <meta property="og:description" content="Every notable key in values.yaml, grouped by topic. Defaults are shownin parentheses. Image   Key Default Notes    image.repository netskopeprivateaccess&#x2F;publisher_u22 Ubuntu 22 Publisher image.   ima">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T21:21:49.487Z">
+<meta property="article:modified_time" content="2026-05-18T21:42:56.033Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -217,8 +217,8 @@
 </tr>
 <tr>
 <td><code>enrollment.api.cleanupOnDelete</code></td>
-<td><code>true</code></td>
-<td>Delete the tenant-side Publisher record on pod termination via preStop hook. Best-effort.</td>
+<td><code>false</code></td>
+<td>Opt-in preStop hook that deletes the tenant-side Publisher record on pod termination. Only safe when scaled replicas never carry Private App attachments — the Netskope API rejects DELETE on Publishers with apps assigned.</td>
 </tr>
 <tr>
 <td><code>registrationToken.value</code></td>

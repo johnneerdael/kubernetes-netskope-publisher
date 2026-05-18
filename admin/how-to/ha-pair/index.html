@@ -14,7 +14,7 @@
 <meta property="og:description" content="Two Publishers in the same cluster, spread across nodes, both enrolledas distinct Publishers in your tenant. Netskope load-balances NPAtraffic across all online Publishers for a given Private App, so">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T21:21:49.487Z">
+<meta property="article:modified_time" content="2026-05-18T21:42:56.034Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -107,7 +107,7 @@
 
 <p>In the Netskope console you’ll see two Publishers with the suffixed<br>names. Attach the <strong>same Private App</strong> to both — Netskope handles the<br>traffic distribution.</p>
 <h2><span id="scaling">Scaling</span></h2><p><code>helm upgrade --set workload.replicas=3</code> adds a third member. Each new<br>pod enrolls itself via the API; no manual token shuffling.</p>
-<p>Scale-down deletes the tenant-side Publisher record automatically via<br>the pod’s preStop hook (since 1.3.0). Disable with<br><code>enrollment.api.cleanupOnDelete=false</code> if you’d rather prune<br>manually — see<br><a href="/kubernetes-netskope-publisher/admin/how-to/delete-publisher/">delete-publisher</a>.</p>
+<p>Scale-down leaves the tenant-side Publisher record by default — the<br>Netskope API rejects deletion of Publishers with Private Apps<br>attached, so opt-in cleanup is safer than racing it. See<br><a href="/kubernetes-netskope-publisher/admin/how-to/autoscaling/">autoscaling</a><br>and the <a href="/kubernetes-netskope-publisher/admin/how-to/delete-publisher/">delete-publisher</a><br>flow for manual pruning.</p>
 <p>For CPU-driven scaling without manual <code>helm upgrade</code> calls, see<br><a href="/kubernetes-netskope-publisher/admin/how-to/autoscaling/">autoscaling</a>.</p>
 
         

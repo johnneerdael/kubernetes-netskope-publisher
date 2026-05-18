@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.0 — 2026-05-18Autoscaling and orphan-Publisher cleanup.  HorizontalPodAutoscaler temp">
+    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.1 — 2026-05-18Flip enrollment.api.cleanupOnDelete to default off. The NetskopeAPI ref">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Changelog">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/reference/changelog">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.0 — 2026-05-18Autoscaling and orphan-Publisher cleanup.  HorizontalPodAutoscaler temp">
+<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.1 — 2026-05-18Flip enrollment.api.cleanupOnDelete to default off. The NetskopeAPI ref">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T21:21:49.488Z">
+<meta property="article:modified_time" content="2026-05-18T21:42:56.034Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -99,6 +99,8 @@
   <div class="content" itemprop="articleBody">
       
           <p>Hand-maintained — mirrors <code>Chart.yaml</code> <code>version:</code> bumps. See the<br>GitHub Releases page for the published artifacts.</p>
+<h2><span id="v131-2026-05-18">v1.3.1 — 2026-05-18</span></h2><p>Flip <code>enrollment.api.cleanupOnDelete</code> to default <strong>off</strong>. The Netskope<br>API refuses to delete a Publisher with Private Apps attached, so the<br>1.3.0 default of <code>true</code> could silently fail on scale-down — leaving<br>orphan Publisher records <em>and</em> stranded app assignments to chase. The<br>hook is still available; you just have to opt in (<code>cleanupOnDelete: true</code>) and confirm that your auto-scaled replicas never carry app<br>assignments.</p>
+<p>If you’re already on 1.3.0, the new release also pulls in the<br>slimmed example values and the AH-aligned install path from the<br>1.1.1 docs work.</p>
 <h2><span id="v130-2026-05-18">v1.3.0 — 2026-05-18</span></h2><p>Autoscaling and orphan-Publisher cleanup.</p>
 <ul>
 <li><strong>HorizontalPodAutoscaler</strong> template for the StatefulSet path.<br>CPU-based, autoscaling&#x2F;v2 API. Enable with <code>hpa.enabled=true</code> and<br>tune <code>hpa.minReplicas</code> &#x2F; <code>hpa.maxReplicas</code> &#x2F;<br><code>hpa.targetCPUUtilizationPercentage</code>. Optional <code>hpa.behavior</code><br>block for scale-up&#x2F;scale-down policies. Silently ignored when<br><code>workload.type=daemonset</code>.</li>

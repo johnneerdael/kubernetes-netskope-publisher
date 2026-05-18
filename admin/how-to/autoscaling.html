@@ -14,7 +14,7 @@
 <meta property="og:description" content="CPU-based autoscaling on the StatefulSet path, with automatictenant-side cleanup on scale-down. Prerequisites workload.type: statefulset (HPA doesn’t make sense for aDaemonSet — one pod per node is th">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T21:21:49.487Z">
+<meta property="article:modified_time" content="2026-05-18T21:42:56.033Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -117,26 +117,27 @@
 </ol>
 <p>No manual token shuffling. Each replica is an independent<br>identity in the Netskope console.</p>
 <h2><span id="what-happens-on-scale-down">What happens on scale-down</span></h2><ol>
-<li><p>HPA observes CPU below target → patches replicas down.</p>
-</li>
-<li><p>Kubernetes terminates the highest-ordinal pod first.</p>
-</li>
-<li><p>The pod’s <strong>preStop hook fires</strong> (controlled by<br><code>enrollment.api.cleanupOnDelete</code>, default <code>true</code>):</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Inside the pod, at termination time:</span></span><br><span class="line">curl -X DELETE \</span><br><span class="line">  -H <span class="string">&quot;Authorization: Bearer <span class="variable">$NPA_API_TOKEN</span>&quot;</span> \</span><br><span class="line">  <span class="string">&quot;<span class="variable">$NPA_API_BASE_URL</span>/api/v2/infrastructure/publishers/<span class="subst">$(cat /home/resources/publisherid)</span>&quot;</span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>The Publisher record is removed from the tenant. No orphan<br>record left in <strong>NG SASE → Steering → Publishers</strong>.</p>
-</li>
+<li>HPA observes CPU below target → patches replicas down.</li>
+<li>Kubernetes terminates the highest-ordinal pod first.</li>
+<li>The Publisher record stays in the Netskope tenant. <strong>By default<br>the chart does not delete it</strong> — see the warning below.</li>
 </ol>
-<p>The hook is <strong>best-effort</strong>. If the API call fails (network glitch,<br>expired token, tenant outage), the hook returns 0 anyway so the pod<br>terminates promptly. The orphan record can be cleaned up manually<br>via the <a href="/kubernetes-netskope-publisher/admin/how-to/delete-publisher/">delete-publisher</a><br>flow.</p>
+<blockquote>
+<p>⚠️ <strong>Why scale-down doesn’t auto-delete by default</strong></p>
+<p>The Netskope API refuses to delete a Publisher that has Private<br>Apps attached (<code>/api/v2/infrastructure/publishers/&#123;id&#125;</code> returns<br>an error). Many tenants attach apps to every Publisher in a<br>region for load balancing — including the auto-scaled replicas.<br>An automatic DELETE would silently fail on those, leaving both<br>orphan Publisher records and stranded app attachments to chase.</p>
+<p>Reconciling orphans periodically via the <a href="/kubernetes-netskope-publisher/admin/how-to/delete-publisher/">delete-publisher</a><br>flow is safer than racing the lifecycle.</p>
+</blockquote>
+<h2><span id="opt-in-auto-delete-on-scale-down">Opt-in: auto-delete on scale-down</span></h2><p>If you’re certain auto-scaled replicas <strong>never</strong> carry app<br>assignments — e.g. you only attach apps to a fixed baseline<br>Publisher and let the scaled replicas inherit traffic via DTLS<br>load-balancing only:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">enrollment:</span></span><br><span class="line">  <span class="attr">api:</span></span><br><span class="line">    <span class="attr">cleanupOnDelete:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>The pod’s preStop hook then fires on termination:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Inside the pod, at termination time:</span></span><br><span class="line">curl -X DELETE \</span><br><span class="line">  -H <span class="string">&quot;Authorization: Bearer <span class="variable">$NPA_API_TOKEN</span>&quot;</span> \</span><br><span class="line">  <span class="string">&quot;<span class="variable">$NPA_API_BASE_URL</span>/api/v2/infrastructure/publishers/<span class="subst">$(cat /home/resources/publisherid)</span>&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>The hook is <strong>best-effort</strong>. It exits 0 on any failure (including<br>the “Publisher has apps attached” rejection) so the pod terminates<br>promptly. If you turn this on and your assumption later changes,<br>the worst outcome is silent orphans rather than blocked pods.</p>
 <h2><span id="why-cpu-and-not-tunnel-count">Why CPU and not tunnel-count</span></h2><p>CPU is what’s available without extra infrastructure. The Publisher<br>does report active SNAT connection counts (<code>num_snat_conns</code>)<br>internally, but it doesn’t expose them as Prometheus metrics — they<br>go up to the Netskope stitcher control plane instead. Wiring those<br>into HPA would require a sidecar that reads the internal<br><code>publisher_metrics</code> file and serves Prometheus, plus<br><code>prometheus-adapter</code> or KEDA in the cluster. That’s tracked on the<br><a href="/kubernetes-netskope-publisher/reference/roadmap/">roadmap</a>.</p>
 <p>In practice, CPU tracks tunnel count well enough: more active<br>sessions → more packet processing → more CPU. Tune<br><code>targetCPUUtilizationPercentage</code> based on observed load.</p>
 <h2><span id="tuning-scale-policies">Tuning scale policies</span></h2><p>The HPA <code>behavior</code> block (Kubernetes <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#configurable-scaling-behavior">v2 spec</a>)<br>lets you slow down scale-up or scale-down. Useful because<br>Publisher enrollment takes ~30–60 seconds, so you may want to<br>delay scale-up reactions to avoid flapping:</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">hpa:</span></span><br><span class="line">  <span class="attr">behavior:</span></span><br><span class="line">    <span class="attr">scaleUp:</span></span><br><span class="line">      <span class="attr">stabilizationWindowSeconds:</span> <span class="number">60</span></span><br><span class="line">      <span class="attr">policies:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">Pods</span></span><br><span class="line">          <span class="attr">value:</span> <span class="number">1</span></span><br><span class="line">          <span class="attr">periodSeconds:</span> <span class="number">60</span>       <span class="comment"># at most 1 new replica per minute</span></span><br><span class="line">    <span class="attr">scaleDown:</span></span><br><span class="line">      <span class="attr">stabilizationWindowSeconds:</span> <span class="number">300</span></span><br><span class="line">      <span class="attr">policies:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">Pods</span></span><br><span class="line">          <span class="attr">value:</span> <span class="number">1</span></span><br><span class="line">          <span class="attr">periodSeconds:</span> <span class="number">120</span>      <span class="comment"># at most 1 fewer replica every 2 minutes</span></span><br></pre></td></tr></table></figure>
 
-<h2><span id="disabling-cleanup">Disabling cleanup</span></h2><p>If you’d rather keep all Publisher records (e.g. for an audit<br>window, or because you’re running on a tenant where deletion<br>requires a change ticket):</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">enrollment:</span></span><br><span class="line">  <span class="attr">api:</span></span><br><span class="line">    <span class="attr">cleanupOnDelete:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
-
-<p>You then prune orphans manually via the API, the admin console, or<br>a periodic reconciliation script.</p>
 
         
   </div>

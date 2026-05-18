@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Since chart 1.3.0, helm uninstall (and any pod termination)automatically deletes the tenant-side Publisher record via the pod’spreStop hook. The flow below is for cases where:  You ran enrollment.api.">
+    <meta name="description" content="helm uninstall removes the pod but leaves the Publisher recordin the Netskope tenant by default. The chart can optionally deleteit on pod termination via the preStop hook(enrollment.api.cleanupOnDelet">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Delete a Publisher cleanly">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/how-to/delete-publisher">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="Since chart 1.3.0, helm uninstall (and any pod termination)automatically deletes the tenant-side Publisher record via the pod’spreStop hook. The flow below is for cases where:  You ran enrollment.api.">
+<meta property="og:description" content="helm uninstall removes the pod but leaves the Publisher recordin the Netskope tenant by default. The chart can optionally deleteit on pod termination via the preStop hook(enrollment.api.cleanupOnDelet">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-18T21:21:49.487Z">
+<meta property="article:modified_time" content="2026-05-18T21:42:56.034Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -98,14 +98,7 @@
 
   <div class="content" itemprop="articleBody">
       
-          <p>Since chart 1.3.0, <strong><code>helm uninstall</code> (and any pod termination)<br>automatically deletes the tenant-side Publisher record</strong> via the pod’s<br>preStop hook. The flow below is for cases where:</p>
-<ul>
-<li>You ran <code>enrollment.api.cleanupOnDelete: false</code></li>
-<li>The preStop hook failed (network glitch, expired token, tenant outage)</li>
-<li>You’re cleaning up records from before 1.3.0</li>
-<li>You’re using <code>enrollment.mode: token</code> (preStop only applies in API mode)</li>
-</ul>
-<p>If the automatic cleanup ran successfully, the record is already gone —<br>you can skip step 2.</p>
+          <p><code>helm uninstall</code> removes the pod but <strong>leaves the Publisher record<br>in the Netskope tenant by default</strong>. The chart can optionally delete<br>it on pod termination via the preStop hook<br>(<code>enrollment.api.cleanupOnDelete=true</code>) — see<br><a href="/kubernetes-netskope-publisher/admin/how-to/autoscaling/">autoscaling</a><br>for when that’s safe. If you didn’t enable it, this is the manual<br>flow.</p>
 <h2><span id="1-uninstall-the-helm-release">1. Uninstall the Helm release</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">helm uninstall kubernetes-netskope-publisher -n npa-publisher</span><br><span class="line">kubectl delete namespace npa-publisher</span><br></pre></td></tr></table></figure>
 
 <h2><span id="2-delete-the-publisher-record-via-api">2. Delete the Publisher record via API</span></h2><p>Find the publisher ID:</p>
