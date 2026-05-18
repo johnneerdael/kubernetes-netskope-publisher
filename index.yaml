@@ -12,6 +12,42 @@ entries:
       artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
     apiVersion: v2
     appVersion: 1.0.0
+    created: '2026-05-18T22:10:34.142106658Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: 3582f69ba25f22a42c62eb92ffb3f1518ec059d28dd8274ad48a2460d3c34c46
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://johnneerdael.github.io/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.4.0/kubernetes-netskope-publisher-1.4.0.tgz
+    version: 1.4.0
+  - annotations:
+      artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: added\n  description: values.schema.json. Helm\
+        \ validates --set / -f overrides against it on install/upgrade, and Artifact\
+        \ Hub renders it as an interactive values form on the listing.\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
     created: '2026-05-18T22:02:07.434416989Z'
     description: Netskope Private Access Publisher for Kubernetes
     digest: 85ded561bdabf0ebb393d03ace0d96bed7ffafc6e40129ba7cb1648b15cdf052
@@ -302,4 +338,4 @@ entries:
     urls:
     - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
     version: 1.0.0
-generated: '2026-05-18T22:02:07.433384863Z'
+generated: '2026-05-18T22:10:34.140758064Z'
