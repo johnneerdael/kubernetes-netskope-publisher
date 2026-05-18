@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="CPU-based autoscaling on the StatefulSet path, with automatictenant-side cleanup on scale-down. Prerequisites workload.type: statefulset (HPA doesn’t make sense for aDaemonSet — one pod per node is th">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Autoscaling">
+<meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/how-to/autoscaling">
+<meta property="og:site_name" content="kubernetes-netskope-publisher">
+<meta property="og:description" content="CPU-based autoscaling on the StatefulSet path, with automatictenant-side cleanup on scale-down. Prerequisites workload.type: statefulset (HPA doesn’t make sense for aDaemonSet — one pod per node is th">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
+<meta property="article:modified_time" content="2026-05-18T21:21:49.487Z">
+<meta property="article:author" content="John Neerdael">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/kubernetes-netskope-publisher/images/netskope-favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/kubernetes-netskope-publisher/images/netskope-apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Autoscaling</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/kubernetes-netskope-publisher/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+    <div class="content index py4 ">
+        
+          <header id="header">
+  <a class="u-url u-uid" href="/kubernetes-netskope-publisher/">
+  
+    
+      <img id="logo" alt class="u-logo" src="/kubernetes-netskope-publisher/images/netskope-logo.png" />
+    
+  
+    <div id="title">
+      <h1 class="p-name">kubernetes-netskope-publisher</h1>
+    </div>
+  </a>
+  <div id="nav">
+    <ul>
+      <li class="icon">
+        <a href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-2x"></i></a>
+      </li>
+      <!--
+     --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+   --><!--
+     --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+   -->
+    </ul>
+  </div>
+</header>
+
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  
+
+  <div class="content" itemprop="articleBody">
+      
+          <p>CPU-based autoscaling on the StatefulSet path, with automatic<br>tenant-side cleanup on scale-down.</p>
+<h2><span id="prerequisites">Prerequisites</span></h2><ul>
+<li><code>workload.type: statefulset</code> (HPA doesn’t make sense for a<br>DaemonSet — one pod per node is the design).</li>
+<li><code>enrollment.mode: api</code> so the chart can self-enrol new replicas<br>without operator intervention.</li>
+<li>A working <strong>metrics-server</strong> in the cluster<br>(<code>kubectl top pods -n npa-publisher</code> should return data). All<br>managed Kubernetes flavours ship it by default; bare-metal<br>clusters may need <a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/metrics-server">installation</a>.</li>
+</ul>
+<h2><span id="enable">Enable</span></h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">workload:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">statefulset</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">2</span>          <span class="comment"># baseline, also used as HPA minReplicas if you don&#x27;t override</span></span><br><span class="line"></span><br><span class="line"><span class="attr">enrollment:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">api</span></span><br><span class="line">  <span class="attr">commonName:</span> <span class="string">prod-eu-publisher</span></span><br><span class="line">  <span class="attr">api:</span></span><br><span class="line">    <span class="attr">baseUrl:</span> <span class="string">https://tenant.goskope.com</span></span><br><span class="line">    <span class="attr">existingSecret:</span> <span class="string">npa-api-token</span></span><br><span class="line">    <span class="attr">tokenKey:</span> <span class="string">api-token</span></span><br><span class="line"></span><br><span class="line"><span class="attr">hpa:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">minReplicas:</span> <span class="number">2</span></span><br><span class="line">  <span class="attr">maxReplicas:</span> <span class="number">6</span></span><br><span class="line">  <span class="attr">targetCPUUtilizationPercentage:</span> <span class="number">70</span></span><br></pre></td></tr></table></figure>
+
+<p>Apply with the usual <code>helm upgrade --install</code>. The chart renders a<br><code>HorizontalPodAutoscaler</code> targeting the StatefulSet:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get hpa -n npa-publisher</span><br><span class="line">NAME                              REFERENCE                                  TARGETS    MINPODS   MAXPODS   REPLICAS</span><br><span class="line">kubernetes-netskope-publisher     StatefulSet/kubernetes-netskope-publisher  35%/70%    2         6         2</span><br></pre></td></tr></table></figure>
+
+<h2><span id="what-happens-on-scale-up">What happens on scale-up</span></h2><ol>
+<li>HPA observes average CPU above target → patches the StatefulSet’s<br><code>replicas</code>.</li>
+<li>Kubernetes creates a new pod (<code>&lt;release&gt;-N</code>).</li>
+<li>The new pod runs <code>npa-bootstrap</code>, calls the Netskope API with<br><code>commonName-&lt;pod-name&gt;</code>, gets a publisher_id, enrols.</li>
+<li>Once <code>NPACONNECTED</code> shows up in the publisher logs, Netskope<br>load-balancers route new private-app sessions to the new<br>replica.</li>
+</ol>
+<p>No manual token shuffling. Each replica is an independent<br>identity in the Netskope console.</p>
+<h2><span id="what-happens-on-scale-down">What happens on scale-down</span></h2><ol>
+<li><p>HPA observes CPU below target → patches replicas down.</p>
+</li>
+<li><p>Kubernetes terminates the highest-ordinal pod first.</p>
+</li>
+<li><p>The pod’s <strong>preStop hook fires</strong> (controlled by<br><code>enrollment.api.cleanupOnDelete</code>, default <code>true</code>):</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Inside the pod, at termination time:</span></span><br><span class="line">curl -X DELETE \</span><br><span class="line">  -H <span class="string">&quot;Authorization: Bearer <span class="variable">$NPA_API_TOKEN</span>&quot;</span> \</span><br><span class="line">  <span class="string">&quot;<span class="variable">$NPA_API_BASE_URL</span>/api/v2/infrastructure/publishers/<span class="subst">$(cat /home/resources/publisherid)</span>&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>The Publisher record is removed from the tenant. No orphan<br>record left in <strong>NG SASE → Steering → Publishers</strong>.</p>
+</li>
+</ol>
+<p>The hook is <strong>best-effort</strong>. If the API call fails (network glitch,<br>expired token, tenant outage), the hook returns 0 anyway so the pod<br>terminates promptly. The orphan record can be cleaned up manually<br>via the <a href="/kubernetes-netskope-publisher/admin/how-to/delete-publisher/">delete-publisher</a><br>flow.</p>
+<h2><span id="why-cpu-and-not-tunnel-count">Why CPU and not tunnel-count</span></h2><p>CPU is what’s available without extra infrastructure. The Publisher<br>does report active SNAT connection counts (<code>num_snat_conns</code>)<br>internally, but it doesn’t expose them as Prometheus metrics — they<br>go up to the Netskope stitcher control plane instead. Wiring those<br>into HPA would require a sidecar that reads the internal<br><code>publisher_metrics</code> file and serves Prometheus, plus<br><code>prometheus-adapter</code> or KEDA in the cluster. That’s tracked on the<br><a href="/kubernetes-netskope-publisher/reference/roadmap/">roadmap</a>.</p>
+<p>In practice, CPU tracks tunnel count well enough: more active<br>sessions → more packet processing → more CPU. Tune<br><code>targetCPUUtilizationPercentage</code> based on observed load.</p>
+<h2><span id="tuning-scale-policies">Tuning scale policies</span></h2><p>The HPA <code>behavior</code> block (Kubernetes <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#configurable-scaling-behavior">v2 spec</a>)<br>lets you slow down scale-up or scale-down. Useful because<br>Publisher enrollment takes ~30–60 seconds, so you may want to<br>delay scale-up reactions to avoid flapping:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">hpa:</span></span><br><span class="line">  <span class="attr">behavior:</span></span><br><span class="line">    <span class="attr">scaleUp:</span></span><br><span class="line">      <span class="attr">stabilizationWindowSeconds:</span> <span class="number">60</span></span><br><span class="line">      <span class="attr">policies:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">Pods</span></span><br><span class="line">          <span class="attr">value:</span> <span class="number">1</span></span><br><span class="line">          <span class="attr">periodSeconds:</span> <span class="number">60</span>       <span class="comment"># at most 1 new replica per minute</span></span><br><span class="line">    <span class="attr">scaleDown:</span></span><br><span class="line">      <span class="attr">stabilizationWindowSeconds:</span> <span class="number">300</span></span><br><span class="line">      <span class="attr">policies:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">Pods</span></span><br><span class="line">          <span class="attr">value:</span> <span class="number">1</span></span><br><span class="line">          <span class="attr">periodSeconds:</span> <span class="number">120</span>      <span class="comment"># at most 1 fewer replica every 2 minutes</span></span><br></pre></td></tr></table></figure>
+
+<h2><span id="disabling-cleanup">Disabling cleanup</span></h2><p>If you’d rather keep all Publisher records (e.g. for an audit<br>window, or because you’re running on a tenant where deletion<br>requires a change ticket):</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">enrollment:</span></span><br><span class="line">  <span class="attr">api:</span></span><br><span class="line">    <span class="attr">cleanupOnDelete:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+
+<p>You then prune orphans manually via the API, the admin console, or<br>a periodic reconciliation script.</p>
+
+        
+  </div>
+</article>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2026
+    John Neerdael
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+
+<script src="/kubernetes-netskope-publisher/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
