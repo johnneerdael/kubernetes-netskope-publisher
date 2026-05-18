@@ -1,6 +1,9 @@
 # Unoffical Netskope NPA Publisher — Kubernetes Deployment Guide
 
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher)](https://artifacthub.io/packages/search?repo=kubernetes-netskope-publisher)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher)](https://artifacthub.io/packages/helm/kubernetes-netskope-publisher/kubernetes-netskope-publisher)
+
+The Helm chart is published on [Artifact Hub](https://artifacthub.io/packages/helm/kubernetes-netskope-publisher/kubernetes-netskope-publisher) and served as a Helm repository at
+<https://johnneerdael.github.io/kubernetes-netskope-publisher>.
 
 This guide walks you through deploying the Netskope Private Access (NPA) Publisher with Helm. The recommended beginner path uses a single-node k3s cluster because it keeps the Kubernetes setup small, local to one Linux host, and friendly to operators who have not run Kubernetes before.
 
@@ -10,33 +13,22 @@ The same Helm chart can also run on managed or self-managed Kubernetes platforms
 
 ## Quickstart
 
-Use this path to deploy with API enrollment and pod network mode, then validate startup from logs. Replace the tenant URL, API token, Publisher name, and DNS forwarders for your environment.
+Use this path to deploy with API enrollment, then validate startup from logs. Replace the tenant URL, API token, Publisher name, and DNS forwarders for your environment. Everything else uses chart defaults (pod networking, daemonset workload, no persistence).
 
 ```bash
+# Add the chart repository (one-time)
+helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher
+helm repo update
+
+# Create namespace + API-token Secret
 kubectl create namespace npa-publisher
 
 kubectl create secret generic npa-api-token \
   --namespace npa-publisher \
   --from-literal=api-token='PASTE_NETSKOPE_API_TOKEN_HERE'
 
+# Tenant-specific values (only the keys the chart can't infer)
 cat > my-api-config.yaml <<'EOF'
-image:
-  repository: "netskopeprivateaccess/publisher_u22"
-  pullPolicy: IfNotPresent
-  tag: "latest"
-
-networking:
-  mode: pod
-  disableIPv6: true
-
-tunDevice:
-  enabled: true
-  hostPath: /dev/net/tun
-  mountPath: /dev/net/tun
-
-persistence:
-  enabled: false
-
 enrollment:
   mode: api
   commonName: "prod-k8s-publisher"
@@ -51,11 +43,14 @@ bind:
     - "8.8.4.4"
 EOF
 
-helm install kubernetes-netskope-publisher . \
+helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher \
-  --create-namespace \
   -f my-api-config.yaml
 ```
+
+> Developing on the chart? Clone the repo and swap `npa/kubernetes-netskope-publisher`
+> for `.` in the install command to install from the local source instead of the
+> published release.
 
 Watch the pod and then follow the publisher container logs:
 
@@ -127,10 +122,12 @@ sudo modprobe tun
 ls -l /dev/net/tun
 ```
 
-Clone this chart and continue with the Quickstart:
+You can install directly from the published Helm repository — see the
+[Quickstart](#quickstart) for the commands. If you'd rather develop on
+the chart locally:
 
 ```bash
-git clone https://github.com/jneerdael-netskope/kubernetes-publisher
+git clone https://github.com/johnneerdael/kubernetes-netskope-publisher
 ```
 
 For horizontal-scaling tests on a single node, make sure the node has enough allocatable CPU and memory for every replica. Kubernetes schedules based on `resources.requests`, so extra replicas will stay `Pending` if the node cannot satisfy their requested CPU or memory.
@@ -307,7 +304,7 @@ resources:
 Install or upgrade with the scaled values file:
 
 ```bash
-helm upgrade --install kubernetes-netskope-publisher . \
+helm upgrade --install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-statefulset-config.yaml
@@ -702,7 +699,7 @@ If the Publisher needs to reach both internal private apps **and** the Netskope 
 From the directory containing both the chart folder (`./kubernetes/`) and your config file (`./my-api-config.yaml`), run:
 
 ```bash
-helm install kubernetes-netskope-publisher . \
+helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-config.yaml
@@ -728,7 +725,7 @@ If you see `Error: INSTALLATION FAILED`, check the error message — the most co
 For token mode:
 
 ```bash
-helm install kubernetes-netskope-publisher . \
+helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher \
   --create-namespace \
   -f my-token-config.yaml
@@ -829,14 +826,14 @@ Edit your values file, then run `helm upgrade` with the same file you used for i
 
 For API mode:
 ```bash
-helm upgrade kubernetes-netskope-publisher . \
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher \
   -f my-api-config.yaml
 ```
 
 For token mode:
 ```bash
-helm upgrade kubernetes-netskope-publisher . \
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --namespace npa-publisher \
   -f my-token-config.yaml
 ```
@@ -924,7 +921,7 @@ The Publisher cannot resolve the Netskope stitcher hostname. This is a DNS confi
 
 Fix `bind.forwarders` in your values file with DNS servers that work in your network, then:
 ```bash
-helm upgrade kubernetes-netskope-publisher . -n npa-publisher -f my-api-config.yaml
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher -n npa-publisher -f my-api-config.yaml
 kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher
 ```
 
@@ -1029,10 +1026,10 @@ kubectl exec -n npa-publisher $(kubectl get pod -n npa-publisher -o name) \
   -c publisher -- ls /home/resources/
 
 # Upgrade after API mode config change
-helm upgrade kubernetes-netskope-publisher . -n npa-publisher -f my-api-config.yaml
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher -n npa-publisher -f my-api-config.yaml
 
 # Upgrade after token mode config change
-helm upgrade kubernetes-netskope-publisher . -n npa-publisher -f my-token-config.yaml
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher -n npa-publisher -f my-token-config.yaml
 
 # Force pod restart without config change
 kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher

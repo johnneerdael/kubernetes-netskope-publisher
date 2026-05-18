@@ -3,7 +3,7 @@ title: kubernetes-netskope-publisher
 date: 2026-05-18
 ---
 
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher)](https://artifacthub.io/packages/search?repo=kubernetes-netskope-publisher)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher)](https://artifacthub.io/packages/helm/kubernetes-netskope-publisher/kubernetes-netskope-publisher)
 
 Deploy Netskope Private Access (NPA) Publishers on **any Kubernetes
 distribution** from a single Helm chart — k3s, kind, EKS, AKS, GKE,
