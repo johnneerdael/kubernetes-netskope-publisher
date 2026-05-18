@@ -1,0 +1,1081 @@
+{
+  "result_dir": "scripts/iperf-results/20260515-000935",
+  "note": "Truncated files are estimated from complete per-interval sum blocks only.",
+  "lanes": [
+    {
+      "file": "lane1-client1-to-downloadserver1.json",
+      "bytes_captured": 25913,
+      "complete_json": true,
+      "samples": 24,
+      "covered_seconds": 120.005378,
+      "total_bytes": 4330094592,
+      "bps": 288100059.189748,
+      "mbps": 288.100059189748,
+      "gbps": 0.288100059189748,
+      "receiver_bps": 288100059.189748,
+      "sender_bps": 288660036.01938576,
+      "best_available_bps": 288100059.189748,
+      "best_available_source": "receiver",
+      "intervals": [
+        {
+          "start": 0,
+          "end": 5.005746,
+          "seconds": 5.005745887756348,
+          "bytes": 189923328,
+          "bits_per_second": 303528516.6425043,
+          "retransmits": 453,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 5.005746,
+          "end": 10.004759,
+          "seconds": 4.99901294708252,
+          "bytes": 197525504,
+          "bits_per_second": 316103208.5188387,
+          "retransmits": 170,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 10.004759,
+          "end": 15.004766,
+          "seconds": 5.000007152557373,
+          "bytes": 178126848,
+          "bits_per_second": 285002549.1005832,
+          "retransmits": 28,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 15.004766,
+          "end": 20.005749,
+          "seconds": 5.000983238220215,
+          "bytes": 170393600,
+          "bits_per_second": 272576158.5406007,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 20.005749,
+          "end": 25.004739,
+          "seconds": 4.998990058898926,
+          "bytes": 183762944,
+          "bits_per_second": 294080111.11824536,
+          "retransmits": 22,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 25.004739,
+          "end": 30.005028,
+          "seconds": 5.00028896331787,
+          "bytes": 176553984,
+          "bits_per_second": 282470049.7034477,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 30.005028,
+          "end": 35.004771,
+          "seconds": 4.9997429847717285,
+          "bytes": 173932544,
+          "bits_per_second": 278306376.19536144,
+          "retransmits": 29,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 35.004771,
+          "end": 40.004767,
+          "seconds": 4.999996185302734,
+          "bytes": 183631872,
+          "bits_per_second": 293811219.360171,
+          "retransmits": 57,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 40.004767,
+          "end": 45.004792,
+          "seconds": 5.000024795532227,
+          "bytes": 178651136,
+          "bits_per_second": 285840400.0870296,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 45.004792,
+          "end": 50.004738,
+          "seconds": 4.999946117401123,
+          "bytes": 186515456,
+          "bits_per_second": 298427945.61465746,
+          "retransmits": 18,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 50.004738,
+          "end": 55.004762,
+          "seconds": 5.00002384185791,
+          "bytes": 185073664,
+          "bits_per_second": 296116450.406733,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 55.004762,
+          "end": 60.004752,
+          "seconds": 4.999989986419678,
+          "bytes": 176685056,
+          "bits_per_second": 282696655.76113385,
+          "retransmits": 120,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 60.004752,
+          "end": 65.005361,
+          "seconds": 5.000608921051025,
+          "bytes": 166985728,
+          "bits_per_second": 267144630.80212724,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 65.005361,
+          "end": 70.00515,
+          "seconds": 4.999789237976074,
+          "bytes": 179175424,
+          "bits_per_second": 286692763.189403,
+          "retransmits": 9,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 70.00515,
+          "end": 75.005544,
+          "seconds": 5.000393867492676,
+          "bytes": 177995776,
+          "bits_per_second": 284770809.2070781,
+          "retransmits": 104,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 75.005544,
+          "end": 80.004843,
+          "seconds": 4.999299049377441,
+          "bytes": 175767552,
+          "bits_per_second": 281267514.1278267,
+          "retransmits": 38,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 80.004843,
+          "end": 85.005733,
+          "seconds": 5.000889778137207,
+          "bytes": 179306496,
+          "bits_per_second": 286839348.9236874,
+          "retransmits": 16,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 85.005733,
+          "end": 90.004769,
+          "seconds": 4.999035835266113,
+          "bytes": 182845440,
+          "bits_per_second": 292609128.6805374,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 90.004769,
+          "end": 95.005039,
+          "seconds": 5.000269889831543,
+          "bytes": 190578688,
+          "bits_per_second": 304909442.4083905,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 95.005039,
+          "end": 100.005217,
+          "seconds": 5.00017786026001,
+          "bytes": 180224000,
+          "bits_per_second": 288348142.8648673,
+          "retransmits": 20,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 100.005217,
+          "end": 105.005736,
+          "seconds": 5.000518798828125,
+          "bytes": 183238656,
+          "bits_per_second": 293151432.2760944,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 105.005736,
+          "end": 110.004769,
+          "seconds": 4.999032974243164,
+          "bytes": 184549376,
+          "bits_per_second": 295336121.1272108,
+          "retransmits": 18,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 110.004769,
+          "end": 115.004986,
+          "seconds": 5.000216960906982,
+          "bytes": 179830784,
+          "bits_per_second": 287716769.74173653,
+          "retransmits": 56,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 115.004986,
+          "end": 120.005378,
+          "seconds": 5.000391960144043,
+          "bytes": 168820736,
+          "bits_per_second": 270092004.53979915,
+          "retransmits": 39,
+          "omitted": false,
+          "sender": true
+        }
+      ],
+      "sum_bps": null
+    },
+    {
+      "file": "lane2-client2-to-downloadserver2.json",
+      "bytes_captured": 25893,
+      "complete_json": true,
+      "samples": 24,
+      "covered_seconds": 120.005476,
+      "total_bytes": 3840802816,
+      "bps": 255031934.21260113,
+      "mbps": 255.03193421260113,
+      "gbps": 0.2550319342126011,
+      "receiver_bps": 255031934.21260113,
+      "sender_bps": 256041837.02417046,
+      "best_available_bps": 255031934.21260113,
+      "best_available_source": "receiver",
+      "intervals": [
+        {
+          "start": 0,
+          "end": 5.005102,
+          "seconds": 5.005102157592773,
+          "bytes": 133693440,
+          "bits_per_second": 213691446.51273286,
+          "retransmits": 289,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 5.005102,
+          "end": 10.005112,
+          "seconds": 5.000010013580322,
+          "bytes": 76546048,
+          "bits_per_second": 122473431.52049123,
+          "retransmits": 40,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 10.005112,
+          "end": 15.006793,
+          "seconds": 5.001680850982666,
+          "bytes": 156893184,
+          "bits_per_second": 250944734.25936505,
+          "retransmits": 409,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 15.006793,
+          "end": 20.004826,
+          "seconds": 4.998033046722412,
+          "bytes": 146276352,
+          "bits_per_second": 234134269.43373168,
+          "retransmits": 234,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 20.004826,
+          "end": 25.005023,
+          "seconds": 5.000196933746338,
+          "bytes": 88735744,
+          "bits_per_second": 141971598.60024282,
+          "retransmits": 363,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 25.005023,
+          "end": 30.004761,
+          "seconds": 4.9997382164001465,
+          "bytes": 173146112,
+          "bits_per_second": 277048284.539452,
+          "retransmits": 77,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 30.004761,
+          "end": 35.004756,
+          "seconds": 4.999995231628418,
+          "bytes": 188481536,
+          "bits_per_second": 301570745.2002743,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 35.004756,
+          "end": 40.004752,
+          "seconds": 4.999996185302734,
+          "bytes": 186908672,
+          "bits_per_second": 299054103.360174,
+          "retransmits": 49,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 40.004752,
+          "end": 45.004784,
+          "seconds": 5.0000319480896,
+          "bytes": 155058176,
+          "bits_per_second": 248091496.39012888,
+          "retransmits": 164,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 45.004784,
+          "end": 50.004961,
+          "seconds": 5.000176906585693,
+          "bytes": 182583296,
+          "bits_per_second": 292122937.9056905,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 50.004961,
+          "end": 55.004756,
+          "seconds": 4.999794960021973,
+          "bytes": 189661184,
+          "bits_per_second": 303470339.1103326,
+          "retransmits": 140,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 55.004756,
+          "end": 60.004752,
+          "seconds": 4.999996185302734,
+          "bytes": 155844608,
+          "bits_per_second": 249351563.04014513,
+          "retransmits": 120,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 60.004752,
+          "end": 65.004754,
+          "seconds": 5.000001907348633,
+          "bytes": 187170816,
+          "bits_per_second": 299473191.3600436,
+          "retransmits": 32,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 65.004754,
+          "end": 70.004754,
+          "seconds": 5,
+          "bytes": 158728192,
+          "bits_per_second": 253965107.2,
+          "retransmits": 2,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 70.004754,
+          "end": 75.004754,
+          "seconds": 5,
+          "bytes": 190316544,
+          "bits_per_second": 304506470.4,
+          "retransmits": 224,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 75.004754,
+          "end": 80.005029,
+          "seconds": 5.000275135040283,
+          "bytes": 182714368,
+          "bits_per_second": 292326902.92515755,
+          "retransmits": 26,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 80.005029,
+          "end": 85.004752,
+          "seconds": 4.999722957611084,
+          "bytes": 189005824,
+          "bits_per_second": 302426075.3684781,
+          "retransmits": 35,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 85.004752,
+          "end": 90.004881,
+          "seconds": 5.000129222869873,
+          "bytes": 180748288,
+          "bits_per_second": 289189786.813162,
+          "retransmits": 301,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 90.004881,
+          "end": 95.00575,
+          "seconds": 5.000868797302246,
+          "bytes": 125960192,
+          "bits_per_second": 201501294.44379762,
+          "retransmits": 135,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 95.00575,
+          "end": 100.005041,
+          "seconds": 4.999290943145752,
+          "bytes": 181272576,
+          "bits_per_second": 290077257.8535885,
+          "retransmits": 18,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 100.005041,
+          "end": 105.00475,
+          "seconds": 4.999709129333496,
+          "bytes": 182714368,
+          "bits_per_second": 292359996.5894134,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 105.00475,
+          "end": 110.005075,
+          "seconds": 5.0003252029418945,
+          "bytes": 69599232,
+          "bits_per_second": 111351528.83104794,
+          "retransmits": 108,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 110.005075,
+          "end": 115.004755,
+          "seconds": 4.999680042266846,
+          "bytes": 188612608,
+          "bits_per_second": 301799485.41584414,
+          "retransmits": 668,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 115.004755,
+          "end": 120.005476,
+          "seconds": 5.000720977783203,
+          "bytes": 170131456,
+          "bits_per_second": 272171083.73907876,
+          "retransmits": 300,
+          "omitted": false,
+          "sender": true
+        }
+      ],
+      "sum_bps": null
+    },
+    {
+      "file": "lane3-client3-to-downloadserver3.json",
+      "bytes_captured": 25893,
+      "complete_json": true,
+      "samples": 24,
+      "covered_seconds": 120.005455,
+      "total_bytes": 3580231680,
+      "bps": 238148555.25416914,
+      "mbps": 238.14855525416914,
+      "gbps": 0.23814855525416914,
+      "receiver_bps": 238148555.25416914,
+      "sender_bps": 238671262.40219665,
+      "best_available_bps": 238148555.25416914,
+      "best_available_source": "receiver",
+      "intervals": [
+        {
+          "start": 0,
+          "end": 5.004753,
+          "seconds": 5.00475311279297,
+          "bytes": 129761280,
+          "bits_per_second": 207420869.04276484,
+          "retransmits": 160,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 5.004753,
+          "end": 10.004766,
+          "seconds": 5.0000128746032715,
+          "bytes": 159383552,
+          "bits_per_second": 255013026.56169078,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 10.004766,
+          "end": 15.005303,
+          "seconds": 5.000536918640137,
+          "bytes": 169476096,
+          "bits_per_second": 271132638.36650234,
+          "retransmits": 6,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 15.005303,
+          "end": 20.005066,
+          "seconds": 4.999763011932373,
+          "bytes": 139198464,
+          "bits_per_second": 222728099.1803662,
+          "retransmits": 257,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 20.005066,
+          "end": 25.004729,
+          "seconds": 4.99966287612915,
+          "bytes": 134479872,
+          "bits_per_second": 215182303.8182403,
+          "retransmits": 663,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 25.004729,
+          "end": 30.004852,
+          "seconds": 5.000123023986816,
+          "bytes": 170131456,
+          "bits_per_second": 272203632.084791,
+          "retransmits": 2,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 30.004852,
+          "end": 35.0049,
+          "seconds": 5.0000481605529785,
+          "bytes": 162267136,
+          "bits_per_second": 259624916.86408737,
+          "retransmits": 2,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 35.0049,
+          "end": 40.004729,
+          "seconds": 4.999828815460205,
+          "bytes": 157548544,
+          "bits_per_second": 252086301.05548695,
+          "retransmits": 56,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 40.004729,
+          "end": 45.005473,
+          "seconds": 5.000743865966797,
+          "bytes": 159121408,
+          "bits_per_second": 254556381.63421428,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 45.005473,
+          "end": 50.004742,
+          "seconds": 4.999269008636475,
+          "bytes": 158072832,
+          "bits_per_second": 252953512.56661192,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 50.004742,
+          "end": 55.001722,
+          "seconds": 4.9969801902771,
+          "bytes": 137494528,
+          "bits_per_second": 220124191.434708,
+          "retransmits": 226,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 55.001722,
+          "end": 60.005246,
+          "seconds": 5.00352382659912,
+          "bytes": 153747456,
+          "bits_per_second": 245822682.29868972,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 60.005246,
+          "end": 65.00473,
+          "seconds": 4.999484062194824,
+          "bytes": 162660352,
+          "bits_per_second": 260283421.2114127,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 65.00473,
+          "end": 70.004761,
+          "seconds": 5.000030994415283,
+          "bytes": 153616384,
+          "bits_per_second": 245784690.80944455,
+          "retransmits": 122,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 70.004761,
+          "end": 75.004721,
+          "seconds": 4.99995994567871,
+          "bytes": 147849216,
+          "bits_per_second": 236560640.655181,
+          "retransmits": 26,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 75.004721,
+          "end": 80.004734,
+          "seconds": 5.0000128746032715,
+          "bytes": 136052736,
+          "bits_per_second": 217683817.08144328,
+          "retransmits": 116,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 80.004734,
+          "end": 85.004725,
+          "seconds": 4.999990940093994,
+          "bytes": 108527616,
+          "bits_per_second": 173644500.24057013,
+          "retransmits": 48,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 85.004725,
+          "end": 90.005112,
+          "seconds": 5.00038719177246,
+          "bytes": 142213120,
+          "bits_per_second": 227523372.96438912,
+          "retransmits": 152,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 90.005112,
+          "end": 95.005032,
+          "seconds": 4.999919891357422,
+          "bytes": 116129792,
+          "bits_per_second": 185810644.2076968,
+          "retransmits": 114,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 95.005032,
+          "end": 100.005029,
+          "seconds": 4.99999713897705,
+          "bytes": 170131456,
+          "bits_per_second": 272210485.3600891,
+          "retransmits": 2,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 100.005029,
+          "end": 105.004725,
+          "seconds": 4.999695777893066,
+          "bytes": 157024256,
+          "bits_per_second": 251254097.01015362,
+          "retransmits": 16,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 105.004725,
+          "end": 110.00503,
+          "seconds": 5.00030517578125,
+          "bytes": 169345024,
+          "bits_per_second": 270935501.8093134,
+          "retransmits": 48,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 110.00503,
+          "end": 115.002739,
+          "seconds": 4.997708797454834,
+          "bytes": 174981120,
+          "bits_per_second": 280098144.3162307,
+          "retransmits": 81,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 115.002739,
+          "end": 120.005455,
+          "seconds": 5.002716064453125,
+          "bytes": 111017984,
+          "bits_per_second": 177532336.54628527,
+          "retransmits": 42,
+          "omitted": false,
+          "sender": true
+        }
+      ],
+      "sum_bps": null
+    },
+    {
+      "file": "lane4-client4-to-downloadserver4.json",
+      "bytes_captured": 25889,
+      "complete_json": true,
+      "samples": 24,
+      "covered_seconds": 120.004886,
+      "total_bytes": 4277010432,
+      "bps": 284596754.320554,
+      "mbps": 284.596754320554,
+      "gbps": 0.28459675432055404,
+      "receiver_bps": 284596754.320554,
+      "sender_bps": 285122419.56548333,
+      "best_available_bps": 284596754.320554,
+      "best_available_source": "receiver",
+      "intervals": [
+        {
+          "start": 0,
+          "end": 5.004501,
+          "seconds": 5.00450086593628,
+          "bytes": 176422912,
+          "bits_per_second": 282022789.8463852,
+          "retransmits": 148,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 5.004501,
+          "end": 10.004427,
+          "seconds": 4.9999260902404785,
+          "bytes": 182976512,
+          "bits_per_second": 292766746.8639713,
+          "retransmits": 26,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 10.004427,
+          "end": 15.005052,
+          "seconds": 5.000625133514404,
+          "bytes": 186908672,
+          "bits_per_second": 299016490.154129,
+          "retransmits": 26,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 15.005052,
+          "end": 20.005428,
+          "seconds": 5.000376224517822,
+          "bytes": 170524672,
+          "bits_per_second": 272818946.964645,
+          "retransmits": 78,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 20.005428,
+          "end": 25.004407,
+          "seconds": 4.998979091644287,
+          "bytes": 178126848,
+          "bits_per_second": 285061161.064244,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 25.004407,
+          "end": 30.004437,
+          "seconds": 5.000030040740967,
+          "bytes": 174718976,
+          "bits_per_second": 279548682.0300911,
+          "retransmits": 98,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 30.004437,
+          "end": 35.004409,
+          "seconds": 4.999971866607666,
+          "bytes": 171835392,
+          "bits_per_second": 274938174.18870443,
+          "retransmits": 21,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 35.004409,
+          "end": 40.004685,
+          "seconds": 5.0002760887146,
+          "bytes": 183762944,
+          "bits_per_second": 294004476.1364194,
+          "retransmits": 107,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 40.004685,
+          "end": 45.004417,
+          "seconds": 4.99973201751709,
+          "bytes": 179961856,
+          "bits_per_second": 287954402.94717336,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 45.004417,
+          "end": 50.00442,
+          "seconds": 5.00000286102295,
+          "bytes": 184287232,
+          "bits_per_second": 294859402.4800965,
+          "retransmits": 38,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 50.00442,
+          "end": 55.004464,
+          "seconds": 5.000043869018555,
+          "bytes": 152567808,
+          "bits_per_second": 244106351.05879122,
+          "retransmits": 132,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 55.004464,
+          "end": 60.004477,
+          "seconds": 5.0000128746032715,
+          "bytes": 178782208,
+          "bits_per_second": 286050796.24189657,
+          "retransmits": 22,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 60.004477,
+          "end": 65.001415,
+          "seconds": 4.996938228607178,
+          "bytes": 188481536,
+          "bits_per_second": 301755238.7115042,
+          "retransmits": 31,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 65.001415,
+          "end": 70.005047,
+          "seconds": 5.003632068634033,
+          "bytes": 187826176,
+          "bits_per_second": 300303736.84334564,
+          "retransmits": 7,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 70.005047,
+          "end": 75.00469,
+          "seconds": 4.999642848968506,
+          "bytes": 187170816,
+          "bits_per_second": 299494698.56810415,
+          "retransmits": 56,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 75.00469,
+          "end": 80.004911,
+          "seconds": 5.000220775604248,
+          "bytes": 184287232,
+          "bits_per_second": 294846552.21485484,
+          "retransmits": 24,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 80.004911,
+          "end": 85.004408,
+          "seconds": 4.999496936798096,
+          "bytes": 185204736,
+          "bits_per_second": 296357394.8999973,
+          "retransmits": 123,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 85.004408,
+          "end": 90.004486,
+          "seconds": 5.000078201293945,
+          "bytes": 182845440,
+          "bits_per_second": 292548128.47156245,
+          "retransmits": 28,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 90.004486,
+          "end": 95.004406,
+          "seconds": 4.999919891357422,
+          "bytes": 158072832,
+          "bits_per_second": 252920583.42492366,
+          "retransmits": 37,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 95.004406,
+          "end": 100.004403,
+          "seconds": 4.99999713897705,
+          "bytes": 182059008,
+          "bits_per_second": 291294579.4800954,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 100.004403,
+          "end": 105.004415,
+          "seconds": 5.000011920928955,
+          "bytes": 170131456,
+          "bits_per_second": 272209680.60154736,
+          "retransmits": 66,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 105.004415,
+          "end": 110.004058,
+          "seconds": 4.999642848968506,
+          "bytes": 175898624,
+          "bits_per_second": 281457902.99607545,
+          "retransmits": 0,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 110.004058,
+          "end": 115.004409,
+          "seconds": 5.0003509521484375,
+          "bytes": 171704320,
+          "bits_per_second": 274707630.153401,
+          "retransmits": 110,
+          "omitted": false,
+          "sender": true
+        },
+        {
+          "start": 115.004409,
+          "end": 120.004886,
+          "seconds": 5.000476837158203,
+          "bytes": 182452224,
+          "bits_per_second": 291895721.05477613,
+          "retransmits": 110,
+          "omitted": false,
+          "sender": true
+        }
+      ],
+      "sum_bps": null
+    }
+  ],
+  "peak_combined_interval": {
+    "bucket": "70.005-75.006",
+    "start": 70.004754,
+    "end": 75.005544,
+    "bytes": 703332352,
+    "lanes": [
+      {
+        "file": "lane1-client1-to-downloadserver1.json",
+        "bytes": 177995776,
+        "bps": 284770801.6608291
+      },
+      {
+        "file": "lane2-client2-to-downloadserver2.json",
+        "bytes": 190316544,
+        "bps": 304506470.4
+      },
+      {
+        "file": "lane3-client3-to-downloadserver3.json",
+        "bytes": 147849216,
+        "bps": 236560638.0851046
+      },
+      {
+        "file": "lane4-client4-to-downloadserver4.json",
+        "bytes": 187170816,
+        "bps": 299494689.5208323
+      }
+    ],
+    "seconds": 5.000789999999995,
+    "bps": 1125153988.8697598,
+    "mbps": 1125.1539888697598,
+    "gbps": 1.1251539888697597
+  },
+  "total_receiver_bps": 1065877302.9770722,
+  "total_receiver_mbps": 1065.8773029770723,
+  "total_receiver_gbps": 1.0658773029770723,
+  "total_sender_bps": 1068495555.0112362,
+  "total_sender_mbps": 1068.495555011236,
+  "total_sender_gbps": 1.0684955550112363,
+  "total_bps": 1065877302.9770722,
+  "total_mbps": 1065.8773029770723,
+  "total_gbps": 1.0658773029770723,
+  "usable_lanes": 4,
+  "lane_files": 4
+}

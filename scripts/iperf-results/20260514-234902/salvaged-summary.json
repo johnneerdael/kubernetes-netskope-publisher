@@ -1,0 +1,162 @@
+{
+  "result_dir": "scripts/iperf-results/20260514-234902",
+  "note": "Truncated files are estimated from complete per-interval sum blocks only.",
+  "lanes": [
+    {
+      "file": "lane1-client1-to-downloadserver1.json",
+      "bytes_captured": 5979,
+      "complete_json": true,
+      "samples": 1,
+      "covered_seconds": 120.100122,
+      "total_bytes": 4311744512,
+      "bps": 286367324.8846693,
+      "mbps": 286.3673248846693,
+      "gbps": 0.2863673248846693,
+      "receiver_bps": 286367324.8846693,
+      "sender_bps": 287210000.46944165,
+      "best_available_bps": 286367324.8846693,
+      "best_available_source": "receiver",
+      "intervals": [
+        {
+          "start": 0,
+          "end": 120.100122,
+          "seconds": 120.1001205444336,
+          "bytes": 4311744512,
+          "bits_per_second": 287210003.95031434,
+          "retransmits": 3457,
+          "omitted": false,
+          "sender": true
+        }
+      ],
+      "sum_bps": null
+    },
+    {
+      "file": "lane2-client2-to-downloadserver2.json",
+      "bytes_captured": 5993,
+      "complete_json": true,
+      "samples": 1,
+      "covered_seconds": 120.100867,
+      "total_bytes": 4433772544,
+      "bps": 294415651.2809985,
+      "mbps": 294.41565128099853,
+      "gbps": 0.2944156512809985,
+      "receiver_bps": 294415651.2809985,
+      "sender_bps": 295336588.6359505,
+      "best_available_bps": 294415651.2809985,
+      "best_available_source": "receiver",
+      "intervals": [
+        {
+          "start": 0,
+          "end": 120.100867,
+          "seconds": 120.10086822509766,
+          "bytes": 4433772544,
+          "bits_per_second": 295336585.6233481,
+          "retransmits": 3279,
+          "omitted": false,
+          "sender": true
+        }
+      ],
+      "sum_bps": null
+    },
+    {
+      "file": "lane3-client3-to-downloadserver3.json",
+      "bytes_captured": 5875,
+      "complete_json": true,
+      "samples": 1,
+      "covered_seconds": 120.02071,
+      "total_bytes": 972029952,
+      "bps": 64790814.985180475,
+      "mbps": 64.79081498518048,
+      "gbps": 0.06479081498518048,
+      "receiver_bps": 0.0,
+      "sender_bps": 64790814.985180475,
+      "best_available_bps": 64790814.985180475,
+      "best_available_source": "sender",
+      "intervals": [
+        {
+          "start": 0,
+          "end": 120.02071,
+          "seconds": 120.02071380615234,
+          "bytes": 972029952,
+          "bits_per_second": 64790812.9305042,
+          "retransmits": 1348,
+          "omitted": false,
+          "sender": true
+        }
+      ],
+      "iperf_error": "unable to send control message - port may not be available, the other side may have stopped running, etc.: Broken pipe",
+      "sum_bps": null
+    },
+    {
+      "file": "lane4-client4-to-downloadserver4.json",
+      "bytes_captured": 5984,
+      "complete_json": true,
+      "samples": 1,
+      "covered_seconds": 120.101139,
+      "total_bytes": 4267573248,
+      "bps": 283354564.2874813,
+      "mbps": 283.3545642874813,
+      "gbps": 0.2833545642874813,
+      "receiver_bps": 283354564.2874813,
+      "sender_bps": 284265297.30080247,
+      "best_available_bps": 283354564.2874813,
+      "best_available_source": "receiver",
+      "intervals": [
+        {
+          "start": 0,
+          "end": 120.101139,
+          "seconds": 120.10113525390625,
+          "bytes": 4267573248,
+          "bits_per_second": 284265306.16736686,
+          "retransmits": 3239,
+          "omitted": false,
+          "sender": true
+        }
+      ],
+      "sum_bps": null
+    }
+  ],
+  "peak_combined_interval": {
+    "bucket": "0.000-120.101",
+    "start": 0.0,
+    "end": 120.101139,
+    "bytes": 13985120256,
+    "lanes": [
+      {
+        "file": "lane1-client1-to-downloadserver1.json",
+        "bytes": 4311744512,
+        "bps": 287210000.46944165
+      },
+      {
+        "file": "lane2-client2-to-downloadserver2.json",
+        "bytes": 4433772544,
+        "bps": 295336588.6359505
+      },
+      {
+        "file": "lane3-client3-to-downloadserver3.json",
+        "bytes": 972029952,
+        "bps": 64790814.985180475
+      },
+      {
+        "file": "lane4-client4-to-downloadserver4.json",
+        "bytes": 4267573248,
+        "bps": 284265297.30080247
+      }
+    ],
+    "seconds": 120.101139,
+    "bps": 931556211.5360122,
+    "mbps": 931.5562115360121,
+    "gbps": 0.9315562115360122
+  },
+  "total_receiver_bps": 864137540.4531491,
+  "total_receiver_mbps": 864.1375404531491,
+  "total_receiver_gbps": 0.8641375404531491,
+  "total_sender_bps": 931602701.3913751,
+  "total_sender_mbps": 931.602701391375,
+  "total_sender_gbps": 0.931602701391375,
+  "total_bps": 928928355.4383296,
+  "total_mbps": 928.9283554383296,
+  "total_gbps": 0.9289283554383295,
+  "usable_lanes": 4,
+  "lane_files": 4
+}

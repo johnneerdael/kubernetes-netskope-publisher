@@ -1,0 +1,40 @@
+# kind cluster configuration for CI testing
+# Used by Drone CI to validate K8s deployments
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: npa-publisher-test
+nodes:
+  - role: control-plane
+    # Port mappings for local testing (optional)
+    extraPortMappings:
+      - containerPort: 30443
+        hostPort: 30443
+        protocol: TCP
+    # Resource limits and configuration
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        apiServer:
+          extraArgs:
+            "service-node-port-range": "30000-32767"
+        controllerManager:
+          extraArgs:
+            "node-cidr-mask-size": "20"
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            "max-pods": "110"
+            "pod-max-pids": "4096"
+networking:
+  # Disable default CNI (we'll install Calico)
+  disableDefaultCNI: true
+  # Pod subnet for Calico
+  podSubnet: "192.168.0.0/16"
+  # Service subnet
+  serviceSubnet: "10.96.0.0/12"
+# Enable containerd snapshotter for faster image loading
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+      endpoint = ["http://localhost:5000"]

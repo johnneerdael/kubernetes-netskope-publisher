@@ -1,0 +1,59 @@
+{
+  "result_dir": "scripts/iperf-results/20260514-224354",
+  "note": "Truncated files are estimated from complete per-interval sum blocks only.",
+  "lanes": [
+    {
+      "file": "lane1-client1-to-downloadserver1.json",
+      "bytes_captured": 196608,
+      "complete_json": false,
+      "samples": 33,
+      "covered_seconds": 33.000625,
+      "total_bytes": 867827712,
+      "bps": 210378491.19524252,
+      "mbps": 210.37849119524253,
+      "gbps": 0.21037849119524252,
+      "json_error": "Unterminated string starting at: line 8457 column 6 (char 196607)"
+    },
+    {
+      "file": "lane2-client2-to-downloadserver2.json",
+      "bytes_captured": 196608,
+      "complete_json": false,
+      "samples": 33,
+      "covered_seconds": 33.001048,
+      "total_bytes": 834797568,
+      "bps": 202368741.2593685,
+      "mbps": 202.3687412593685,
+      "gbps": 0.20236874125936852,
+      "json_error": "Expecting ',' delimiter: line 8482 column 17 (char 196608)"
+    },
+    {
+      "file": "lane3-client3-to-downloadserver3.json",
+      "bytes_captured": 357,
+      "complete_json": true,
+      "samples": 0,
+      "covered_seconds": 0.0,
+      "total_bytes": 0,
+      "bps": null,
+      "mbps": null,
+      "gbps": null,
+      "iperf_error": "unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: Connection timed out"
+    },
+    {
+      "file": "lane4-client4-to-downloadserver4.json",
+      "bytes_captured": 196608,
+      "complete_json": false,
+      "samples": 33,
+      "covered_seconds": 33.00073,
+      "total_bytes": 838467584,
+      "bps": 203260372.48266935,
+      "mbps": 203.26037248266934,
+      "gbps": 0.20326037248266934,
+      "json_error": "Unterminated string starting at: line 8450 column 6 (char 196603)"
+    }
+  ],
+  "total_bps": 616007604.9372804,
+  "total_mbps": 616.0076049372805,
+  "total_gbps": 0.6160076049372805,
+  "usable_lanes": 3,
+  "lane_files": 4
+}

@@ -1,0 +1,59 @@
+{
+  "lanes": [
+    {
+      "lane": "lane1-client1-to-downloadserver1",
+      "target": "172.31.43.126",
+      "url": "http://172.31.43.126:8080/npa-throughput.bin",
+      "status": 0,
+      "http_code": 200,
+      "bytes": 1788277808,
+      "time_seconds": 119.999067,
+      "bytes_per_second": 14902430.0,
+      "bps": 119219440.0,
+      "mbps": 119.21944,
+      "gbps": 0.11921944
+    },
+    {
+      "lane": "lane2-client2-to-downloadserver2",
+      "target": "172.31.42.63",
+      "url": "http://172.31.42.63:8080/npa-throughput.bin",
+      "status": 0,
+      "http_code": 200,
+      "bytes": 1636970760,
+      "time_seconds": 119.999304,
+      "bytes_per_second": 13641502.0,
+      "bps": 109132016.0,
+      "mbps": 109.132016,
+      "gbps": 0.109132016
+    },
+    {
+      "lane": "lane3-client3-to-downloadserver3",
+      "target": "172.31.43.39",
+      "url": "http://172.31.43.39:8080/npa-throughput.bin",
+      "status": 0,
+      "http_code": 200,
+      "bytes": 1737675320,
+      "time_seconds": 119.999083,
+      "bytes_per_second": 14480738.0,
+      "bps": 115845904.0,
+      "mbps": 115.845904,
+      "gbps": 0.115845904
+    },
+    {
+      "lane": "lane4-client4-to-downloadserver4",
+      "target": "172.31.43.137",
+      "url": "http://172.31.43.137:8080/npa-throughput.bin",
+      "status": 0,
+      "http_code": 200,
+      "bytes": 1640874744,
+      "time_seconds": 119.999544,
+      "bytes_per_second": 13674008.0,
+      "bps": 109392064.0,
+      "mbps": 109.392064,
+      "gbps": 0.109392064
+    }
+  ],
+  "total_bps": 453589424.0,
+  "total_mbps": 453.589424,
+  "total_gbps": 0.453589424
+}

@@ -1,0 +1,73 @@
+Successfully deployed NPA Publisher to Kubernetes!
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+{{- if include "npa-publisher.isStatefulSet" . }}
+The publisher is deployed as a StatefulSet with {{ .Values.workload.replicas }} replica(s).
+Each pod gets a stable Kubernetes name and uses it as a suffix for the Publisher common name.
+{{- else }}
+The publisher is deployed as a DaemonSet and will run on nodes matching your node selector.
+{{- end }}
+
+DEPLOYMENT STATUS:
+To check the status of your publisher pods:
+
+{{- if include "npa-publisher.isStatefulSet" . }}
+  kubectl get statefulset {{ include "npa-publisher.fullname" . }} -n {{ .Release.Namespace }}
+{{- else }}
+  kubectl get daemonset {{ include "npa-publisher.fullname" . }} -n {{ .Release.Namespace }}
+{{- end }}
+  kubectl get pods -l app.kubernetes.io/name={{ include "npa-publisher.name" . }} -n {{ .Release.Namespace }}
+
+LOGS:
+To view publisher logs:
+
+  kubectl logs -l app.kubernetes.io/name={{ include "npa-publisher.name" . }} -n {{ .Release.Namespace }} -c publisher
+{{ if include "npa-publisher.isApiEnrollment" . }}
+API enrollment also logs through the publisher container during startup.
+{{ else }}
+To view enrollment logs:
+
+  kubectl logs -l app.kubernetes.io/name={{ include "npa-publisher.name" . }} -n {{ .Release.Namespace }} -c enroll
+{{- end }}
+
+RESOURCES:
+Publisher data is stored in:
+{{- if .Values.persistence.enabled }}
+  PersistentVolumeClaim: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "npa-publisher.fullname" .)) }}
+{{- else }}
+  EmptyDir (data will be lost on pod restart)
+{{- end }}
+
+TROUBLESHOOTING:
+If pods are not starting, check:
+{{ if include "npa-publisher.isApiEnrollment" . }}
+1. API token Secret exists and contains the expected key:
+   kubectl get secret {{ .Values.enrollment.api.existingSecret }} -n {{ .Release.Namespace }}
+
+2. Publisher startup and API enrollment logs:
+   kubectl logs <pod-name> -n {{ .Release.Namespace }} -c publisher
+{{ else }}
+1. Registration token is valid:
+   kubectl get secret {{ .Values.registrationToken.existingSecret | default (printf "%s-token" (include "npa-publisher.fullname" .)) }} -n {{ .Release.Namespace }}
+
+2. Init container enrollment logs:
+   kubectl logs <pod-name> -n {{ .Release.Namespace }} -c enroll
+{{- end }}
+
+3. Pod events:
+   kubectl describe pod <pod-name> -n {{ .Release.Namespace }}
+
+4. Check if nodes meet requirements:
+{{ if include "npa-publisher.isPodNetworking" . }}
+   - NET_ADMIN/NET_RAW capabilities
+   - /dev/net/tun hostPath character device access
+   - Namespace/policy exception for capability and hostPath device use
+{{ else }}
+   - Host network access
+   - Privileged container support
+   - NET_ADMIN/NET_RAW capabilities
+{{- end }}
+
+For more information, visit: https://www.netskope.com

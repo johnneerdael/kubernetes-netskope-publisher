@@ -1,0 +1,263 @@
+{
+	"start":	{
+		"connected":	[{
+				"socket":	5,
+				"local_host":	"172.31.22.157",
+				"local_port":	51306,
+				"remote_host":	"172.31.42.63",
+				"remote_port":	5201
+			}, {
+				"socket":	7,
+				"local_host":	"172.31.22.157",
+				"local_port":	51316,
+				"remote_host":	"172.31.42.63",
+				"remote_port":	5201
+			}, {
+				"socket":	9,
+				"local_host":	"172.31.22.157",
+				"local_port":	51326,
+				"remote_host":	"172.31.42.63",
+				"remote_port":	5201
+			}, {
+				"socket":	11,
+				"local_host":	"172.31.22.157",
+				"local_port":	51332,
+				"remote_host":	"172.31.42.63",
+				"remote_port":	5201
+			}],
+		"version":	"iperf 3.16",
+		"system_info":	"Linux ip-172-31-22-157 6.17.0-1012-aws #12~24.04.1-Ubuntu SMP Mon Apr  6 17:36:28 UTC 2026 x86_64",
+		"timestamp":	{
+			"time":	"Thu, 14 May 2026 20:51:53 GMT",
+			"timesecs":	1778791913
+		},
+		"connecting_to":	{
+			"host":	"172.31.42.63",
+			"port":	5201
+		},
+		"cookie":	"kbplznwxgtwfcqgyqvkh6mkzhl6pn7y6viyp",
+		"tcp_mss_default":	1448,
+		"target_bitrate":	0,
+		"fq_rate":	0,
+		"sock_bufsize":	0,
+		"sndbuf_actual":	16384,
+		"rcvbuf_actual":	131072,
+		"test_start":	{
+			"protocol":	"TCP",
+			"num_streams":	4,
+			"blksize":	131072,
+			"omit":	0,
+			"duration":	120,
+			"bytes":	0,
+			"blocks":	0,
+			"reverse":	0,
+			"tos":	0,
+			"target_bitrate":	0,
+			"bidir":	0,
+			"fqrate":	0
+		}
+	},
+	"intervals":	[{
+			"streams":	[{
+					"socket":	5,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.05581665039062,
+					"bytes":	624951296,
+					"bits_per_second":	41644049.4720814,
+					"retransmits":	575,
+					"snd_cwnd":	1448,
+					"snd_wnd":	10158848,
+					"rtt":	198794,
+					"rttvar":	3988,
+					"pmtu":	1500,
+					"omitted":	false,
+					"sender":	true
+				}, {
+					"socket":	7,
+					"start":	0,
+					"end":	120.055824,
+					"seconds":	120.05582427978516,
+					"bytes":	448921600,
+					"bits_per_second":	29914190.51549264,
+					"retransmits":	420,
+					"snd_cwnd":	1448,
+					"snd_wnd":	10158848,
+					"rtt":	197386,
+					"rttvar":	1007,
+					"pmtu":	1500,
+					"omitted":	false,
+					"sender":	true
+				}, {
+					"socket":	9,
+					"start":	0,
+					"end":	120.055826,
+					"seconds":	120.05582427978516,
+					"bytes":	327548928,
+					"bits_per_second":	21826441.488530248,
+					"retransmits":	457,
+					"snd_cwnd":	1448,
+					"snd_wnd":	9213696,
+					"rtt":	197086,
+					"rttvar":	1532,
+					"pmtu":	1500,
+					"omitted":	false,
+					"sender":	true
+				}, {
+					"socket":	11,
+					"start":	0,
+					"end":	120.055829,
+					"seconds":	120.05583190917969,
+					"bytes":	297533440,
+					"bits_per_second":	19826338.1474099,
+					"retransmits":	134,
+					"snd_cwnd":	1448,
+					"snd_wnd":	10158848,
+					"rtt":	197893,
+					"rttvar":	991,
+					"pmtu":	1500,
+					"omitted":	false,
+					"sender":	true
+				}],
+			"sum":	{
+				"start":	0,
+				"end":	120.055815,
+				"seconds":	120.05581665039062,
+				"bytes":	1698955264,
+				"bits_per_second":	113211025.43144274,
+				"retransmits":	1586,
+				"omitted":	false,
+				"sender":	true
+			}
+		}],
+	"end":	{
+		"streams":	[{
+				"sender":	{
+					"socket":	5,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.055815,
+					"bytes":	624951296,
+					"bits_per_second":	41644050.044556357,
+					"retransmits":	575,
+					"max_snd_cwnd":	1448,
+					"max_snd_wnd":	10158848,
+					"max_rtt":	198794,
+					"min_rtt":	198794,
+					"mean_rtt":	198794,
+					"sender":	true
+				},
+				"receiver":	{
+					"socket":	5,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.055815,
+					"bytes":	0,
+					"bits_per_second":	0,
+					"sender":	true
+				}
+			}, {
+				"sender":	{
+					"socket":	7,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.055815,
+					"bytes":	448921600,
+					"bits_per_second":	29914192.827727672,
+					"retransmits":	420,
+					"max_snd_cwnd":	1448,
+					"max_snd_wnd":	10158848,
+					"max_rtt":	197386,
+					"min_rtt":	197386,
+					"mean_rtt":	197386,
+					"sender":	true
+				},
+				"receiver":	{
+					"socket":	7,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.055815,
+					"bytes":	0,
+					"bits_per_second":	0,
+					"sender":	true
+				}
+			}, {
+				"sender":	{
+					"socket":	9,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.055815,
+					"bytes":	327548928,
+					"bits_per_second":	21826443.175617941,
+					"retransmits":	457,
+					"max_snd_cwnd":	1448,
+					"max_snd_wnd":	9213696,
+					"max_rtt":	197086,
+					"min_rtt":	197086,
+					"mean_rtt":	197086,
+					"sender":	true
+				},
+				"receiver":	{
+					"socket":	9,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.055815,
+					"bytes":	0,
+					"bits_per_second":	0,
+					"sender":	true
+				}
+			}, {
+				"sender":	{
+					"socket":	11,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.055815,
+					"bytes":	297533440,
+					"bits_per_second":	19826340.939837027,
+					"retransmits":	134,
+					"max_snd_cwnd":	1448,
+					"max_snd_wnd":	10158848,
+					"max_rtt":	197893,
+					"min_rtt":	197893,
+					"mean_rtt":	197893,
+					"sender":	true
+				},
+				"receiver":	{
+					"socket":	11,
+					"start":	0,
+					"end":	120.055815,
+					"seconds":	120.055815,
+					"bytes":	0,
+					"bits_per_second":	0,
+					"sender":	true
+				}
+			}],
+		"sum_sent":	{
+			"start":	0,
+			"end":	120.055815,
+			"seconds":	120.055815,
+			"bytes":	1698955264,
+			"bits_per_second":	113211026.987739,
+			"retransmits":	1586,
+			"sender":	true
+		},
+		"sum_received":	{
+			"start":	0,
+			"end":	120.055815,
+			"seconds":	120.055815,
+			"bytes":	0,
+			"bits_per_second":	0,
+			"sender":	true
+		},
+		"cpu_utilization_percent":	{
+			"host_total":	0.50661201890229068,
+			"host_user":	0.013023447348572458,
+			"host_system":	0.493590230697275,
+			"remote_total":	0,
+			"remote_user":	0,
+			"remote_system":	0
+		},
+		"sender_tcp_congestion":	"cubic"
+	},
+	"error":	"unable to send control message - port may not be available, the other side may have stopped running, etc.: Broken pipe"
+}

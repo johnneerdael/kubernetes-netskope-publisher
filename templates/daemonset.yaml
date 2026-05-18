@@ -1,0 +1,223 @@
+{{- include "npa-publisher.validateEnrollment" . -}}
+apiVersion: apps/v1
+kind: {{ if include "npa-publisher.isStatefulSet" . }}StatefulSet{{ else }}DaemonSet{{ end }}
+metadata:
+  name: {{ include "npa-publisher.fullname" . }}
+  labels:
+    {{- include "npa-publisher.labels" . | nindent 4 }}
+spec:
+  {{- if include "npa-publisher.isStatefulSet" . }}
+  serviceName: {{ include "npa-publisher.fullname" . }}-headless
+  podManagementPolicy: Parallel
+  replicas: {{ .Values.workload.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "npa-publisher.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        app.kubernetes.io/name: {{ include "npa-publisher.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "npa-publisher.serviceAccountName" . }}
+      hostNetwork: {{ include "npa-publisher.hostNetwork" . }}
+      dnsPolicy: {{ include "npa-publisher.dnsPolicy" . }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if not (include "npa-publisher.isApiEnrollment" .) }}
+      initContainers:
+        - name: enroll
+          image: "{{ .Values.initContainer.image.repository | default .Values.image.repository }}:{{ .Values.initContainer.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/bash
+          args:
+            - -c
+            - |
+              cd /home && /home/npa_publisher_wizard -token "$(cat /tmp/token/token)"
+          env:
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "npa-publisher.fullname" . }}-config
+                  key: LOG_LEVEL
+          volumeMounts:
+            - name: resources
+              mountPath: /home/resources
+            - name: token
+              mountPath: /tmp/token
+              readOnly: true
+          resources:
+            {{- toYaml .Values.initContainer.resources | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: publisher
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            {{- if include "npa-publisher.isApiEnrollment" . }}
+            - /bin/bash
+            - /home/k8s-api-enroll-and-start.sh
+            {{- else }}
+            - /home/k8s-bootstrap.sh
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "npa-publisher.fullname" . }}-config
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NPA_NETWORKING_MODE
+              value: {{ include "npa-publisher.networkingMode" . | quote }}
+            {{- if and (include "npa-publisher.isPodNetworking" .) .Values.networking.disableIPv6 }}
+            - name: NPA_DISABLE_IPV6
+              value: "true"
+            {{- end }}
+            {{- if include "npa-publisher.isStatefulSet" . }}
+            - name: NPA_COMMON_NAME_APPEND_POD_NAME
+              value: "true"
+            {{- end }}
+            {{- if include "npa-publisher.isApiEnrollment" . }}
+            - name: NPA_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.enrollment.api.existingSecret }}
+                  key: {{ .Values.enrollment.api.tokenKey }}
+            {{- end }}
+          securityContext:
+            {{- include "npa-publisher.securityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: resources
+              mountPath: /home/resources
+            - name: k8s-bootstrap
+              mountPath: /home/k8s-bootstrap.sh
+              subPath: k8s-bootstrap.sh
+              readOnly: true
+            {{- if and (include "npa-publisher.isPodNetworking" .) .Values.tunDevice.enabled }}
+            - name: dev-net-tun
+              mountPath: {{ .Values.tunDevice.mountPath }}
+            {{- end }}
+            {{- if include "npa-publisher.isApiEnrollment" . }}
+            - name: api-enrollment-wrapper
+              mountPath: /home/k8s-api-enroll-and-start.sh
+              subPath: k8s-api-enroll-and-start.sh
+              readOnly: true
+            {{- end }}
+            {{- if .Values.customSettings.enabled }}
+            - name: custom-settings
+              mountPath: /home/resources/settings.json
+              subPath: settings.json
+              readOnly: true
+            {{- end }}
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  pgrep -f "/home/npa_publisher\b" >/dev/null \
+                  && test -s /home/resources/publisherid \
+                  && test -s /home/resources/sslcert/agent.pem \
+                  && test -s /home/resources/settings.json
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  pgrep -f "/home/npa_publisher\b" >/dev/null \
+                  && test -s /home/resources/publisherid \
+                  && test -s /home/resources/sslcert/agent.pem \
+                  && test -s /home/resources/nsconfig.json \
+                  && test -s /home/resources/loglevel
+            initialDelaySeconds: 45
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: resources
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "npa-publisher.fullname" .)) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: k8s-bootstrap
+          configMap:
+            name: {{ include "npa-publisher.fullname" . }}-config
+            defaultMode: 0755
+            items:
+              - key: k8s-bootstrap.sh
+                path: k8s-bootstrap.sh
+        {{- if and (include "npa-publisher.isPodNetworking" .) .Values.tunDevice.enabled }}
+        - name: dev-net-tun
+          hostPath:
+            path: {{ .Values.tunDevice.hostPath }}
+            type: CharDevice
+        {{- end }}
+        {{- if include "npa-publisher.isApiEnrollment" . }}
+        - name: api-enrollment-wrapper
+          configMap:
+            name: {{ include "npa-publisher.fullname" . }}-config
+            defaultMode: 0755
+            items:
+              - key: k8s-api-enroll-and-start.sh
+                path: k8s-api-enroll-and-start.sh
+        {{- end }}
+        {{- if not (include "npa-publisher.isApiEnrollment" .) }}
+        - name: token
+          secret:
+            secretName: {{ .Values.registrationToken.existingSecret | default (printf "%s-token" (include "npa-publisher.fullname" .)) }}
+            items:
+              - key: {{ .Values.registrationToken.existingSecretKey }}
+                path: token
+        {{- end }}
+        {{- if .Values.customSettings.enabled }}
+        - name: custom-settings
+          configMap:
+            name: {{ .Values.customSettings.configMapName }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

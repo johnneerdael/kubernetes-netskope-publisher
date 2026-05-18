@@ -1,0 +1,217 @@
+---
+# Default values for npa-publisher Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Image configuration
+#
+# The chart works with the standard published Ubuntu 22 Publisher image.
+# Override image.tag only when pinning a specific published build or release.
+image:
+  repository: "netskopeprivateaccess/publisher_u22"
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion
+  # Use any published tag, or keep "latest" for the default published image.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Workload configuration.
+# daemonset: one Publisher pod per matching node.
+# statefulset: API-mode-only multi-replica mode. Each pod gets a stable
+#              identity and appends its pod name to enrollment.commonName.
+workload:
+  type: "daemonset"
+  replicas: 1
+
+# Registration token configuration
+# Only used when enrollment.mode=token.
+registrationToken:
+  # Token value (provide via --set for security)
+  value: ""
+  # Or reference an existing secret
+  existingSecret: ""
+  existingSecretKey: "token"
+
+# Enrollment configuration
+# api: Kubernetes-native default. The main container looks up or creates a Publisher,
+#      generates a registration token, enrolls, then starts.
+# token: uses a one-time registration token and the enroll init container.
+enrollment:
+  mode: "api"
+  # Required when mode=api. Matched against Publisher common_name or publisher_name.
+  # If no match exists, a Publisher is created with this value as its name.
+  commonName: "npa-publisher"
+  api:
+    # Required when mode=api. Replace with your tenant URL, for example https://tenant.goskope.com.
+    baseUrl: "https://tenant.goskope.com"
+    # Required when mode=api. Secret must contain the Netskope API token.
+    existingSecret: "npa-api-token"
+    tokenKey: "api-token"
+
+# Tenant configuration
+tenant:
+  # Tenant name (optional, will be extracted from token if not provided)
+  name: ""
+
+# Publisher configuration
+publisher:
+  # Log level (0=trace, 1=debug, 2=info, 3=warn, 4=error, 5=critical)
+  logLevel: 3
+
+  # Host OS type (ubuntu, centos, etc.)
+  hostOsType: "ubuntu"
+
+  # Discovery refresh flag
+  discoveryRefresh: true
+
+# Persistent storage configuration
+persistence:
+  enabled: false
+  # Storage class (use default if not specified)
+  storageClass: ""
+  # Access mode
+  accessMode: ReadWriteOnce
+  # Size of the PVC
+  size: 10Gi
+  # Existing PVC name (optional, creates new if not specified)
+  existingClaim: ""
+
+# Network namespace mode.
+# host: legacy mode. Uses host networking and privileged container defaults.
+# pod: runs in the pod network namespace without hostNetwork or privileged mode.
+#      The Publisher still needs NET_ADMIN/NET_RAW and /dev/net/tun for its
+#      container-local tunnel interface, routes, and iptables rules.
+networking:
+  mode: "host"
+  # Only applies when mode=pod. Disables IPv6 best-effort inside the pod
+  # network namespace before the Publisher creates tun0.
+  disableIPv6: true
+
+# TUN device mount for networking.mode=pod.
+tunDevice:
+  enabled: true
+  hostPath: /dev/net/tun
+  mountPath: /dev/net/tun
+
+# Security context configuration
+# Publisher requires privileged access for:
+# - sysctl tuning (net.ipv4.ip_forward, etc.)
+# - iptables management (SNAT, conntrack)
+# - tun device creation and management
+securityContext:
+  privileged: true
+  capabilities:
+    add:
+      - NET_ADMIN
+      - NET_RAW
+  # Run as root (required for privileged operations)
+  runAsUser: 0
+  runAsNonRoot: false
+  allowPrivilegeEscalation: true
+
+# Host network configuration
+# Required for stitcher connectivity and proper routing
+hostNetwork: true
+dnsPolicy: ClusterFirstWithHostNet
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 384Mi
+
+# Health probe configuration
+livenessProbe:
+  tcpSocket:
+    port: 1234
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  tcpSocket:
+    port: 1234
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+# Termination grace period (seconds)
+# Allows time for graceful shutdown of tunnels
+terminationGracePeriodSeconds: 30
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Service account
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod labels
+podLabels: {}
+
+# Proxy settings (optional)
+proxy:
+  enabled: false
+  # HTTP proxy URL
+  httpProxy: ""
+  # HTTPS proxy URL
+  httpsProxy: ""
+  # No proxy hosts
+  noProxy: ""
+
+# BIND9 DNS forwarder configuration
+# Override upstream DNS forwarders for Kubernetes deployments
+# If not specified, configure_bind.sh will auto-discover from /etc/resolv.conf
+bind:
+  # List of DNS forwarder IP addresses
+  # Example: ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
+  # Leave empty to auto-discover from the pod's resolv.conf. In pod network
+  # mode this normally means Kubernetes CoreDNS.
+  # Override with internal DNS servers if the Publisher needs to resolve private hostnames
+  forwarders: []
+
+# Custom settings.json (optional)
+# If provided via ConfigMap, will override default settings
+customSettings:
+  enabled: false
+  # Name of existing ConfigMap containing settings.json
+  configMapName: ""
+
+# Init container configuration
+initContainer:
+  # Image for init container (uses same image as main container)
+  image:
+    repository: ""  # Uses main image.repository if empty
+    tag: ""         # Uses main image.tag if empty
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
