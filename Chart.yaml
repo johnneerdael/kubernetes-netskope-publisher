@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.1.0
+version: 1.1.1
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
@@ -35,10 +35,4 @@ annotations:
       email: john@neerdael.nl
   artifacthub.io/changes: |
     - kind: changed
-      description: Default networking.mode flipped from host to pod. hostNetwork now defaults to false and dnsPolicy to ClusterFirst. Upgrade hazard — pin networking.mode=host in your values if you need the old behaviour.
-    - kind: changed
-      description: serviceAccount.create now defaults to false. The chart makes no kube-API calls, so the namespace default ServiceAccount is sufficient.
-    - kind: changed
-      description: Memory resources bumped — limits 1Gi to 1536Mi, requests 384Mi to 1024Mi.
-    - kind: removed
-      description: Dead livenessProbe / readinessProbe value blocks. The DaemonSet template hardcodes the real exec probes; the tcpSocket values were never read.
+      description: README rewritten to lead with the Artifact Hub install path (helm repo add + helm install npa/kubernetes-netskope-publisher). Slimmer example values that lean on the 1.1.0 defaults.

@@ -6,6 +6,23 @@ date: 2026-05-18
 Hand-maintained — mirrors `Chart.yaml` `version:` bumps. See the
 GitHub Releases page for the published artifacts.
 
+## v1.1.1 — 2026-05-18
+
+Docs-only release so Artifact Hub picks up the new README.
+
+- README leads with the Artifact Hub install path
+  (`helm repo add npa … && helm install npa/kubernetes-netskope-publisher`)
+  instead of the local-clone path; local-clone install becomes a
+  developer footnote.
+- Slimmed example values to only the keys that aren't covered by
+  1.1.0 defaults (pod networking, tunDevice, persistence: false, and
+  IPv6-disable are all default now).
+- Replaced every remaining local-path install/upgrade example in the
+  deep-dive sections so the advice stays consistent end-to-end.
+- Fixed a stale clone URL in the k3s setup section.
+- `release.yml` now also fires on `README.md` changes so future
+  README updates ship to Artifact Hub on the next push.
+
 ## v1.1.0 — 2026-05-18
 
 Defaults overhaul. Values surface unchanged — only defaults moved.

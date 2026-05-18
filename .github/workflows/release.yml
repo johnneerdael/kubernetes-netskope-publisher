@@ -8,6 +8,7 @@ on:
       - 'values.yaml'
       - 'templates/**'
       - 'files/**'
+      - 'README.md'           # bundled in the chart .tgz; AH displays it
       - '.helmignore'
       - '.github/workflows/release.yml'
   workflow_dispatch:
