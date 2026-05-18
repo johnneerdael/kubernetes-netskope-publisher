@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="Recommended values12345678910111213workload:  type: statefulset  replicas: 2networking:  mode: pod  disableIPv6: truetunDevice:  enabled: truehostNetwork: falsednsPolicy: ClusterFirst  Node image Cont">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GKE (Google)">
+<meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/chart/distributions/gke">
+<meta property="og:site_name" content="kubernetes-netskope-publisher">
+<meta property="og:description" content="Recommended values12345678910111213workload:  type: statefulset  replicas: 2networking:  mode: pod  disableIPv6: truetunDevice:  enabled: truehostNetwork: falsednsPolicy: ClusterFirst  Node image Cont">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
+<meta property="article:modified_time" content="2026-05-18T19:36:36.777Z">
+<meta property="article:author" content="John Neerdael">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/kubernetes-netskope-publisher/images/netskope-favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/kubernetes-netskope-publisher/images/netskope-apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>GKE (Google)</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/kubernetes-netskope-publisher/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+    <div class="content index py4 ">
+        
+          <header id="header">
+  <a class="u-url u-uid" href="/kubernetes-netskope-publisher/">
+  
+    
+      <img id="logo" alt class="u-logo" src="/kubernetes-netskope-publisher/images/netskope-logo.png" />
+    
+  
+    <div id="title">
+      <h1 class="p-name">kubernetes-netskope-publisher</h1>
+    </div>
+  </a>
+  <div id="nav">
+    <ul>
+      <li class="icon">
+        <a href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-2x"></i></a>
+      </li>
+      <!--
+     --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+   --><!--
+     --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+   -->
+    </ul>
+  </div>
+</header>
+
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  
+
+  <div class="content" itemprop="articleBody">
+      
+          <h2><span id="recommended-values">Recommended values</span></h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">workload:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">statefulset</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networking:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">pod</span></span><br><span class="line">  <span class="attr">disableIPv6:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="attr">tunDevice:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="attr">hostNetwork:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">dnsPolicy:</span> <span class="string">ClusterFirst</span></span><br></pre></td></tr></table></figure>
+
+<h2><span id="node-image">Node image</span></h2><ul>
+<li><strong>Container-Optimized OS (cos_containerd):</strong> <code>/dev/net/tun</code> is<br>available. <strong>Default and recommended.</strong></li>
+<li><strong>Ubuntu (ubuntu_containerd):</strong> also works.</li>
+<li><strong>GKE Autopilot:</strong> <strong>unsupported.</strong> Autopilot blocks <code>privileged: true</code><br>pods and <code>hostPath</code> mounts. Use Standard GKE.</li>
+</ul>
+<h2><span id="egress">Egress</span></h2><p>Use <strong>Cloud NAT</strong> with a reserved static external IP for the node pool<br>running the Publisher. Without it, GKE assigns ephemeral SNAT IPs that<br>change.</p>
+<h2><span id="podsecurity-gke-125">PodSecurity (GKE 1.25+)</span></h2><p>The install namespace must allow <code>privileged</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl label namespace npa-publisher \</span><br><span class="line">  pod-security.kubernetes.io/enforce=privileged \</span><br><span class="line">  --overwrite</span><br></pre></td></tr></table></figure>
+
+<h2><span id="workload-identity">Workload Identity</span></h2><p>Not required; the Publisher does not call any GCP API.</p>
+
+        
+  </div>
+</article>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2026
+    John Neerdael
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+
+<script src="/kubernetes-netskope-publisher/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

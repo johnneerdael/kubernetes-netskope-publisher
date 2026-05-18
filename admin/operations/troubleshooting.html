@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="Start here when a Publisher won’t go Online. Quick triage12345678# Are pods running?kubectl get pods -n npa-publisher -o wide# Init container exit reasonkubectl describe pod -n npa-publisher &lt;pod&amp;g">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Troubleshooting">
+<meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/operations/troubleshooting">
+<meta property="og:site_name" content="kubernetes-netskope-publisher">
+<meta property="og:description" content="Start here when a Publisher won’t go Online. Quick triage12345678# Are pods running?kubectl get pods -n npa-publisher -o wide# Init container exit reasonkubectl describe pod -n npa-publisher &lt;pod&amp;g">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
+<meta property="article:modified_time" content="2026-05-18T19:36:36.778Z">
+<meta property="article:author" content="John Neerdael">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/kubernetes-netskope-publisher/images/netskope-favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/kubernetes-netskope-publisher/images/netskope-apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Troubleshooting</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/kubernetes-netskope-publisher/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+    <div class="content index py4 ">
+        
+          <header id="header">
+  <a class="u-url u-uid" href="/kubernetes-netskope-publisher/">
+  
+    
+      <img id="logo" alt class="u-logo" src="/kubernetes-netskope-publisher/images/netskope-logo.png" />
+    
+  
+    <div id="title">
+      <h1 class="p-name">kubernetes-netskope-publisher</h1>
+    </div>
+  </a>
+  <div id="nav">
+    <ul>
+      <li class="icon">
+        <a href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-2x"></i></a>
+      </li>
+      <!--
+     --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+   --><!--
+     --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+   -->
+    </ul>
+  </div>
+</header>
+
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  
+
+  <div class="content" itemprop="articleBody">
+      
+          <p>Start here when a Publisher won’t go Online.</p>
+<h2><span id="quick-triage">Quick triage</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Are pods running?</span></span><br><span class="line">kubectl get pods -n npa-publisher -o wide</span><br><span class="line"></span><br><span class="line"><span class="comment"># Init container exit reason</span></span><br><span class="line">kubectl describe pod -n npa-publisher &lt;pod&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># Publisher container logs</span></span><br><span class="line">kubectl logs -n npa-publisher &lt;pod&gt; -c publisher --<span class="built_in">tail</span>=200</span><br></pre></td></tr></table></figure>
+
+<h2><span id="failure-pod-stuck-in-init01">Failure: pod stuck in <code>Init:0/1</code></span></h2><p>Likely the <strong>init container is retrying</strong> the API enrollment.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl logs -n npa-publisher &lt;pod&gt; -c npa-bootstrap</span><br></pre></td></tr></table></figure>
+
+<p>Common causes:</p>
+<table>
+<thead>
+<tr>
+<th>Log line</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Cannot resolve tenant.goskope.com</code></td>
+<td>DNS broken inside the pod</td>
+<td>Set <code>bind.forwarders</code> or fix cluster DNS</td>
+</tr>
+<tr>
+<td><code>401 Unauthorized</code></td>
+<td>Wrong&#x2F;expired API token</td>
+<td><a href="/kubernetes-netskope-publisher/admin/how-to/rotate-token/">Rotate the token</a></td>
+</tr>
+<tr>
+<td><code>403 Forbidden</code></td>
+<td>Token lacks <code>publishers</code> scope</td>
+<td>Re-mint with correct scope</td>
+</tr>
+<tr>
+<td><code>Connection refused</code> &#x2F; <code>i/o timeout</code></td>
+<td>Egress blocked</td>
+<td>Open outbound 443 to <code>*.goskope.com</code></td>
+</tr>
+</tbody></table>
+<h2><span id="failure-publisher-logs-repeat-connect-to-stitcher-status-resolving">Failure: Publisher logs repeat <code>Connect to stitcher status: Resolving</code></span></h2><p>The agent can’t resolve <code>gateway-*.gw.npa.goskope.com</code>. The most common<br>fix is providing explicit DNS forwarders:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">bind:</span></span><br><span class="line">  <span class="attr">forwarders:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&quot;8.8.8.8&quot;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&quot;8.8.4.4&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>If your cluster uses internal-only DNS (forwarders that can’t reach<br>public), you must allow the in-pod BIND9 to bypass them for<br><code>*.goskope.com</code>. Forwarders above replace the auto-discovered list.</p>
+<h2><span id="failure-cannot-open-devnettun">Failure: <code>cannot open /dev/net/tun</code></span></h2><p>The <code>tunDevice</code> mount isn’t reaching the pod.</p>
+<ul>
+<li>In <code>mode: pod</code>: confirm <code>tunDevice.enabled: true</code> and the node has<br><code>/dev/net/tun</code> present (<code>ls -la /dev/net/tun</code> on the node).</li>
+<li>In <code>mode: host</code>: this shouldn’t happen — the pod uses the host’s<br>device directly via <code>hostNetwork</code>.</li>
+<li>On kind: confirm the kind config mounts <code>/dev/net/tun</code>. See<br><a href="/kubernetes-netskope-publisher/admin/chart/distributions/kind/">kind distribution</a>.</li>
+<li>On EKS Bottlerocket &#x2F; GKE Autopilot: see distribution-specific notes.</li>
+</ul>
+<h2><span id="failure-net_admin-operation-not-permitted">Failure: <code>NET_ADMIN</code> operation not permitted</span></h2><p>PSA &#x2F; SCC is blocking the capability.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl describe pod -n npa-publisher &lt;pod&gt; | grep -i security</span><br></pre></td></tr></table></figure>
+
+<p>Fix: label namespace <code>pod-security.kubernetes.io/enforce=privileged</code>,<br>or bind <code>privileged</code> SCC on OpenShift. See<br><a href="/kubernetes-netskope-publisher/admin/chart/distributions/">distributions</a>.</p>
+<h2><span id="failure-publisher-appears-offline-after-working">Failure: Publisher appears Offline after working</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Check that the pod is still running and tunnels are up</span></span><br><span class="line">kubectl logs -n npa-publisher &lt;pod&gt; -c publisher --<span class="built_in">tail</span>=50 | grep -E <span class="string">&quot;NPACONNECTED|stitcher&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>If the log shows recent <code>NPACONNECTED</code> but the console says Offline:</p>
+<ul>
+<li>Tenant-side outage (rare). Check Netskope status page.</li>
+<li>Egress IP changed (NAT gateway was recreated). Re-attest in the console.</li>
+<li>API token revoked. Re-rotate.</li>
+</ul>
+<h2><span id="collecting-diagnostics">Collecting diagnostics</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kubectl logs -n npa-publisher &lt;pod&gt; -c npa-bootstrap &gt; bootstrap.log</span><br><span class="line">kubectl logs -n npa-publisher &lt;pod&gt; -c publisher &gt; publisher.log</span><br><span class="line">kubectl describe pod -n npa-publisher &lt;pod&gt; &gt; describe.log</span><br><span class="line">kubectl get events -n npa-publisher --sort-by=.lastTimestamp &gt; events.log</span><br></pre></td></tr></table></figure>
+
+<p>Bundle these when opening a Netskope support case.</p>
+
+        
+  </div>
+</article>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2026
+    John Neerdael
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+
+<script src="/kubernetes-netskope-publisher/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

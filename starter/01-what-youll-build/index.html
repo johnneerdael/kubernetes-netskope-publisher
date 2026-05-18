@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="By the end of this guide you’ll have:  A single-node k3s cluster on a Linux host (Ubuntu 22.04 recommended). One NPA Publisher pod running in namespace npa-publisher, enrolledwith your Netskope tenant">
+<meta property="og:type" content="website">
+<meta property="og:title" content="What you&#39;ll build">
+<meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/starter/01-what-youll-build">
+<meta property="og:site_name" content="kubernetes-netskope-publisher">
+<meta property="og:description" content="By the end of this guide you’ll have:  A single-node k3s cluster on a Linux host (Ubuntu 22.04 recommended). One NPA Publisher pod running in namespace npa-publisher, enrolledwith your Netskope tenant">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
+<meta property="article:modified_time" content="2026-05-18T19:36:36.778Z">
+<meta property="article:author" content="John Neerdael">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/kubernetes-netskope-publisher/images/netskope-favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/kubernetes-netskope-publisher/images/netskope-apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>What you&#39;ll build</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/kubernetes-netskope-publisher/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+    <div class="content index py4 ">
+        
+          <header id="header">
+  <a class="u-url u-uid" href="/kubernetes-netskope-publisher/">
+  
+    
+      <img id="logo" alt class="u-logo" src="/kubernetes-netskope-publisher/images/netskope-logo.png" />
+    
+  
+    <div id="title">
+      <h1 class="p-name">kubernetes-netskope-publisher</h1>
+    </div>
+  </a>
+  <div id="nav">
+    <ul>
+      <li class="icon">
+        <a href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-2x"></i></a>
+      </li>
+      <!--
+     --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+   --><!--
+     --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+   -->
+    </ul>
+  </div>
+</header>
+
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  
+
+  <div class="content" itemprop="articleBody">
+      
+          <p>By the end of this guide you’ll have:</p>
+<ul>
+<li>A <strong>single-node k3s cluster</strong> on a Linux host (Ubuntu 22.04 recommended).</li>
+<li>One <strong>NPA Publisher pod</strong> running in namespace <code>npa-publisher</code>, enrolled<br>with your Netskope tenant via the <strong>API enrollment</strong> flow.</li>
+<li>The Publisher visible as <strong>Online</strong> in <strong>Netskope NG SASE → Steering →<br>Publishers</strong>.</li>
+</ul>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Linux host (1 vCPU, 2 GB)</span><br><span class="line">├── k3s (single node)</span><br><span class="line">│     └── ns: npa-publisher</span><br><span class="line">│           └── pod: npa-publisher-xxxxx</span><br><span class="line">│                 ├── init: npa-bootstrap</span><br><span class="line">│                 └── publisher container ← talks outbound to *.goskope.com</span><br><span class="line">└── kubeconfig at /etc/rancher/k3s/k3s.yaml</span><br></pre></td></tr></table></figure>
+
+<h2><span id="why-k3s-for-the-first-run">Why k3s for the first run?</span></h2><ul>
+<li>Single binary, one command to install, no etcd to babysit.</li>
+<li>The chart’s default <code>hostNetwork: true</code> and privileged settings work<br>on k3s without extra PSP&#x2F;PSA tweaks.</li>
+<li>Same Helm chart works unchanged on EKS&#x2F;AKS&#x2F;GKE later<br>(<a href="/kubernetes-netskope-publisher/admin/chart/distributions/">distributions</a>).</li>
+</ul>
+<h2><span id="what-youll-need">What you’ll need</span></h2><ul>
+<li>A Linux VM you can SSH into as root (or with <code>sudo</code>).</li>
+<li>Outbound HTTPS reachability to <code>*.goskope.com</code> and Docker Hub.</li>
+<li>A Netskope tenant with <strong>NPA</strong> licensed and an API token with<br><code>policy/npa/publishers</code> write scope (see<br><a href="/kubernetes-netskope-publisher/starter/04-netskope-tenant-prep/">Netskope tenant prep</a>).</li>
+</ul>
+<p>Hit <strong>Next</strong> when you’re ready.</p>
+
+        
+  </div>
+</article>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2026
+    John Neerdael
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+
+<script src="/kubernetes-netskope-publisher/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
