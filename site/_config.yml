@@ -1,0 +1,29 @@
+title:       kubernetes-netskope-publisher
+subtitle:    Helm chart for Netskope Private Access Publishers on Kubernetes
+description: One Helm chart, every Kubernetes distribution, API-driven enrollment.
+author:      John Neerdael
+language:    en
+timezone:    Europe/Amsterdam
+
+url:         https://johnneerdael.github.io/kubernetes-netskope-publisher
+root:        /kubernetes-netskope-publisher/
+permalink:   :title/
+permalink_defaults:
+pretty_urls:
+  trailing_index: false
+  trailing_html:  false
+
+source_dir:    source
+public_dir:    public
+tag_dir:       tags
+archive_dir:   archives
+category_dir:  categories
+code_dir:      downloads/code
+
+default_layout: page
+new_post_name:  :title.md
+
+theme: cactus
+
+# Surfaced into page footers via hexo-injector.
+chart_version: v1.x
