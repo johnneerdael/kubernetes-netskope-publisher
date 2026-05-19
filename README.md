@@ -13,7 +13,7 @@ The same Helm chart can also run on managed or self-managed Kubernetes platforms
 
 ## Quickstart
 
-Use this path to deploy with API enrollment, then validate startup from logs. Replace the tenant URL, API token, Publisher name, and DNS forwarders for your environment. Everything else uses chart defaults (pod networking, daemonset workload, no persistence).
+Use this path to deploy with API enrollment, then validate startup from logs. Replace the tenant URL, API token, and Publisher name for your environment. Everything else uses chart defaults (pod networking, pod-local dnsmasq, daemonset workload, no persistence).
 
 ```bash
 # Add the chart repository (one-time)
@@ -36,11 +36,6 @@ enrollment:
     baseUrl: "https://tenant.goskope.com"
     existingSecret: "npa-api-token"
     tokenKey: "api-token"
-
-bind:
-  forwarders:
-    - "8.8.8.8"
-    - "8.8.4.4"
 EOF
 
 helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
@@ -74,7 +69,7 @@ k8s-bootstrap: Starting NPA Publisher
 NPACONNECTED
 ```
 
-The pod is ready when `kubectl get pods -n npa-publisher` shows `1/1 Running`. Connectivity is working when the logs show `NPACONNECTED` or `ConnectedResolvedByGSLB`. If the logs repeat `Connect to stitcher status: Resolving`, check the `bind.forwarders` DNS settings.
+The pod is ready when `kubectl get pods -n npa-publisher` shows `2/2 Running`. Connectivity is working when the logs show `NPACONNECTED` or `ConnectedResolvedByGSLB`. If the logs repeat `Connect to stitcher status: Resolving`, check cluster DNS resolution from the pod.
 
 ---
 
@@ -177,9 +172,11 @@ volumes:
 
 In pod network mode the Kubernetes bootstrap avoids host-level preparation that is not writable in a pod sandbox. It prepares only the pod network namespace pieces the Publisher needs, skips host-level sysctl tuning, filters known non-fatal startup noise, and removes IPv6 link-local addresses from `tun0` when `networking.disableIPv6=true`.
 
+Pod network mode also avoids the Publisher image's in-container BIND9 path. The chart starts a `local-dns` dnsmasq sidecar that listens only on `127.0.0.1:53`, reads the Kubernetes-provided upstream resolver from `/etc/resolv.conf`, and forwards to cluster DNS/CoreDNS. This preserves Kubernetes service discovery and any cluster-level forwarding or stub-domain rules. Do not set `bind.forwarders` in pod mode; configure CoreDNS forwarding instead when private domains need authoritative external DNS.
+
 ## Horizontal Scaling In Pod Mode
 
-Pod network mode unlocks horizontal scaling on Kubernetes because each pod has its own network namespace. That means each Publisher pod can have its own `tun0`, routes, iptables rules, and local BIND listener even when multiple pods are scheduled on the same node.
+Pod network mode unlocks horizontal scaling on Kubernetes because each pod has its own network namespace. That means each Publisher pod can have its own `tun0`, routes, iptables rules, and pod-local dnsmasq listener even when multiple pods are scheduled on the same node.
 
 Use StatefulSet mode for horizontal scaling. StatefulSet mode is API-only and requires pod networking:
 
@@ -245,7 +242,7 @@ enrollment:
 
 bind:
   forwarders:
-    - "8.8.8.8"
+    - "8.8.8.8"      # Replace with internal DNS servers if needed
     - "8.8.4.4"
 ```
 
@@ -533,7 +530,7 @@ Create a values file in your working directory. This file overrides the chart de
 
 ### API Mode Configuration
 
-Use this configuration for the default API enrollment mode without attached storage. It keeps the chart default `networking.mode=host`, which uses privileged host networking.
+Use this configuration for API enrollment in legacy host network mode. Host mode uses privileged host networking and keeps the in-container BIND9 forwarder path.
 
 ```yaml
 # my-api-host-config.yaml
@@ -556,11 +553,6 @@ enrollment:
     baseUrl: "https://tenant.goskope.com"
     existingSecret: "npa-api-token"
     tokenKey: "api-token"
-
-bind:
-  forwarders:
-    - "8.8.8.8"
-    - "8.8.4.4"
 ```
 
 Use this configuration for API enrollment with pod network mode. This avoids `hostNetwork` and full privileged mode, but the namespace policy must allow `NET_ADMIN`, `NET_RAW`, and the `/dev/net/tun` hostPath character device.
@@ -592,11 +584,6 @@ enrollment:
     baseUrl: "https://tenant.goskope.com"
     existingSecret: "npa-api-token"
     tokenKey: "api-token"
-
-bind:
-  forwarders:
-    - "8.8.8.8"
-    - "8.8.4.4"
 ```
 
 In API mode, the pod looks up the Publisher by `commonName` against the API response fields `common_name` and `publisher_name`. When one matching Publisher exists, it reuses that Publisher ID. When none exists, it creates a Publisher with `{"name":"<commonName>"}` and uses the returned ID. If multiple Publishers match, startup fails because the configured name is ambiguous. If the matched Publisher is already connected, startup fails until the existing connection is cleared.
@@ -671,16 +658,11 @@ enrollment:
 
 registrationToken:
   value: "PASTE_YOUR_TOKEN_HERE"
-
-bind:
-  forwarders:
-    - "8.8.8.8"
-    - "8.8.4.4"
 ```
 
 ### Choosing DNS Forwarders
 
-The `bind.forwarders` setting determines what DNS the Publisher uses internally. Set it based on your environment:
+In host network mode, `bind.forwarders` determines what DNS the Publisher's in-container BIND9 uses internally. Set it based on your environment:
 
 | Environment | Recommended forwarders |
 |---|---|
@@ -691,6 +673,24 @@ The `bind.forwarders` setting determines what DNS the Publisher uses internally.
 | GCP VPC | `169.254.169.254` or your VPC DNS IP |
 
 If the Publisher needs to reach both internal private apps **and** the Netskope cloud, use your internal DNS servers — they should already forward public queries upstream.
+
+In pod network mode, leave `bind.forwarders` unset. The chart runs a `local-dns` dnsmasq sidecar that forwards to Kubernetes cluster DNS/CoreDNS. If the Publisher must resolve private domains that CoreDNS does not already know, add domain-specific forwarding in CoreDNS so Kubernetes service discovery and private authoritative DNS both work.
+
+For the default CoreDNS `kube-system/coredns` ConfigMap, add a domain block before the root `.:53` block:
+
+```text
+private.example.com:53 {
+    errors
+    cache 30
+    forward . 10.0.0.10 10.0.0.11
+}
+```
+
+Then roll CoreDNS:
+
+```bash
+kubectl -n kube-system rollout restart deployment/coredns
+```
 
 ---
 
@@ -746,12 +746,12 @@ The pod goes through these stages in order:
 | Status | Meaning |
 |---|---|
 | `Init:0/1` | Token mode only: the `enroll` init container is registering with Netskope |
-| `0/1 Running` with restarts | In API mode, main-container enrollment is failing before publisher startup; check main container logs |
+| `0/2 Running` with restarts | In API mode, main-container enrollment is failing before publisher startup; check main container logs |
 | `PodInitializing` | Enrollment complete, main container starting |
-| `0/1 Running` | Publisher process is running, waiting for readiness (connecting to stitcher) |
-| `1/1 Running` | **Fully ready** — Publisher is connected |
+| `1/2 Running` | Publisher process is running, waiting for readiness (connecting to stitcher) |
+| `2/2 Running` | **Fully ready** — Publisher and local DNS sidecar are ready |
 
-Press `Ctrl+C` to stop watching once you see `1/1 Running`. The transition from `0/1` to `1/1` typically takes 30–90 seconds after enrollment.
+Press `Ctrl+C` to stop watching once you see `2/2 Running`. The transition from `1/2` to `2/2` typically takes 30–90 seconds after enrollment.
 
 ### Step 2: Verify Enrollment Succeeded
 
@@ -919,7 +919,9 @@ If this returns nothing, the token was not set in `my-token-config.yaml`. Correc
 
 The Publisher cannot resolve the Netskope stitcher hostname. This is a DNS configuration issue.
 
-Fix `bind.forwarders` in your values file with DNS servers that work in your network, then:
+In pod network mode, fix Kubernetes cluster DNS/CoreDNS. The default chart runs dnsmasq as a thin pod-local proxy to the cluster resolver; overriding per-pod forwarders is intentionally blocked so Kubernetes service discovery keeps working.
+
+In host network mode, fix `bind.forwarders` in your values file with DNS servers that work in your network, then:
 ```bash
 helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher -n npa-publisher -f my-api-config.yaml
 kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher

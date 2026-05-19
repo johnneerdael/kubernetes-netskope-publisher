@@ -30,15 +30,31 @@ Common causes:
 
 | Log line | Cause | Fix |
 |---|---|---|
-| `Cannot resolve tenant.goskope.com` | DNS broken inside the pod | Set `bind.forwarders` or fix cluster DNS |
+| `Cannot resolve tenant.goskope.com` | DNS broken inside the pod | Fix cluster DNS in pod mode; set `bind.forwarders` only in host mode |
 | `401 Unauthorized` | Wrong/expired API token | [Rotate the token](/kubernetes-netskope-publisher/admin/how-to/rotate-token/) |
 | `403 Forbidden` | Token lacks `publishers` scope | Re-mint with correct scope |
 | `Connection refused` / `i/o timeout` | Egress blocked | Open outbound 443 to `*.goskope.com` |
 
 ## Failure: Publisher logs repeat `Connect to stitcher status: Resolving`
 
-The agent can't resolve `gateway-*.gw.npa.goskope.com`. The most common
-fix is providing explicit DNS forwarders:
+The agent can't resolve `gateway-*.gw.npa.goskope.com`.
+
+In pod network mode, fix Kubernetes cluster DNS/CoreDNS. The chart runs
+dnsmasq only as a pod-local proxy to the Kubernetes resolver, so
+`bind.forwarders` is intentionally rejected in pod mode.
+
+If private domains need authoritative external DNS, add forwarding to
+CoreDNS:
+
+```text
+private.example.com:53 {
+    errors
+    cache 30
+    forward . 10.0.0.10 10.0.0.11
+}
+```
+
+In host network mode, provide explicit BIND forwarders:
 
 ```yaml
 bind:
@@ -47,9 +63,9 @@ bind:
     - "8.8.4.4"
 ```
 
-If your cluster uses internal-only DNS (forwarders that can't reach
-public), you must allow the in-pod BIND9 to bypass them for
-`*.goskope.com`. Forwarders above replace the auto-discovered list.
+If your host-mode DNS uses internal-only resolvers that can't reach
+public DNS, use forwarders that can resolve both Netskope cloud names
+and any private application names the Publisher needs.
 
 ## Failure: `cannot open /dev/net/tun`
 

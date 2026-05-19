@@ -362,6 +362,18 @@ apply_bind_forwarders_to_named_config() {
   systemctl restart named
 }
 
+start_dns_forwarder() {
+  if [ "${NPA_NETWORKING_MODE:-host}" = "pod" ]; then
+    log "Using dnsmasq sidecar for pod-local DNS; preserving Kubernetes cluster DNS from /etc/resolv.conf"
+    return 0
+  fi
+
+  apply_bind_forwarders_override
+  /home/configure_bind.sh "${HOST_OS_TYPE:-ubuntu}"
+  apply_bind_forwarders_to_named_config
+  NAMED_PID="$(pgrep -x named | head -1 || true)"
+}
+
 cleanup_tun0_ipv6_if_requested() {
   if [ "${NPA_DISABLE_IPV6:-false}" != "true" ]; then
     return 0
@@ -409,10 +421,7 @@ disable_ipv6_if_requested
 echo '127.0.0.1 guacamole-frontend' >> /etc/hosts
 
 prepare_network_namespace
-apply_bind_forwarders_override
-/home/configure_bind.sh "${HOST_OS_TYPE:-ubuntu}"
-apply_bind_forwarders_to_named_config
-NAMED_PID="$(pgrep -x named | head -1 || true)"
+start_dns_forwarder
 
 ulimit -n 32000
 

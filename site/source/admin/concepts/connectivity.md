@@ -22,19 +22,28 @@ this is the most common first-run failure.
 
 In `networking.mode: host` the pod uses the node's `/etc/resolv.conf`.
 In `networking.mode: pod` the pod uses cluster DNS (CoreDNS), which on
-most clusters forwards to the node resolvers anyway.
+most clusters forwards to the node resolvers anyway. The chart also runs
+a pod-local dnsmasq sidecar in pod mode. It listens on `127.0.0.1:53`
+and forwards to the Kubernetes-provided resolver from `/etc/resolv.conf`,
+so Kubernetes service discovery and CoreDNS forwarding rules remain in
+the resolution path.
 
-If the cluster DNS can't reach public DNS, set explicit forwarders:
+If the cluster DNS can't reach public DNS, fix CoreDNS or the node
+resolver path. If private domains need authoritative DNS, add
+domain-specific forwarding to CoreDNS:
 
-```yaml
-bind:
-  forwarders:
-    - "8.8.8.8"
-    - "8.8.4.4"
+```text
+private.example.com:53 {
+    errors
+    cache 30
+    forward . 10.0.0.10 10.0.0.11
+}
 ```
 
-The chart's built-in BIND9 forwarder will then use those for everything
-under `*.goskope.com`. See
+Do not set `bind.forwarders` in pod mode; Helm rejects that
+configuration because it bypasses cluster DNS and can break Kubernetes
+service discovery. In host mode, `bind.forwarders` still configures the
+legacy in-container BIND9 path. See
 [troubleshooting](/kubernetes-netskope-publisher/admin/operations/troubleshooting/)
 for diagnosing DNS resolution loops.
 

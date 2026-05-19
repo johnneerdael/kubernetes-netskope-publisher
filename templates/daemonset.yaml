@@ -190,6 +190,46 @@ spec:
                       >/dev/null 2>&1 || true
                     exit 0
           {{- end }}
+        {{- if and (include "kubernetes-netskope-publisher.isPodNetworking" .) .Values.localDns.enabled }}
+        - name: local-dns
+          image: "{{ .Values.localDns.image.repository }}:{{ .Values.localDns.image.tag }}"
+          imagePullPolicy: {{ .Values.localDns.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              UPSTREAM_DNS="$(awk '$1 == "nameserver" && $2 !~ /^127\./ && $2 != "::1" { print $2; exit }' /etc/resolv.conf)"
+              if [ -z "${UPSTREAM_DNS}" ]; then
+                echo "No non-loopback upstream DNS server found in /etc/resolv.conf" >&2
+                exit 1
+              fi
+
+              exec dnsmasq \
+                --keep-in-foreground \
+                --no-resolv \
+                --listen-address=127.0.0.1 \
+                --bind-interfaces \
+                --server="${UPSTREAM_DNS}" \
+                --cache-size={{ .Values.localDns.cacheSize }} \
+                --log-facility=-
+          ports:
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+            - name: dns-tcp
+              containerPort: 53
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+          resources:
+            {{- toYaml .Values.localDns.resources | nindent 12 }}
+        {{- end }}
       volumes:
         - name: resources
           {{- if .Values.persistence.enabled }}

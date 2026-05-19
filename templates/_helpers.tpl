@@ -108,6 +108,9 @@ runAsUser: 0
 {{- if and (eq $workloadType "statefulset") (ne $networkingMode "pod") -}}
 {{- fail "workload.type=statefulset requires networking.mode=pod" -}}
 {{- end -}}
+{{- if and (eq $networkingMode "pod") .Values.bind.forwarders -}}
+{{- fail "bind.forwarders is only supported when networking.mode=host; configure Kubernetes CoreDNS forwarding for private domains in pod network mode" -}}
+{{- end -}}
 {{- if eq $mode "api" -}}
 {{- $_ := required "enrollment.commonName is required when enrollment.mode=api" .Values.enrollment.commonName -}}
 {{- $_ := required "enrollment.api.baseUrl is required when enrollment.mode=api" .Values.enrollment.api.baseUrl -}}

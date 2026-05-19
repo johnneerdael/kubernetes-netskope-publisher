@@ -9,7 +9,7 @@ date: 2026-05-18
 |---|---|---|
 | Tenant identity (publisher_id) | `/etc/npa/registration-config` | Only if `persistence.enabled: true`, OR re-derived by `mode: api` on every start. |
 | Bootstrap token | `/etc/npa/token` | Same — persistent or re-issued. |
-| BIND9 / DNS state | tmpfs in container | No (regenerated). |
+| DNS proxy state | tmpfs in container | No (regenerated). Pod mode uses dnsmasq; host mode uses BIND9. |
 | Active tunnel state | kernel routes + iptables | No (rebuilt on start). |
 
 ## API mode (recommended)

@@ -57,6 +57,10 @@ for the full setup.
 | `tunDevice.enabled` | `true` | Mount `/dev/net/tun` from the node. |
 | `tunDevice.hostPath` | `/dev/net/tun` |  |
 | `tunDevice.mountPath` | `/dev/net/tun` |  |
+| `localDns.enabled` | `true` | Pod-mode dnsmasq sidecar that forwards to Kubernetes cluster DNS. |
+| `localDns.image.repository` | `dockurr/dnsmasq` | dnsmasq sidecar image. |
+| `localDns.image.tag` | `latest` |  |
+| `localDns.cacheSize` | `1000` | Pod-local DNS cache size. |
 
 `hostNetwork`, `dnsPolicy`, and the container `securityContext` are
 **not configurable via values** — they're derived from `networking.mode`.
@@ -76,7 +80,7 @@ comparison table for what each mode renders.
 
 | Key | Default | Notes |
 |---|---|---|
-| `bind.forwarders` | `[]` | List of upstream resolvers for the in-pod BIND9. Auto-discovers from resolv.conf when empty. |
+| `bind.forwarders` | `[]` | Host network mode only. List of upstream resolvers for legacy in-container BIND9. Pod network mode rejects this value; configure CoreDNS forwarding instead. |
 
 ## Proxy
 

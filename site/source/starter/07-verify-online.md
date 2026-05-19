@@ -9,8 +9,9 @@ date: 2026-05-18
 kubectl get pods -n npa-publisher -w
 ```
 
-Wait for `1/1 Running`. The init container `npa-bootstrap` may run for
-30–60 seconds while it enrolls.
+Wait for `2/2 Running` in the default pod-networking mode. The
+Publisher container may take 30–60 seconds while it enrolls and
+connects.
 
 ## 2. Follow the Publisher logs
 
@@ -47,7 +48,7 @@ healthy tunnel up to the Netskope stitchers.
 
 | Symptom | Cause | Where to look |
 |---|---|---|
-| `Resolving` repeats forever | Pod can't resolve `*.goskope.com` | [troubleshooting](/kubernetes-netskope-publisher/admin/operations/troubleshooting/) — set `bind.forwarders` |
+| `Resolving` repeats forever | Pod can't resolve `*.goskope.com` | [troubleshooting](/kubernetes-netskope-publisher/admin/operations/troubleshooting/) — fix cluster DNS in pod mode |
 | `Permission denied` on `/dev/net/tun` | tunDevice not mounted, or PSA blocks the mount | [pod-vs-host network](/kubernetes-netskope-publisher/admin/how-to/pod-vs-host-network/) |
 | `401 Unauthorized` from enrollment | API token scope wrong | [Netskope tenant prep](/kubernetes-netskope-publisher/starter/04-netskope-tenant-prep/) — re-mint with publishers write |
 | `commonName` already in use | Existing publisher record with that name | Change `enrollment.commonName` or delete the stale record |

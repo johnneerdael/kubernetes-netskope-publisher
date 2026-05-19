@@ -18,10 +18,13 @@ date: 2026-05-18
   │    - writes /etc/npa registration  │
   │                                    │
   │  container: publisher              │
-  │    - starts BIND9 forwarder        │
+  │    - configures pod/host netns     │
   │    - configures iptables + sysctl  │
   │    - creates tun0                  │
   │    - runs npa_publisher binary     │
+  │                                    │
+  │  sidecar: local-dns (pod mode)     │
+  │    - dnsmasq -> cluster DNS        │
   └────────────────────────────────────┘
 ```
 
@@ -42,8 +45,9 @@ A single pod contains:
 
 1. **init container** (`npa-bootstrap`) — performs enrollment exactly
    once per pod start, then exits.
-2. **publisher container** — runs the long-lived `npa_publisher` binary,
-   plus a BIND9 forwarder for stitcher GSLB resolution.
+2. **publisher container** — runs the long-lived `npa_publisher` binary.
+3. **local-dns sidecar** in pod network mode — runs dnsmasq as a thin
+   `127.0.0.1:53` proxy to Kubernetes cluster DNS.
 
 The publisher binary owns the `tun0` interface inside the pod (or the
 host, depending on `networking.mode`).

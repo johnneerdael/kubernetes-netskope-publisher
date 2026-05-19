@@ -10,6 +10,16 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+helm() {
+    if [ "${1:-}" = "template" ]; then
+        shift
+        command helm template --kube-version 1.29.0 "$@"
+        return
+    fi
+
+    command helm "$@"
+}
+
 echo "========================================="
 echo "NPA Publisher Helm Chart Testing"
 echo "========================================="
@@ -81,6 +91,8 @@ OUTPUT=$(helm template test-release "${CHART_DIR}" \
     --set-string enrollment.commonName="" 2>&1 || true)
 if echo "$OUTPUT" | grep -q "enrollment.commonName is required when enrollment.mode=api"; then
     echo -e "${GREEN}✓ API commonName validation working${NC}"
+elif echo "$OUTPUT" | grep -q "at '/enrollment/commonName': minLength"; then
+    echo -e "${GREEN}✓ API commonName schema validation working${NC}"
 else
     echo -e "${RED}✗ API commonName validation missing${NC}"
     exit 1
@@ -91,6 +103,8 @@ OUTPUT=$(helm template test-release "${CHART_DIR}" \
     --set registrationToken.value="test-token" 2>&1 || true)
 if echo "$OUTPUT" | grep -q "enrollment.mode must be either 'token' or 'api'"; then
     echo -e "${GREEN}✓ Enrollment mode validation working${NC}"
+elif echo "$OUTPUT" | grep -q "at '/enrollment/mode': value must be one of 'api', 'token'"; then
+    echo -e "${GREEN}✓ Enrollment mode schema validation working${NC}"
 else
     echo -e "${RED}✗ Enrollment mode validation missing${NC}"
     exit 1
@@ -100,8 +114,20 @@ OUTPUT=$(helm template test-release "${CHART_DIR}" \
     --set networking.mode=invalid 2>&1 || true)
 if echo "$OUTPUT" | grep -q "networking.mode must be either 'host' or 'pod'"; then
     echo -e "${GREEN}✓ Networking mode validation working${NC}"
+elif echo "$OUTPUT" | grep -q "at '/networking/mode': value must be one of 'pod', 'host'"; then
+    echo -e "${GREEN}✓ Networking mode schema validation working${NC}"
 else
     echo -e "${RED}✗ Networking mode validation missing${NC}"
+    exit 1
+fi
+
+OUTPUT=$(helm template test-release "${CHART_DIR}" \
+    --set networking.mode=pod \
+    --set bind.forwarders="{8.8.8.8}" 2>&1 || true)
+if echo "$OUTPUT" | grep -q "bind.forwarders is only supported when networking.mode=host"; then
+    echo -e "${GREEN}✓ Pod-mode BIND forwarder validation working${NC}"
+else
+    echo -e "${RED}✗ Pod-mode BIND forwarder validation missing${NC}"
     exit 1
 fi
 
@@ -109,6 +135,8 @@ OUTPUT=$(helm template test-release "${CHART_DIR}" \
     --set workload.type=invalid 2>&1 || true)
 if echo "$OUTPUT" | grep -q "workload.type must be either 'daemonset' or 'statefulset'"; then
     echo -e "${GREEN}✓ Workload type validation working${NC}"
+elif echo "$OUTPUT" | grep -q "at '/workload/type': value must be one of 'daemonset', 'statefulset'"; then
+    echo -e "${GREEN}✓ Workload type schema validation working${NC}"
 else
     echo -e "${RED}✗ Workload type validation missing${NC}"
     exit 1
@@ -142,6 +170,7 @@ echo -e "\n${YELLOW}[TEST 7]${NC} Validating expected Kubernetes resources..."
 RENDERED=$(helm template test-release "${CHART_DIR}" \
     --set enrollment.mode=token \
     --set persistence.enabled=true \
+    --set serviceAccount.create=true \
     --set registrationToken.value="test-token")
 
 EXPECTED_RESOURCES=(
@@ -181,19 +210,19 @@ else
     echo -e "${YELLOW}⚠ yamllint not installed, skipping YAML validation${NC}"
 fi
 
-# Test 9: Check security context configuration
-echo -e "\n${YELLOW}[TEST 9]${NC} Validating security context..."
-if echo "$RENDERED" | grep -q "privileged: true"; then
-    echo -e "${GREEN}✓ Privileged security context configured${NC}"
+# Test 9: Check default pod-network security context configuration
+echo -e "\n${YELLOW}[TEST 9]${NC} Validating default pod-network security context..."
+if echo "$RENDERED" | grep -q "privileged: false"; then
+    echo -e "${GREEN}✓ Default pod-network security context configured${NC}"
 else
-    echo -e "${RED}✗ Privileged security context not found${NC}"
+    echo -e "${RED}✗ Default pod-network security context not found${NC}"
     exit 1
 fi
 
-if echo "$RENDERED" | grep -q "hostNetwork: true"; then
-    echo -e "${GREEN}✓ Host networking configured by default${NC}"
+if echo "$RENDERED" | grep -q "hostNetwork: false"; then
+    echo -e "${GREEN}✓ Pod networking configured by default${NC}"
 else
-    echo -e "${RED}✗ Host networking default not found${NC}"
+    echo -e "${RED}✗ Pod networking default not found${NC}"
     exit 1
 fi
 
@@ -243,10 +272,10 @@ else
     exit 1
 fi
 
-if echo "$API_RENDERED" | grep -q "memory: 1Gi"; then
-    echo -e "${GREEN}✓ Publisher memory limit capped at 1Gi${NC}"
+if echo "$API_RENDERED" | grep -q "memory: 1536Mi"; then
+    echo -e "${GREEN}✓ Publisher memory limit set to 1536Mi${NC}"
 else
-    echo -e "${RED}✗ Publisher memory limit should be capped at 1Gi${NC}"
+    echo -e "${RED}✗ Publisher memory limit should be 1536Mi${NC}"
     exit 1
 fi
 
@@ -293,6 +322,7 @@ done
 echo -e "\n${YELLOW}[TEST 11]${NC} Validating BIND forwarders configuration..."
 RENDERED_WITH_FORWARDERS=$(helm template test-release "${CHART_DIR}" \
     --set enrollment.mode=token \
+    --set networking.mode=host \
     --set persistence.enabled=true \
     --set registrationToken.value="test-token" \
     --set bind.forwarders="{8.8.8.8,8.8.4.4}")
@@ -327,6 +357,7 @@ fi
 # Test that BIND_FORWARDERS is NOT present when forwarders list is empty
 RENDERED_WITHOUT_FORWARDERS=$(helm template test-release "${CHART_DIR}" \
     --set enrollment.mode=token \
+    --set networking.mode=host \
     --set persistence.enabled=true \
     --set registrationToken.value="test-token" \
     --set bind.forwarders=null)
@@ -383,6 +414,23 @@ for expected in \
     fi
 done
 
+for expected in \
+    "name: local-dns" \
+    "dockurr/dnsmasq:latest" \
+    'UPSTREAM_DNS="$(awk' \
+    "--listen-address=127.0.0.1" \
+    "--bind-interfaces" \
+    '--server="${UPSTREAM_DNS}"' \
+    "--cache-size=1000" \
+    "Using dnsmasq sidecar for pod-local DNS"; do
+    if echo "$POD_NETWORK_RENDERED" | grep -F -q -- "$expected"; then
+        echo -e "  ${GREEN}✓${NC} Found local DNS setting: $expected"
+    else
+        echo -e "  ${RED}✗${NC} Missing local DNS setting: $expected"
+        exit 1
+    fi
+done
+
 if echo "$POD_NETWORK_RENDERED" | grep -q "privileged: true"; then
     echo -e "${RED}✗ Pod network mode should not render privileged: true${NC}"
     exit 1
@@ -407,7 +455,7 @@ for expected in \
     "kind: Service" \
     "clusterIP: None" \
     "replicas: 3" \
-    "serviceName: test-release-npa-publisher-headless" \
+    "serviceName: test-release-kubernetes-netskope-publisher-headless" \
     "podManagementPolicy: Parallel" \
     "name: NPA_COMMON_NAME_APPEND_POD_NAME" \
     "NPA_PUBLISHER_COMMON_NAME=\"\${NPA_PUBLISHER_COMMON_NAME}-\${POD_NAME}\""; do

@@ -18,7 +18,7 @@ data:
   HTTPS_PROXY: {{ .Values.proxy.httpsProxy | quote }}
   NO_PROXY: {{ .Values.proxy.noProxy | quote }}
   {{- end }}
-  {{- if .Values.bind.forwarders }}
+  {{- if and (not (include "kubernetes-netskope-publisher.isPodNetworking" .)) .Values.bind.forwarders }}
   BIND_FORWARDERS: {{ join "," .Values.bind.forwarders | quote }}
   {{- end }}
   {{- if include "kubernetes-netskope-publisher.isApiEnrollment" . }}

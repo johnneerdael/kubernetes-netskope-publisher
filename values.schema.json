@@ -130,6 +130,32 @@
       }
     },
 
+    "localDns": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Pod-local dnsmasq proxy used when networking.mode=pod.",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repository": { "type": "string", "minLength": 1 },
+            "tag":        { "type": "string", "minLength": 1 },
+            "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+          },
+          "required": ["repository", "tag"]
+        },
+        "cacheSize": { "type": "integer", "minimum": 0 },
+        "resources": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Pass-through Kubernetes ResourceRequirements for the dnsmasq sidecar."
+        }
+      },
+      "required": ["enabled", "image", "cacheSize"]
+    },
+
     "resources": {
       "type": "object",
       "additionalProperties": true,

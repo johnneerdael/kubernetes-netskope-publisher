@@ -141,6 +141,27 @@ tunDevice:
 #     hostNetwork:     true
 #     dnsPolicy:       ClusterFirstWithHostNet
 
+# Pod-local DNS proxy for networking.mode=pod.
+#
+# The Publisher image historically starts BIND9 in the main container.
+# In pod network mode the chart uses a small dnsmasq sidecar instead so
+# Kubernetes service discovery continues to flow through the cluster DNS
+# resolver that Kubernetes injects into /etc/resolv.conf.
+localDns:
+  enabled: true
+  image:
+    repository: "dockurr/dnsmasq"
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  cacheSize: 1000
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 5m
+      memory: 16Mi
+
 # Resource limits and requests
 resources:
   limits:
@@ -195,15 +216,16 @@ proxy:
   # No proxy hosts
   noProxy: ""
 
-# BIND9 DNS forwarder configuration
-# Override upstream DNS forwarders for Kubernetes deployments
-# If not specified, configure_bind.sh will auto-discover from /etc/resolv.conf
+# BIND9 DNS forwarder configuration for networking.mode=host only.
+#
+# Do not set this in pod network mode. Pod mode keeps dnsPolicy=ClusterFirst
+# and uses the localDns dnsmasq sidecar to forward to Kubernetes cluster DNS.
+# If private domains need authoritative external DNS in pod mode, configure
+# forwarding on CoreDNS/cluster DNS instead of bypassing it per pod.
 bind:
   # List of DNS forwarder IP addresses
   # Example: ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
-  # Leave empty to auto-discover from the pod's resolv.conf. In pod network
-  # mode this normally means Kubernetes CoreDNS.
-  # Override with internal DNS servers if the Publisher needs to resolve private hostnames
+  # Leave empty in host mode to auto-discover from the pod's resolv.conf.
   forwarders: []
 
 # Custom settings.json (optional)

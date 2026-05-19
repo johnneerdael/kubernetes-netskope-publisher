@@ -17,7 +17,7 @@ clusters that rely on the legacy host-networking layout.
 | Iptables modifications | on the host | inside the pod |
 | Reach cluster services | via host network | via cluster DNS / kube-proxy |
 | Survives node reboot | yes | yes |
-| Works with PSA `restricted` | no — `hostNetwork: true` blocked | partial — still needs `privileged: true` |
+| Works with PSA `restricted` | no — `hostNetwork: true` blocked | partial — still needs `NET_ADMIN`, `NET_RAW`, and `/dev/net/tun` hostPath exception |
 | Multi-replica per node | no (single host netns) | yes |
 
 > Since chart 1.2.0, `hostNetwork`, `dnsPolicy`, and the container
@@ -44,6 +44,14 @@ fails on startup with `cannot open /dev/net/tun`.
 The chart automatically renders `hostNetwork: false`, `dnsPolicy:
 ClusterFirst`, and a minimal `securityContext` (`privileged: false`,
 `NET_ADMIN`, `NET_RAW`, `runAsUser: 0`).
+
+Pod mode uses a `local-dns` dnsmasq sidecar instead of BIND9 in the
+Publisher container. dnsmasq listens only on `127.0.0.1:53`, discovers
+the Kubernetes cluster DNS server from `/etc/resolv.conf`, and forwards
+there. Keep `bind.forwarders` unset in pod mode. For private
+authoritative DNS, configure forwarding on CoreDNS so cluster service
+names and private domains both resolve through the same cluster DNS
+path.
 
 ## Host mode values
 
