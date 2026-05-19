@@ -676,7 +676,17 @@ If the Publisher needs to reach both internal private apps **and** the Netskope 
 
 In pod network mode, leave `bind.forwarders` unset. The chart runs a `local-dns` dnsmasq sidecar that forwards to Kubernetes cluster DNS/CoreDNS. If the Publisher must resolve private domains that CoreDNS does not already know, add domain-specific forwarding in CoreDNS so Kubernetes service discovery and private authoritative DNS both work.
 
-For the default CoreDNS `kube-system/coredns` ConfigMap, add a domain block before the root `.:53` block:
+For the default CoreDNS `kube-system/coredns` ConfigMap:
+
+```bash
+kubectl -n kube-system get configmap coredns -o yaml > coredns-backup.yaml
+kubectl -n kube-system edit configmap coredns
+```
+
+In `data.Corefile`, add a domain block for your private zone at the same
+level as the existing `.:53` block. Replace `private.example.com` with
+your private DNS suffix and `10.0.0.10 10.0.0.11` with your internal DNS
+server IPs:
 
 ```text
 private.example.com:53 {
@@ -686,11 +696,24 @@ private.example.com:53 {
 }
 ```
 
-Then roll CoreDNS:
+Then roll CoreDNS and test both cluster DNS and the private zone:
 
 ```bash
 kubectl -n kube-system rollout restart deployment/coredns
+kubectl -n kube-system rollout status deployment/coredns
+
+kubectl run dns-test --rm -it --restart=Never \
+  --image=busybox:1.36 \
+  -- nslookup kubernetes.default.svc.cluster.local
+
+kubectl run dns-test-private --rm -it --restart=Never \
+  --image=busybox:1.36 \
+  -- nslookup app1.private.example.com
 ```
+
+See the GitHub Pages
+[Connectivity requirements](https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/concepts/connectivity/#forward-private-domains-with-coredns)
+page for the detailed walkthrough.
 
 ---
 

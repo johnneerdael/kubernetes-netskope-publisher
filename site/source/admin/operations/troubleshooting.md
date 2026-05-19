@@ -44,7 +44,9 @@ dnsmasq only as a pod-local proxy to the Kubernetes resolver, so
 `bind.forwarders` is intentionally rejected in pod mode.
 
 If private domains need authoritative external DNS, add forwarding to
-CoreDNS:
+CoreDNS. The full walkthrough is in
+[Connectivity requirements: DNS in the pod](/kubernetes-netskope-publisher/admin/concepts/connectivity/#forward-private-domains-with-coredns).
+The short form is:
 
 ```text
 private.example.com:53 {
@@ -52,6 +54,22 @@ private.example.com:53 {
     cache 30
     forward . 10.0.0.10 10.0.0.11
 }
+```
+
+After editing `kube-system/coredns`, restart CoreDNS and test both
+cluster DNS and the private domain:
+
+```bash
+kubectl -n kube-system rollout restart deployment/coredns
+kubectl -n kube-system rollout status deployment/coredns
+
+kubectl run dns-test --rm -it --restart=Never \
+  --image=busybox:1.36 \
+  -- nslookup kubernetes.default.svc.cluster.local
+
+kubectl run dns-test-private --rm -it --restart=Never \
+  --image=busybox:1.36 \
+  -- nslookup app1.private.example.com
 ```
 
 In host network mode, provide explicit BIND forwarders:
