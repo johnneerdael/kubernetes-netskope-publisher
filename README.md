@@ -894,15 +894,17 @@ image:
   tag: "latest"
 ```
 
-For upgrades, pin a specific published build or release. Changing
-`image.tag` changes the pod template, so the DaemonSet or StatefulSet
-performs a rolling restart automatically:
+For upgrades, pin a specific published build or release. Choose the tag
+from the published Publisher image tags on Docker Hub:
+<https://hub.docker.com/r/netskopeprivateaccess/publisher_u22/tags>.
+Changing `image.tag` changes the pod template, so the DaemonSet or
+StatefulSet performs a rolling restart automatically:
 
 ```bash
 helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   -n npa-publisher \
   -f my-values.yaml \
-  --set image.tag=100.0.0.5678
+  --set image.tag=10784
 ```
 
 Do not rely on `latest` for a deterministic production upgrade. With
@@ -910,6 +912,10 @@ Do not rely on `latest` for a deterministic production upgrade. With
 image, and Kubernetes will not restart pods if the rendered pod spec did
 not change. For disposable test environments using `latest`, set
 `image.pullPolicy=Always` and trigger a rollout restart.
+
+Do not assign chart-managed Publishers to a Netskope auto-upgrade
+profile. Helm controls the image tag and Kubernetes rollout; a
+cloud-side profile cannot update the Helm release or restart the pods.
 
 ### Re-enroll in Token Mode
 

@@ -13,13 +13,15 @@ You can move them independently.
 
 ## Upgrading the Publisher binary
 
-Prefer a pinned published image tag for upgrades:
+Prefer a pinned published image tag for upgrades. Choose the tag from
+the published Publisher image tags on Docker Hub:
+<https://hub.docker.com/r/netskopeprivateaccess/publisher_u22/tags>.
 
 ```bash
 helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   -n npa-publisher \
   -f my-values.yaml \
-  --set image.tag=100.0.0.5678
+  --set image.tag=10784
 ```
 
 Changing `image.tag` changes the pod template, so Kubernetes performs a
@@ -72,14 +74,18 @@ helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
 Read the [changelog](/kubernetes-netskope-publisher/reference/changelog/)
 first for any breaking values changes.
 
-## Coordinating with the Netskope tenant
+## Netskope auto-upgrade profiles
 
-Netskope publishes upgrade profiles that pin which Publisher version is
-allowed in a given window. If your tenant has profiles configured:
+Do not assign chart-managed Publishers to a Netskope auto-upgrade
+profile. The Helm chart controls the container image tag and Kubernetes
+rollout. A cloud-side auto-upgrade profile cannot update the Helm
+release, change `image.tag`, or trigger the Kubernetes rollout needed to
+replace the Publisher container image.
 
-- The agent honours the profile and **refuses to run a version outside
-  the allowed range**, even if you pull a newer image.
-- Align `image.tag` with the profile-allowed range before rolling out.
+Keep Publisher binary changes in source-controlled Helm values and roll
+them out with `helm upgrade`. If an existing Publisher record has an
+auto-upgrade profile assigned, remove that assignment before managing it
+with this chart.
 
 ## Rollback
 

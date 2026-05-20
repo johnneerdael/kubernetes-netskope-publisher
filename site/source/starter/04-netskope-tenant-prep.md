@@ -32,8 +32,6 @@ client secret, and token endpoint URL handy for the install step.
 2. **New Token**.
 3. **Scopes** — grant *read + write* on:
    - `/api/v2/infrastructure/publishers`
-   - `/api/v2/infrastructure/publisherupgradeprofiles` (optional, only
-     if you'll manage upgrade profiles from this chart later).
 4. Copy the token. It's shown once.
 
 ### OAuth2 client credentials

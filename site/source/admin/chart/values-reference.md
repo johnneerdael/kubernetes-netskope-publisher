@@ -11,7 +11,7 @@ in parentheses.
 | Key | Default | Notes |
 |---|---|---|
 | `image.repository` | `netskopeprivateaccess/publisher_u22` | Ubuntu 22 Publisher image. |
-| `image.tag` | `latest` | Default for first install. Pin a specific build for deterministic production upgrades. |
+| `image.tag` | `latest` | Default for first install. Pin a specific Docker Hub tag, such as `10784`, for deterministic production upgrades. |
 | `image.pullPolicy` | `IfNotPresent` | Use `Always` only if you intentionally reuse a mutable tag such as `latest`. |
 | `imagePullSecrets` | `[]` | List of secret names for private registries. |
 
