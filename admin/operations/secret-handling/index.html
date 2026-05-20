@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="The chart never embeds secrets in templated objects — it alwaysreferences a Secret resource by name. What’s secret   Value Where Sensitivity    Netskope API token Secret npa-api-token key api-token Hi">
+    <meta name="description" content="The chart never embeds secrets in templated objects — it alwaysreferences a Secret resource by name. What’s secret   Value Where Sensitivity    Netskope API token (enrollment.api.authMode&#x3D;token) Secre">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Secret handling">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/operations/secret-handling">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="The chart never embeds secrets in templated objects — it alwaysreferences a Secret resource by name. What’s secret   Value Where Sensitivity    Netskope API token Secret npa-api-token key api-token Hi">
+<meta property="og:description" content="The chart never embeds secrets in templated objects — it alwaysreferences a Secret resource by name. What’s secret   Value Where Sensitivity    Netskope API token (enrollment.api.authMode&#x3D;token) Secre">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-19T00:09:05.126Z">
+<meta property="article:modified_time" content="2026-05-20T09:46:35.549Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -108,9 +108,14 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>Netskope API token</td>
+<td>Netskope API token (<code>enrollment.api.authMode=token</code>)</td>
 <td>Secret <code>npa-api-token</code> key <code>api-token</code></td>
 <td>High — full publisher admin scope</td>
+</tr>
+<tr>
+<td>OAuth2 client credentials (<code>enrollment.api.authMode=oauth2</code>)</td>
+<td>Secret <code>npa-api-oauth</code> keys <code>client-id</code> and <code>client-secret</code></td>
+<td>High — can mint API access tokens</td>
 </tr>
 <tr>
 <td>Registration token (<code>mode: token</code>)</td>
@@ -124,6 +129,9 @@
 </tr>
 </tbody></table>
 <h2><span id="creating-secrets-safely">Creating secrets safely</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kubectl create secret generic npa-api-token \</span><br><span class="line">  --namespace npa-publisher \</span><br><span class="line">  --from-literal=api-token=<span class="string">&#x27;paste-here&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>For OAuth2 API authentication:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kubectl create secret generic npa-api-oauth \</span><br><span class="line">  --namespace npa-publisher \</span><br><span class="line">  --from-literal=client-id=<span class="string">&#x27;paste-client-id-here&#x27;</span> \</span><br><span class="line">  --from-literal=client-secret=<span class="string">&#x27;paste-client-secret-here&#x27;</span></span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>⚠️ Do <strong>not</strong> pass secrets to <code>helm install --set ...</code>. Helm logs the<br>rendered manifest with values visible to anyone with release-history<br>access. Use <code>existingSecret</code> instead.</p>
