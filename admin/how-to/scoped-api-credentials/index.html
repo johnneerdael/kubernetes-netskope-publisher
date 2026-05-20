@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="Use this workflow when a Kubernetes deployment should manage only aspecific set of Netskope Private Access Publishers, not every Publisherin the tenant. The result is a service account credential, eit">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Scope API credentials to a Publisher cluster set">
+<meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/how-to/scoped-api-credentials">
+<meta property="og:site_name" content="kubernetes-netskope-publisher">
+<meta property="og:description" content="Use this workflow when a Kubernetes deployment should manage only aspecific set of Netskope Private Access Publishers, not every Publisherin the tenant. The result is a service account credential, eit">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-05-19T22:00:00.000Z">
+<meta property="article:modified_time" content="2026-05-20T10:23:06.932Z">
+<meta property="article:author" content="John Neerdael">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/kubernetes-netskope-publisher/images/netskope-favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/kubernetes-netskope-publisher/images/netskope-apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Scope API credentials to a Publisher cluster set</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/kubernetes-netskope-publisher/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+    <div class="content index py4 ">
+        
+          <header id="header">
+  <a class="u-url u-uid" href="/kubernetes-netskope-publisher/">
+  
+    
+      <img id="logo" alt class="u-logo" src="/kubernetes-netskope-publisher/images/netskope-logo.png" />
+    
+  
+    <div id="title">
+      <h1 class="p-name">kubernetes-netskope-publisher</h1>
+    </div>
+  </a>
+  <div id="nav">
+    <ul>
+      <li class="icon">
+        <a href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-2x"></i></a>
+      </li>
+      <!--
+     --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+   --><!--
+     --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+   -->
+    </ul>
+  </div>
+</header>
+
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  
+
+  <div class="content" itemprop="articleBody">
+      
+          <p>Use this workflow when a Kubernetes deployment should manage only a<br>specific set of Netskope Private Access Publishers, not every Publisher<br>in the tenant. The result is a service account credential, either REST<br>API v2 token or OAuth2 client credentials, scoped to Publishers carrying<br>a dedicated label.</p>
+<p>This is useful for delegated operations, shared tenants, and<br>multi-cluster environments where each cluster or cluster set owns its<br>own Publisher records.</p>
+<h2><span id="outcome">Outcome</span></h2><p>By the end, the tenant contains:</p>
+<ul>
+<li>A label under <code>Netskope Private Access &gt; Publishers</code>, such as<br><code>prod-eu-cluster-set</code>.</li>
+<li>Two or more Publisher records carrying that label.</li>
+<li>A custom role that can manage NPA Publishers and is scoped to that<br>label.</li>
+<li>A service account bound to that role, with either an API key or<br>OAuth2 client credentials.</li>
+<li>Helm values that consume the credential without embedding secrets in<br>the release.</li>
+</ul>
+<h2><span id="how-label-scoping-works">How label scoping works</span></h2><p>Netskope roles combine functional permissions with object scope.<br>Functional permissions define what the principal can do; object scope<br>defines which labeled objects the permission applies to.</p>
+<p>Publisher management does not expose its own label-scope picker in all<br>tenant UIs. The practical pattern is to add one low-impact permission<br>that does expose object scoping, then apply the label there. Use:</p>
+<table>
+<thead>
+<tr>
+<th>Permission area</th>
+<th>Permission</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>NPA &gt; Publishers</code></td>
+<td><code>Manage</code></td>
+<td>Inherits the role’s object scope</td>
+</tr>
+<tr>
+<td><code>Skope IT &gt; Network Events</code></td>
+<td><code>View</code></td>
+<td>Label &#x3D; your Publisher cluster-set label</td>
+</tr>
+<tr>
+<td>Everything else</td>
+<td><code>None</code></td>
+<td>Not applicable</td>
+</tr>
+</tbody></table>
+<p>The <code>Network Events</code> permission is only the carrier for the object<br>scope. Do not grant additional Skope IT, DLP, policy, or tenant-wide<br>administrator permissions unless that broader access is intentional.</p>
+<h2><span id="prerequisites">Prerequisites</span></h2><ul>
+<li>A Netskope tenant administrator account that can manage labels, roles,<br>administrators, and NPA Publishers.</li>
+<li>A cluster-set label name. Use an environment or ownership name, for<br>example <code>prod-eu-cluster-set</code>, not a role name.</li>
+<li>At least two Publisher records for production cluster sets. One<br>Publisher is enough for a lab, but it leaves no redundancy during<br>upgrades or node failures.</li>
+<li>A secure place to store the generated API token or OAuth2 client<br>secret.</li>
+</ul>
+<h2><span id="1-create-the-publisher-label">1. Create the Publisher label</span></h2><ol>
+<li>Open <code>Settings &gt; Administration &gt; Labels</code>.</li>
+<li>Create a new label under <code>Netskope Private Access &gt; Publishers</code>.</li>
+<li>Name it after the cluster set or owning environment, for example<br><code>prod-eu-cluster-set</code>.</li>
+<li>Save the label.</li>
+</ol>
+<p>Use labels to describe the Publishers, not the credential. The same<br>label is reused across Publisher records and role scopes, so it should<br>name the managed object set.</p>
+<h2><span id="2-create-and-label-publisher-records">2. Create and label Publisher records</span></h2><p>Scoped credentials can only see and manage Publishers in their label<br>scope. For that reason, pre-create the Publisher records that the chart<br>will enroll, then apply the label to those records.</p>
+<p>For StatefulSet deployments, this chart appends the pod name to<br><code>enrollment.commonName</code>. With release name<br><code>kubernetes-netskope-publisher</code> and:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">workload:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">statefulset</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="attr">enrollment:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">api</span></span><br><span class="line">  <span class="attr">commonName:</span> <span class="string">prod-eu-publisher</span></span><br></pre></td></tr></table></figure>
+
+<p>the chart will look for these Publisher identities:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">prod-eu-publisher-kubernetes-netskope-publisher-0</span><br><span class="line">prod-eu-publisher-kubernetes-netskope-publisher-1</span><br><span class="line">prod-eu-publisher-kubernetes-netskope-publisher-2</span><br></pre></td></tr></table></figure>
+
+<p>Create those Publisher records in <code>Settings &gt; Security Cloud Platform &gt; Publishers</code>, then apply the cluster-set label to each record.</p>
+<p>Keep <code>workload.replicas</code> equal to the number of labeled Publisher<br>records. To scale from three to four replicas, first create and label<br><code>prod-eu-publisher-kubernetes-netskope-publisher-3</code>, then update the<br>Helm values and run <code>helm upgrade</code>.</p>
+<h2><span id="3-create-the-scoped-role">3. Create the scoped role</span></h2><ol>
+<li>Open <code>Settings &gt; Administration &gt; Administrators &amp; Roles &gt; Roles</code>.</li>
+<li>Create a new role. Use a name such as<br><code>Publisher Management - prod-eu-cluster-set</code>.</li>
+<li>Enable only the functional area needed for NPA Publisher management.</li>
+<li>In the permission grid, set:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Permission area</th>
+<th>Permission</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>NPA &gt; Publishers</code></td>
+<td><code>Manage</code></td>
+</tr>
+<tr>
+<td><code>Skope IT &gt; Network Events</code></td>
+<td><code>View</code></td>
+</tr>
+<tr>
+<td>All other rows</td>
+<td><code>None</code></td>
+</tr>
+</tbody></table>
+<ol start="5">
+<li>Open the <code>Scope</code> control for the <code>Network Events</code> row.</li>
+<li>Leave data-scope fields empty.</li>
+<li>Under object scope, choose the same scope for all permissions.</li>
+<li>Set the object scope label to the Publisher cluster-set label.</li>
+<li>Save the scope, then save the role.</li>
+</ol>
+<p>The role should now have Publisher management access restricted to the<br>labeled Publisher set.</p>
+<h2><span id="4-create-the-service-account">4. Create the service account</span></h2><ol>
+<li>Open <code>Settings &gt; Administration &gt; Administrators &amp; Roles &gt; Administrators</code>.</li>
+<li>Click <code>Service Account</code>.</li>
+<li>Name it after the cluster set, for example<br><code>Publisher Management - prod-eu-cluster-set</code>.</li>
+<li>Assign the custom role from the previous step.</li>
+<li>Choose the credential type.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Credential type</th>
+<th>Best for</th>
+<th>Operational notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OAuth2 client credentials</td>
+<td>Production deployments</td>
+<td>Short-lived access tokens; rotate the client secret before expiry.</td>
+</tr>
+<tr>
+<td>REST API v2 token &#x2F; API key</td>
+<td>Labs, PoCs, or tenants not using OAuth2 yet</td>
+<td>Long-lived token; rotate before expiry and update the Kubernetes Secret.</td>
+</tr>
+</tbody></table>
+<p>Capture the generated secret immediately. Netskope displays the client<br>secret or API token only once.</p>
+<h2><span id="5-create-the-kubernetes-secret">5. Create the Kubernetes Secret</span></h2><p>For a static REST API v2 token:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl create namespace npa-publisher</span><br><span class="line"></span><br><span class="line">kubectl create secret generic npa-api-token \</span><br><span class="line">  --namespace npa-publisher \</span><br><span class="line">  --from-literal=api-token=<span class="string">&#x27;PASTE_NETSKOPE_API_TOKEN_HERE&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>For OAuth2 client credentials:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">kubectl create namespace npa-publisher</span><br><span class="line"></span><br><span class="line">kubectl create secret generic npa-api-oauth \</span><br><span class="line">  --namespace npa-publisher \</span><br><span class="line">  --from-literal=client-id=<span class="string">&#x27;PASTE_CLIENT_ID_HERE&#x27;</span> \</span><br><span class="line">  --from-literal=client-secret=<span class="string">&#x27;PASTE_CLIENT_SECRET_HERE&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>Do not pass these values with <code>helm install --set</code>. Keep the credential<br>in a Kubernetes Secret and reference the Secret by name in values.</p>
+<h2><span id="6-configure-the-chart">6. Configure the chart</span></h2><p>Use StatefulSet mode when the cluster set has multiple Publisher<br>records. StatefulSet mode gives each pod a stable identity and lets the<br>chart append the pod name to <code>enrollment.commonName</code>.</p>
+<h3><span id="oauth2-values">OAuth2 values</span></h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">workload:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">statefulset</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networking:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">pod</span></span><br><span class="line">  <span class="attr">disableIPv6:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="attr">persistence:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">false</span></span><br><span class="line"></span><br><span class="line"><span class="attr">enrollment:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">api</span></span><br><span class="line">  <span class="attr">commonName:</span> <span class="string">prod-eu-publisher</span></span><br><span class="line">  <span class="attr">api:</span></span><br><span class="line">    <span class="attr">baseUrl:</span> <span class="string">https://tenant.goskope.com</span></span><br><span class="line">    <span class="attr">authMode:</span> <span class="string">oauth2</span></span><br><span class="line">    <span class="attr">oauth2:</span></span><br><span class="line">      <span class="attr">tokenUrl:</span> <span class="string">https://tenant.goskope.com/oauth2/token</span></span><br><span class="line">      <span class="attr">existingSecret:</span> <span class="string">npa-api-oauth</span></span><br><span class="line">      <span class="attr">clientIdKey:</span> <span class="string">client-id</span></span><br><span class="line">      <span class="attr">clientSecretKey:</span> <span class="string">client-secret</span></span><br></pre></td></tr></table></figure>
+
+<h3><span id="static-api-token-values">Static API token values</span></h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">workload:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">statefulset</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networking:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">pod</span></span><br><span class="line">  <span class="attr">disableIPv6:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="attr">persistence:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">false</span></span><br><span class="line"></span><br><span class="line"><span class="attr">enrollment:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">api</span></span><br><span class="line">  <span class="attr">commonName:</span> <span class="string">prod-eu-publisher</span></span><br><span class="line">  <span class="attr">api:</span></span><br><span class="line">    <span class="attr">baseUrl:</span> <span class="string">https://tenant.goskope.com</span></span><br><span class="line">    <span class="attr">authMode:</span> <span class="string">token</span></span><br><span class="line">    <span class="attr">existingSecret:</span> <span class="string">npa-api-token</span></span><br><span class="line">    <span class="attr">tokenKey:</span> <span class="string">api-token</span></span><br></pre></td></tr></table></figure>
+
+<p>Install or upgrade:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">helm upgrade --install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \</span><br><span class="line">  --namespace npa-publisher \</span><br><span class="line">  -f my-values.yaml</span><br></pre></td></tr></table></figure>
+
+<p>Leave <code>enrollment.api.cleanupOnDelete</code> disabled for scoped cluster<br>sets unless you intentionally want pod termination to delete the<br>tenant-side Publisher record. Most scoped deployments should scale down<br>first, then unlabel or delete retired Publisher records manually.</p>
+<h2><span id="7-verify-the-scope">7. Verify the scope</span></h2><p>Verify both the chart behavior and the credential boundary:</p>
+<ol>
+<li>In <code>Security Cloud Platform &gt; Publishers</code>, confirm that every<br>labeled Publisher reports the expected status after the pods enroll.</li>
+<li>Use the issued credential to call<br><code>GET /api/v2/infrastructure/publishers</code> and confirm the response only<br>includes Publishers in the labeled set.</li>
+<li>Try to retrieve or modify a Publisher outside the labeled set. The<br>request should fail with an authorization error.</li>
+<li>Review the tenant audit log for the service-account principal. It<br>should appear only against Publisher-related actions.</li>
+</ol>
+<h2><span id="8-rotate-credentials">8. Rotate credentials</span></h2><p>For OAuth2:</p>
+<ol>
+<li><p>Reissue the client secret on the service account.</p>
+</li>
+<li><p>Update the Kubernetes Secret:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl create secret generic npa-api-oauth \</span><br><span class="line">  --namespace npa-publisher \</span><br><span class="line">  --from-literal=client-id=<span class="string">&#x27;PASTE_CLIENT_ID_HERE&#x27;</span> \</span><br><span class="line">  --from-literal=client-secret=<span class="string">&#x27;PASTE_NEW_CLIENT_SECRET_HERE&#x27;</span> \</span><br><span class="line">  --dry-run=client -o yaml | kubectl apply -f -</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Restart the StatefulSet:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl rollout restart statefulset/kubernetes-netskope-publisher \</span><br><span class="line">  --namespace npa-publisher</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>For static API tokens, reissue the token, update <code>npa-api-token</code> with<br>the same <code>kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -</code> pattern, then restart the workload.</p>
+<h2><span id="9-scale-the-cluster-set">9. Scale the cluster set</span></h2><p>To add a Publisher:</p>
+<ol>
+<li>Create the next Publisher record that matches the chart-generated<br>name.</li>
+<li>Apply the cluster-set label to the new Publisher.</li>
+<li>Increase <code>workload.replicas</code>.</li>
+<li>Run <code>helm upgrade</code>.</li>
+</ol>
+<p>To retire a Publisher:</p>
+<ol>
+<li>Reduce <code>workload.replicas</code> and run <code>helm upgrade</code> so the highest<br>ordinal pod is removed first.</li>
+<li>Confirm the retired Publisher no longer has an active pod.</li>
+<li>Unlabel or delete the Publisher record in Netskope.</li>
+</ol>
+<p>Never remove the label from a Publisher that still has an active pod<br>enrolled against it. The scoped credential may lose visibility before<br>the chart can complete the next startup or maintenance action.</p>
+
+        
+  </div>
+</article>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2026
+    John Neerdael
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+
+<script src="/kubernetes-netskope-publisher/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
