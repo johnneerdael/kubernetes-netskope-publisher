@@ -14,7 +14,7 @@
 <meta property="og:description" content="Every notable key in values.yaml, grouped by topic. Defaults are shownin parentheses. Image   Key Default Notes    image.repository netskopeprivateaccess&#x2F;publisher_u22 Ubuntu 22 Publisher image.   ima">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-20T10:23:06.931Z">
+<meta property="article:modified_time" content="2026-05-20T10:26:14.740Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -115,12 +115,12 @@
 <tr>
 <td><code>image.tag</code></td>
 <td><code>latest</code></td>
-<td>Pin a specific build for production.</td>
+<td>Default for first install. Pin a specific build for deterministic production upgrades.</td>
 </tr>
 <tr>
 <td><code>image.pullPolicy</code></td>
 <td><code>IfNotPresent</code></td>
-<td>Use <code>Always</code> if you reuse the <code>latest</code> tag.</td>
+<td>Use <code>Always</code> only if you intentionally reuse a mutable tag such as <code>latest</code>.</td>
 </tr>
 <tr>
 <td><code>imagePullSecrets</code></td>
