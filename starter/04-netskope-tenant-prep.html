@@ -14,7 +14,7 @@
 <meta property="og:description" content="The Publisher needs to authenticate to your tenant. The chart supportstwo flows:    Flow When to use    API enrollment (enrollment.mode: api) Default. Recommended. Chart looks up or creates the Publis">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-20T09:46:35.549Z">
+<meta property="article:modified_time" content="2026-05-20T09:49:08.041Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -108,7 +108,7 @@
 </thead>
 <tbody><tr>
 <td><strong>API enrollment</strong> (<code>enrollment.mode: api</code>)</td>
-<td><strong>Default. Recommended.</strong> Chart looks up or creates the Publisher record and enrolls itself. Needs a long-lived API token.</td>
+<td><strong>Default. Recommended.</strong> Chart looks up or creates the Publisher record and enrolls itself. Needs either a static API token or OAuth2 client credentials.</td>
 </tr>
 <tr>
 <td><strong>Token enrollment</strong> (<code>enrollment.mode: token</code>)</td>
@@ -117,7 +117,8 @@
 </tbody></table>
 <p>This guide uses the API flow. It survives pod restarts, scaling, and<br>re-deploys without manual token rotation.</p>
 <h2><span id="1-find-your-tenant-url">1. Find your tenant URL</span></h2><p>It’s the URL you sign into the admin console with, e.g.<br><code>https://tenant.goskope.com</code>. <strong>Do not include a trailing slash</strong> when<br>you later set <code>enrollment.api.baseUrl</code>.</p>
-<h2><span id="2-mint-an-api-token">2. Mint an API token</span></h2><ol>
+<h2><span id="2-choose-api-credentials">2. Choose API credentials</span></h2><p>The quickest starter path uses a static REST API v2 token. If your<br>tenant uses OAuth2 client credentials instead, keep the client ID,<br>client secret, and token endpoint URL handy for the install step.</p>
+<h3><span id="static-api-token">Static API token</span></h3><ol>
 <li>Admin console → <strong>Settings → Tools → REST API v2</strong>.</li>
 <li><strong>New Token</strong>.</li>
 <li><strong>Scopes</strong> — grant <em>read + write</em> on:<ul>
@@ -127,9 +128,10 @@
 </li>
 <li>Copy the token. It’s shown once.</li>
 </ol>
-<h2><span id="3-stage-the-token-as-a-kubernetes-secret">3. Stage the token as a Kubernetes secret</span></h2><p>We’ll do this on the cluster in the next step. For now, paste the token<br>into a private password manager — you’ll need it once.</p>
+<h3><span id="oauth2-client-credentials">OAuth2 client credentials</span></h3><p>Use the OAuth2 client ID and client secret from your tenant or identity<br>provider. The chart also needs the full OAuth2 token endpoint URL for<br>the <code>client_credentials</code> grant.</p>
+<h2><span id="3-stage-credentials-as-a-kubernetes-secret">3. Stage credentials as a Kubernetes secret</span></h2><p>We’ll do this on the cluster in the next step. For now, paste the API<br>token or OAuth2 client credentials into a private password manager —<br>you’ll need them once.</p>
 <blockquote>
-<p>⚠️ Never commit the API token to git. The chart references it by<br>Secret name, not by value. See<br><a href="/kubernetes-netskope-publisher/admin/operations/secret-handling/">secret handling</a>.</p>
+<p>⚠️ Never commit API credentials to git. The chart references them by<br>Secret name, not by value. See<br><a href="/kubernetes-netskope-publisher/admin/operations/secret-handling/">secret handling</a>.</p>
 </blockquote>
 
         
