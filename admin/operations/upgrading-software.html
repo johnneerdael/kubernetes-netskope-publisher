@@ -14,7 +14,7 @@
 <meta property="og:description" content="There are two version axes:  Chart version (Chart.yaml → version:) — controls templates,values schema, RBAC. Publisher version (image.tag → the binary) — controls the agent.  You can move them indepen">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-20T10:26:14.740Z">
+<meta property="article:modified_time" content="2026-05-20T10:30:29.951Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -104,8 +104,8 @@
 <li><strong>Publisher version</strong> (<code>image.tag</code> → the binary) — controls the agent.</li>
 </ol>
 <p>You can move them independently.</p>
-<h2><span id="upgrading-the-publisher-binary">Upgrading the Publisher binary</span></h2><p>Prefer a pinned published image tag for upgrades:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \</span><br><span class="line">  -n npa-publisher \</span><br><span class="line">  -f my-values.yaml \</span><br><span class="line">  --<span class="built_in">set</span> image.tag=100.0.0.5678</span><br></pre></td></tr></table></figure>
+<h2><span id="upgrading-the-publisher-binary">Upgrading the Publisher binary</span></h2><p>Prefer a pinned published image tag for upgrades. Choose the tag from<br>the published Publisher image tags on Docker Hub:<br><a target="_blank" rel="noopener" href="https://hub.docker.com/r/netskopeprivateaccess/publisher_u22/tags">https://hub.docker.com/r/netskopeprivateaccess/publisher_u22/tags</a>.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \</span><br><span class="line">  -n npa-publisher \</span><br><span class="line">  -f my-values.yaml \</span><br><span class="line">  --<span class="built_in">set</span> image.tag=10784</span><br></pre></td></tr></table></figure>
 
 <p>Changing <code>image.tag</code> changes the pod template, so Kubernetes performs a<br>rolling restart:</p>
 <ul>
@@ -123,11 +123,8 @@
 <h2><span id="upgrading-the-chart">Upgrading the chart</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">helm repo update</span><br><span class="line">helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \</span><br><span class="line">  -n npa-publisher \</span><br><span class="line">  -f my-values.yaml</span><br></pre></td></tr></table></figure>
 
 <p>Read the <a href="/kubernetes-netskope-publisher/reference/changelog/">changelog</a><br>first for any breaking values changes.</p>
-<h2><span id="coordinating-with-the-netskope-tenant">Coordinating with the Netskope tenant</span></h2><p>Netskope publishes upgrade profiles that pin which Publisher version is<br>allowed in a given window. If your tenant has profiles configured:</p>
-<ul>
-<li>The agent honours the profile and <strong>refuses to run a version outside<br>the allowed range</strong>, even if you pull a newer image.</li>
-<li>Align <code>image.tag</code> with the profile-allowed range before rolling out.</li>
-</ul>
+<h2><span id="netskope-auto-upgrade-profiles">Netskope auto-upgrade profiles</span></h2><p>Do not assign chart-managed Publishers to a Netskope auto-upgrade<br>profile. The Helm chart controls the container image tag and Kubernetes<br>rollout. A cloud-side auto-upgrade profile cannot update the Helm<br>release, change <code>image.tag</code>, or trigger the Kubernetes rollout needed to<br>replace the Publisher container image.</p>
+<p>Keep Publisher binary changes in source-controlled Helm values and roll<br>them out with <code>helm upgrade</code>. If an existing Publisher record has an<br>auto-upgrade profile assigned, remove that assignment before managing it<br>with this chart.</p>
 <h2><span id="rollback">Rollback</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm rollback kubernetes-netskope-publisher &lt;revision&gt; -n npa-publisher</span><br></pre></td></tr></table></figure>
 
 <p>Helm tracks revision history. <code>helm history kubernetes-netskope-publisher -n npa-publisher</code><br>shows what’s available.</p>
