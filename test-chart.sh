@@ -84,6 +84,28 @@ else
     exit 1
 fi
 
+echo -e "\n${YELLOW}[TEST 5b]${NC} Testing API enrollment with OAuth2 credentials..."
+OAUTH_RENDERED=$(helm template test-release "${CHART_DIR}" \
+    --set enrollment.mode=api \
+    --set enrollment.commonName="oauth-publisher" \
+    --set enrollment.api.baseUrl="https://tenant.goskope.com" \
+    --set enrollment.api.authMode="oauth2" \
+    --set enrollment.api.oauth2.tokenUrl="https://tenant.goskope.com/oauth2/token" \
+    --set enrollment.api.oauth2.existingSecret="npa-api-oauth" \
+    --set enrollment.api.oauth2.clientIdKey="client-id" \
+    --set enrollment.api.oauth2.clientSecretKey="client-secret" \
+    --set persistence.enabled=false)
+
+if echo "$OAUTH_RENDERED" | grep -q "name: NPA_API_OAUTH_CLIENT_ID" \
+    && echo "$OAUTH_RENDERED" | grep -q "name: NPA_API_OAUTH_CLIENT_SECRET" \
+    && echo "$OAUTH_RENDERED" | grep -q "NPA_API_AUTH_MODE: \"oauth2\"" \
+    && echo "$OAUTH_RENDERED" | grep -q "NPA_API_OAUTH_TOKEN_URL: \"https://tenant.goskope.com/oauth2/token\""; then
+    echo -e "${GREEN}✓ Template rendering with OAuth2 API enrollment passed${NC}"
+else
+    echo -e "${RED}✗ OAuth2 API enrollment rendering missing expected configuration${NC}"
+    exit 1
+fi
+
 # Test 6: Validate API enrollment required values are enforced
 echo -e "\n${YELLOW}[TEST 6]${NC} Testing API enrollment required values..."
 OUTPUT=$(helm template test-release "${CHART_DIR}" \
@@ -162,6 +184,31 @@ if echo "$OUTPUT" | grep -q "workload.type=statefulset requires networking.mode=
     echo -e "${GREEN}✓ StatefulSet pod-network validation working${NC}"
 else
     echo -e "${RED}✗ StatefulSet pod-network validation missing${NC}"
+    exit 1
+fi
+
+OUTPUT=$(helm template test-release "${CHART_DIR}" \
+    --set enrollment.mode=api \
+    --set enrollment.api.authMode=invalid 2>&1 || true)
+if echo "$OUTPUT" | grep -q "enrollment.api.authMode must be either 'token' or 'oauth2'"; then
+    echo -e "${GREEN}✓ API auth mode validation working${NC}"
+elif echo "$OUTPUT" | grep -q "at '/enrollment/api/authMode': value must be one of 'token', 'oauth2'"; then
+    echo -e "${GREEN}✓ API auth mode schema validation working${NC}"
+else
+    echo -e "${RED}✗ API auth mode validation missing${NC}"
+    exit 1
+fi
+
+OUTPUT=$(helm template test-release "${CHART_DIR}" \
+    --set enrollment.mode=api \
+    --set enrollment.api.authMode=oauth2 \
+    --set-string enrollment.api.oauth2.tokenUrl="" 2>&1 || true)
+if echo "$OUTPUT" | grep -q "enrollment.api.oauth2.tokenUrl is required when enrollment.api.authMode=oauth2"; then
+    echo -e "${GREEN}✓ OAuth2 tokenUrl validation working${NC}"
+elif echo "$OUTPUT" | grep -q "at '/enrollment/api/oauth2/tokenUrl': does not match pattern"; then
+    echo -e "${GREEN}✓ OAuth2 tokenUrl schema validation working${NC}"
+else
+    echo -e "${RED}✗ OAuth2 tokenUrl validation missing${NC}"
     exit 1
 fi
 

@@ -102,11 +102,24 @@ spec:
               value: "true"
             {{- end }}
             {{- if include "kubernetes-netskope-publisher.isApiEnrollment" . }}
+            {{- if include "kubernetes-netskope-publisher.isApiTokenAuth" . }}
             - name: NPA_API_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.enrollment.api.existingSecret }}
                   key: {{ .Values.enrollment.api.tokenKey }}
+            {{- else if include "kubernetes-netskope-publisher.isApiOauth2Auth" . }}
+            - name: NPA_API_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.enrollment.api.oauth2.existingSecret }}
+                  key: {{ .Values.enrollment.api.oauth2.clientIdKey }}
+            - name: NPA_API_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.enrollment.api.oauth2.existingSecret }}
+                  key: {{ .Values.enrollment.api.oauth2.clientSecretKey }}
+            {{- end }}
             {{- end }}
           securityContext:
             {{- include "kubernetes-netskope-publisher.securityContext" . | nindent 12 }}
@@ -183,9 +196,31 @@ spec:
                     [ -s "$pid_file" ] || exit 0
                     pid="$(cat "$pid_file" 2>/dev/null || true)"
                     [ -n "$pid" ] || exit 0
+                    api_access_token=""
+                    {{- if include "kubernetes-netskope-publisher.isApiTokenAuth" . }}
+                    api_access_token="${NPA_API_TOKEN:-}"
+                    {{- else if include "kubernetes-netskope-publisher.isApiOauth2Auth" . }}
+                    oauth_response="$(mktemp)"
+                    curl --silent --show-error --max-time 10 \
+                      --request POST \
+                      --header "Accept: application/json" \
+                      --header "Content-Type: application/x-www-form-urlencoded" \
+                      --data-urlencode "grant_type=client_credentials" \
+                      --data-urlencode "client_id=${NPA_API_OAUTH_CLIENT_ID}" \
+                      --data-urlencode "client_secret=${NPA_API_OAUTH_CLIENT_SECRET}" \
+                      {{- if .Values.enrollment.api.oauth2.scope }}
+                      --data-urlencode "scope={{ .Values.enrollment.api.oauth2.scope }}" \
+                      {{- end }}
+                      "${NPA_API_OAUTH_TOKEN_URL}" \
+                      --output "${oauth_response}" \
+                      >/dev/null 2>&1 || true
+                    api_access_token="$(jq -r '.access_token // empty' "${oauth_response}" 2>/dev/null || true)"
+                    rm -f "${oauth_response}"
+                    {{- end }}
+                    [ -n "$api_access_token" ] || exit 0
                     curl --silent --show-error --max-time 10 \
                       --request DELETE \
-                      --header "Authorization: Bearer ${NPA_API_TOKEN}" \
+                      --header "Authorization: Bearer ${api_access_token}" \
                       "${NPA_API_BASE_URL}/api/v2/infrastructure/publishers/${pid}" \
                       >/dev/null 2>&1 || true
                     exit 0

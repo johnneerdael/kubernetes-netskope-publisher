@@ -10,7 +10,8 @@ references a **Secret resource by name**.
 
 | Value | Where | Sensitivity |
 |---|---|---|
-| Netskope API token | Secret `npa-api-token` key `api-token` | High — full publisher admin scope |
+| Netskope API token (`enrollment.api.authMode=token`) | Secret `npa-api-token` key `api-token` | High — full publisher admin scope |
+| OAuth2 client credentials (`enrollment.api.authMode=oauth2`) | Secret `npa-api-oauth` keys `client-id` and `client-secret` | High — can mint API access tokens |
 | Registration token (`mode: token`) | Secret you create, or `--set` value | Medium — single-use, short-lived |
 | Image pull credentials | Secret of type `kubernetes.io/dockerconfigjson` | Medium |
 
@@ -20,6 +21,15 @@ references a **Secret resource by name**.
 kubectl create secret generic npa-api-token \
   --namespace npa-publisher \
   --from-literal=api-token='paste-here'
+```
+
+For OAuth2 API authentication:
+
+```bash
+kubectl create secret generic npa-api-oauth \
+  --namespace npa-publisher \
+  --from-literal=client-id='paste-client-id-here' \
+  --from-literal=client-secret='paste-client-secret-here'
 ```
 
 > ⚠️ Do **not** pass secrets to `helm install --set ...`. Helm logs the

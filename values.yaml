@@ -61,9 +61,23 @@ enrollment:
   api:
     # Required when mode=api. Replace with your tenant URL, for example https://tenant.goskope.com.
     baseUrl: "https://tenant.goskope.com"
-    # Required when mode=api. Secret must contain the Netskope API token.
+    # API authentication mode for Netskope REST calls.
+    # token: use a static Netskope API token from existingSecret/tokenKey.
+    # oauth2: fetch a short-lived bearer access token from oauth2.tokenUrl using
+    #         client credentials from oauth2.existingSecret.
+    authMode: "token"
+    # Required when mode=api and authMode=token. Secret must contain the Netskope API token.
     existingSecret: "npa-api-token"
     tokenKey: "api-token"
+    oauth2:
+      # Required when authMode=oauth2. Full OAuth2 token endpoint URL for your tenant/identity provider.
+      tokenUrl: ""
+      # Required when authMode=oauth2. Secret must contain the OAuth2 client ID and client secret.
+      existingSecret: "npa-api-oauth"
+      clientIdKey: "client-id"
+      clientSecretKey: "client-secret"
+      # Optional OAuth2 scope value sent with the client_credentials request.
+      scope: ""
     # Delete the tenant-side Publisher record on pod termination
     # (HPA scale-down, helm uninstall, node drain).
     #

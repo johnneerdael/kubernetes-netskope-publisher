@@ -481,13 +481,13 @@ You should see your cluster nodes listed with `Ready` status. If this fails, res
 
 ## Part 2 — Prepare Enrollment Credentials
 
-### API Mode: Create an API Token Secret
+### API Mode: Create API Credentials
 
-API mode needs a Netskope API token instead of a static one-time registration token. The API token must be allowed to list NPA Publishers, create NPA Publishers, and generate Publisher registration tokens.
+API mode needs Netskope API credentials instead of a static one-time registration token. The credential must be allowed to list NPA Publishers, create NPA Publishers, and generate Publisher registration tokens.
 
 Before deploying, choose the Publisher name to use. If no Publisher with that `common_name` or `publisher_name` exists, API mode creates one automatically using the same value as the Publisher `name`. Netskope may generate a separate `common_name` value during creation.
 
-Create a Kubernetes Secret containing the Netskope API token:
+By default, API mode uses a Kubernetes Secret containing a static Netskope API token:
 
 ```bash
 kubectl create namespace npa-publisher
@@ -495,6 +495,17 @@ kubectl create secret generic npa-api-token \
   --namespace npa-publisher \
   --from-literal=api-token='PASTE_NETSKOPE_API_TOKEN_HERE'
 ```
+
+Alternatively, set `enrollment.api.authMode: oauth2` and create a Secret containing OAuth2 client credentials:
+
+```bash
+kubectl create secret generic npa-api-oauth \
+  --namespace npa-publisher \
+  --from-literal=client-id='PASTE_CLIENT_ID_HERE' \
+  --from-literal=client-secret='PASTE_CLIENT_SECRET_HERE'
+```
+
+OAuth2 mode also requires `enrollment.api.oauth2.tokenUrl`, the full token endpoint URL used for the client credentials flow.
 
 ### Token Mode: Get Your Registration Token
 

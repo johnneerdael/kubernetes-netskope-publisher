@@ -72,8 +72,20 @@
           "additionalProperties": false,
           "properties": {
             "baseUrl":          { "type": "string", "pattern": "^https?://" },
+            "authMode":         { "type": "string", "enum": ["token", "oauth2"] },
             "existingSecret":   { "type": "string", "minLength": 1 },
             "tokenKey":         { "type": "string", "minLength": 1 },
+            "oauth2": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "tokenUrl":        { "type": "string" },
+                "existingSecret":  { "type": "string", "minLength": 1 },
+                "clientIdKey":     { "type": "string", "minLength": 1 },
+                "clientSecretKey": { "type": "string", "minLength": 1 },
+                "scope":           { "type": "string" }
+              }
+            },
             "cleanupOnDelete":  { "type": "boolean" }
           }
         }

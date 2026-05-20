@@ -43,6 +43,18 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if eq (include "kubernetes-netskope-publisher.enrollmentMode" .) "api" -}}true{{- end -}}
 {{- end -}}
 
+{{- define "kubernetes-netskope-publisher.apiAuthMode" -}}
+{{- default "token" .Values.enrollment.api.authMode -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.isApiTokenAuth" -}}
+{{- if eq (include "kubernetes-netskope-publisher.apiAuthMode" .) "token" -}}true{{- end -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.isApiOauth2Auth" -}}
+{{- if eq (include "kubernetes-netskope-publisher.apiAuthMode" .) "oauth2" -}}true{{- end -}}
+{{- end -}}
+
 {{- define "kubernetes-netskope-publisher.workloadType" -}}
 {{- default "daemonset" .Values.workload.type -}}
 {{- end -}}
@@ -114,7 +126,19 @@ runAsUser: 0
 {{- if eq $mode "api" -}}
 {{- $_ := required "enrollment.commonName is required when enrollment.mode=api" .Values.enrollment.commonName -}}
 {{- $_ := required "enrollment.api.baseUrl is required when enrollment.mode=api" .Values.enrollment.api.baseUrl -}}
+{{- $apiAuthMode := include "kubernetes-netskope-publisher.apiAuthMode" . -}}
+{{- if not (or (eq $apiAuthMode "token") (eq $apiAuthMode "oauth2")) -}}
+{{- fail "enrollment.api.authMode must be either 'token' or 'oauth2'" -}}
+{{- end -}}
+{{- if eq $apiAuthMode "token" -}}
 {{- $_ := required "enrollment.api.existingSecret is required when enrollment.mode=api" .Values.enrollment.api.existingSecret -}}
 {{- $_ := required "enrollment.api.tokenKey is required when enrollment.mode=api" .Values.enrollment.api.tokenKey -}}
+{{- end -}}
+{{- if eq $apiAuthMode "oauth2" -}}
+{{- $_ := required "enrollment.api.oauth2.tokenUrl is required when enrollment.api.authMode=oauth2" .Values.enrollment.api.oauth2.tokenUrl -}}
+{{- $_ := required "enrollment.api.oauth2.existingSecret is required when enrollment.api.authMode=oauth2" .Values.enrollment.api.oauth2.existingSecret -}}
+{{- $_ := required "enrollment.api.oauth2.clientIdKey is required when enrollment.api.authMode=oauth2" .Values.enrollment.api.oauth2.clientIdKey -}}
+{{- $_ := required "enrollment.api.oauth2.clientSecretKey is required when enrollment.api.authMode=oauth2" .Values.enrollment.api.oauth2.clientSecretKey -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}

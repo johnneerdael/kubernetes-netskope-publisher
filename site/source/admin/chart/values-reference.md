@@ -42,8 +42,14 @@ for the full setup.
 | `enrollment.mode` | `api` | `api` (recommended) or `token`. |
 | `enrollment.commonName` | `npa-publisher` | Name shown in the Netskope console. |
 | `enrollment.api.baseUrl` | `https://tenant.goskope.com` | Tenant URL, no trailing slash. |
-| `enrollment.api.existingSecret` | `npa-api-token` | Secret containing the API token. |
-| `enrollment.api.tokenKey` | `api-token` | Key within that secret. |
+| `enrollment.api.authMode` | `token` | API credential mode: `token` for a static API token or `oauth2` for client credentials. |
+| `enrollment.api.existingSecret` | `npa-api-token` | Secret containing the API token when `authMode=token`. |
+| `enrollment.api.tokenKey` | `api-token` | API token key within that secret. |
+| `enrollment.api.oauth2.tokenUrl` | `""` | Full OAuth2 token endpoint URL when `authMode=oauth2`. |
+| `enrollment.api.oauth2.existingSecret` | `npa-api-oauth` | Secret containing the OAuth2 client ID and client secret. |
+| `enrollment.api.oauth2.clientIdKey` | `client-id` | OAuth2 client ID key within that secret. |
+| `enrollment.api.oauth2.clientSecretKey` | `client-secret` | OAuth2 client secret key within that secret. |
+| `enrollment.api.oauth2.scope` | `""` | Optional scope sent with the OAuth2 client credentials request. |
 | `enrollment.api.cleanupOnDelete` | `false` | Opt-in preStop hook that deletes the tenant-side Publisher record on pod termination. Only safe when scaled replicas never carry Private App attachments — the Netskope API rejects DELETE on Publishers with apps assigned. |
 | `registrationToken.value` | `""` | `mode: token` only — pass via `--set`. |
 | `registrationToken.existingSecret` | `""` | Alternative to inline value. |
