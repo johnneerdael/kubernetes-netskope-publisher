@@ -884,7 +884,8 @@ kubectl rollout restart statefulset/kubernetes-netskope-publisher -n npa-publish
 
 ### Pin or Change the Publisher Image
 
-The chart defaults to the standard published image:
+The chart defaults to the standard published image for first-time
+installs:
 
 ```yaml
 image:
@@ -893,7 +894,22 @@ image:
   tag: "latest"
 ```
 
-To pin a specific published build or release, change `image.tag` in your values file, then run the same `helm upgrade` command above. The DaemonSet or StatefulSet will perform a rolling restart automatically.
+For upgrades, pin a specific published build or release. Changing
+`image.tag` changes the pod template, so the DaemonSet or StatefulSet
+performs a rolling restart automatically:
+
+```bash
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+  -n npa-publisher \
+  -f my-values.yaml \
+  --set image.tag=100.0.0.5678
+```
+
+Do not rely on `latest` for a deterministic production upgrade. With
+`image.pullPolicy: IfNotPresent`, a node may reuse its cached `latest`
+image, and Kubernetes will not restart pods if the rendered pod spec did
+not change. For disposable test environments using `latest`, set
+`image.pullPolicy=Always` and trigger a rollout restart.
 
 ### Re-enroll in Token Mode
 

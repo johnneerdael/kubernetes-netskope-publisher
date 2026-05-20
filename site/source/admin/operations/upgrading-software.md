@@ -13,6 +13,8 @@ You can move them independently.
 
 ## Upgrading the Publisher binary
 
+Prefer a pinned published image tag for upgrades:
+
 ```bash
 helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   -n npa-publisher \
@@ -20,7 +22,8 @@ helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
   --set image.tag=100.0.0.5678
 ```
 
-This triggers a rolling restart:
+Changing `image.tag` changes the pod template, so Kubernetes performs a
+rolling restart:
 
 - **StatefulSet**: pods restart one-by-one. Each goes through init →
   re-enroll → tunnel-up before the next one is touched.
@@ -29,6 +32,33 @@ This triggers a rolling restart:
 
 There is **no in-place binary upgrade** — the container image is
 replaced wholesale, and the pod restarts.
+
+### About `latest`
+
+The chart defaults to `image.tag=latest` for first-time installs, but
+`latest` is not a deterministic upgrade target. With the default
+`image.pullPolicy=IfNotPresent`, a node can reuse its cached
+`latest` image, and if the rendered pod spec does not change, Kubernetes
+has no reason to restart the pods.
+
+Use `latest` only for disposable test environments. If you do, force a
+pull and a rollout explicitly:
+
+```bash
+helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+  -n npa-publisher \
+  -f my-values.yaml \
+  --set image.tag=latest \
+  --set image.pullPolicy=Always
+
+kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher
+```
+
+For StatefulSet mode, restart the StatefulSet instead:
+
+```bash
+kubectl rollout restart statefulset/kubernetes-netskope-publisher -n npa-publisher
+```
 
 ## Upgrading the chart
 
