@@ -134,9 +134,9 @@ fi
 
 OUTPUT=$(helm template test-release "${CHART_DIR}" \
     --set networking.mode=invalid 2>&1 || true)
-if echo "$OUTPUT" | grep -q "networking.mode must be either 'host' or 'pod'"; then
+if echo "$OUTPUT" | grep -q "networking.mode must be one of 'host', 'pod', or 'lwip'"; then
     echo -e "${GREEN}✓ Networking mode validation working${NC}"
-elif echo "$OUTPUT" | grep -q "at '/networking/mode': value must be one of 'pod', 'host'"; then
+elif echo "$OUTPUT" | grep -q "at '/networking/mode': value must be one of 'pod', 'host', 'lwip'"; then
     echo -e "${GREEN}✓ Networking mode schema validation working${NC}"
 else
     echo -e "${RED}✗ Networking mode validation missing${NC}"
@@ -180,7 +180,7 @@ OUTPUT=$(helm template test-release "${CHART_DIR}" \
     --set workload.type=statefulset \
     --set enrollment.mode=api \
     --set networking.mode=host 2>&1 || true)
-if echo "$OUTPUT" | grep -q "workload.type=statefulset requires networking.mode=pod"; then
+if echo "$OUTPUT" | grep -q "workload.type=statefulset requires networking.mode=pod or networking.mode=lwip"; then
     echo -e "${GREEN}✓ StatefulSet pod-network validation working${NC}"
 else
     echo -e "${RED}✗ StatefulSet pod-network validation missing${NC}"
@@ -520,6 +520,62 @@ if echo "$STATEFULSET_RENDERED" | grep -q "kind: DaemonSet"; then
 else
     echo -e "${GREEN}✓ StatefulSet mode omits DaemonSet${NC}"
 fi
+
+# Test 14: Validate rootless lwIP mode rendering
+echo -e "\n${YELLOW}[TEST 14]${NC} Validating rootless lwIP mode rendering..."
+LWIP_RENDERED=$(helm template test-release "${CHART_DIR}" \
+    --set networking.mode=lwip \
+    --set enrollment.mode=api \
+    --set enrollment.commonName="lwip-publisher" \
+    --set enrollment.api.baseUrl="https://tenant.goskope.com" \
+    --set enrollment.api.existingSecret="npa-api-token" \
+    --set persistence.enabled=false)
+
+for expected in \
+    "hostNetwork: false" \
+    "dnsPolicy: ClusterFirst" \
+    "privileged: false" \
+    "allowPrivilegeEscalation: false" \
+    "drop:" \
+    "- ALL" \
+    "runAsNonRoot: true" \
+    "runAsUser: 65532" \
+    "runAsGroup: 65532" \
+    "fsGroup: 65532" \
+    "fsGroupChangePolicy: OnRootMismatch" \
+    "name: NPA_NETWORKING_MODE" \
+    "value: \"lwip\"" \
+    "image: \"netskopeprivateaccess/publisher_u22_test:10827\"" \
+    "imagePullPolicy: IfNotPresent" \
+    "name: DATA_PLANE" \
+    "value: \"lwip\"" \
+    "Skipping tun network namespace preparation in lwIP mode" \
+    "Skipping DNS daemon startup in lwIP mode" \
+    "Skipping network sysctl tuning in lwIP mode"; do
+    if echo "$LWIP_RENDERED" | grep -F -q -- "$expected"; then
+        echo -e "  ${GREEN}✓${NC} Found lwIP setting: $expected"
+    else
+        echo -e "  ${RED}✗${NC} Missing lwIP setting: $expected"
+        exit 1
+    fi
+done
+
+for unexpected in \
+    "NET_ADMIN" \
+    "NET_RAW" \
+    "mountPath: /dev/net/tun" \
+    "path: /dev/net/tun" \
+    "type: CharDevice" \
+    "name: NPA_DISABLE_IPV6" \
+    "name: local-dns" \
+    "dockurr/dnsmasq"; do
+    if echo "$LWIP_RENDERED" | grep -F -q -- "$unexpected"; then
+        echo -e "  ${RED}✗${NC} lwIP mode rendered forbidden setting: $unexpected"
+        exit 1
+    else
+        echo -e "  ${GREEN}✓${NC} lwIP mode omits forbidden setting: $unexpected"
+    fi
+done
 
 echo -e "\n${GREEN}=========================================${NC}"
 echo -e "${GREEN}All tests passed!${NC}"

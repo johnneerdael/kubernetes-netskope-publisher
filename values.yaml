@@ -14,6 +14,13 @@ image:
   # Use any published tag, or keep "latest" for the default published image.
   tag: "latest"
 
+# Rootless lwIP Publisher image.
+# Used automatically when networking.mode=lwip.
+lwipImage:
+  repository: "netskopeprivateaccess/publisher_u22_test"
+  tag: "10827"
+  pullPolicy: IfNotPresent
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
@@ -122,10 +129,13 @@ persistence:
   # Existing PVC name (optional, creates new if not specified)
   existingClaim: ""
 
-# Network namespace mode.
+# Network namespace / data-plane mode.
 # pod (default): runs in the pod network namespace without hostNetwork or
 #   privileged mode. The Publisher needs NET_ADMIN/NET_RAW and /dev/net/tun
 #   for its container-local tunnel interface, routes, and iptables rules.
+# lwip: rootless userspace data plane. No hostNetwork, privileged mode,
+#   NET_ADMIN/NET_RAW, or /dev/net/tun mount. Automatically uses
+#   lwipImage.repository:lwipImage.tag.
 # host: legacy mode. Uses host networking and the full privileged
 #   securityContext defined below.
 networking:
@@ -146,6 +156,14 @@ tunDevice:
 #   networking.mode=pod  (default):
 #     securityContext: privileged=false, allowPrivilegeEscalation=false,
 #                      NET_ADMIN + NET_RAW, runAsUser=0
+#     hostNetwork:     false
+#     dnsPolicy:       ClusterFirst
+#
+#   networking.mode=lwip:
+#     securityContext: privileged=false, allowPrivilegeEscalation=false,
+#                      drop ALL capabilities, runAsNonRoot=true,
+#                      runAsUser=65532, runAsGroup=65532
+#     podSecurityContext: fsGroup=65532 for writable resources volume
 #     hostNetwork:     false
 #     dnsPolicy:       ClusterFirst
 #

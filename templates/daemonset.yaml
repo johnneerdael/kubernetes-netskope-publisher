@@ -38,11 +38,15 @@ spec:
       hostNetwork: {{ include "kubernetes-netskope-publisher.hostNetwork" . }}
       dnsPolicy: {{ include "kubernetes-netskope-publisher.dnsPolicy" . }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if include "kubernetes-netskope-publisher.isLwipNetworking" . }}
+      securityContext:
+        {{- include "kubernetes-netskope-publisher.podSecurityContext" . | nindent 8 }}
+      {{- end }}
       {{- if not (include "kubernetes-netskope-publisher.isApiEnrollment" .) }}
       initContainers:
         - name: enroll
-          image: "{{ .Values.initContainer.image.repository | default .Values.image.repository }}:{{ .Values.initContainer.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.initContainer.image.repository | default (include "kubernetes-netskope-publisher.publisherImageRepository" .) }}:{{ .Values.initContainer.image.tag | default (include "kubernetes-netskope-publisher.publisherImageTag" .) }}"
+          imagePullPolicy: {{ include "kubernetes-netskope-publisher.publisherImagePullPolicy" . }}
           command:
             - /bin/bash
           args:
@@ -66,8 +70,8 @@ spec:
       {{- end }}
       containers:
         - name: publisher
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ include "kubernetes-netskope-publisher.publisherImage" . }}"
+          imagePullPolicy: {{ include "kubernetes-netskope-publisher.publisherImagePullPolicy" . }}
           command:
             {{- if include "kubernetes-netskope-publisher.isApiEnrollment" . }}
             - /bin/bash
@@ -93,6 +97,10 @@ spec:
                   fieldPath: spec.nodeName
             - name: NPA_NETWORKING_MODE
               value: {{ include "kubernetes-netskope-publisher.networkingMode" . | quote }}
+            {{- if include "kubernetes-netskope-publisher.isLwipNetworking" . }}
+            - name: DATA_PLANE
+              value: "lwip"
+            {{- end }}
             {{- if and (include "kubernetes-netskope-publisher.isPodNetworking" .) .Values.networking.disableIPv6 }}
             - name: NPA_DISABLE_IPV6
               value: "true"

@@ -131,12 +131,13 @@ For horizontal-scaling tests on a single node, make sure the node has enough all
 
 ## Platform Compatibility
 
-The chart supports two network modes. Use `host` for the legacy highest-compatibility deployment, or `pod` to avoid host networking and full privileged mode.
+The chart supports three network modes. Use `host` for the legacy highest-compatibility deployment, `pod` to avoid host networking and full privileged mode, or `lwip` for the rootless userspace data plane image.
 
 | Mode | Value | Security profile | Best for |
 |---|---|---|---|
 | Host network | `networking.mode=host` | `hostNetwork: true`, `privileged: true`, `NET_ADMIN`, `NET_RAW` | Existing deployments and clusters that already allow privileged host-network pods |
 | Pod network | `networking.mode=pod` | `hostNetwork: false`, `privileged: false`, `NET_ADMIN`, `NET_RAW`, `/dev/net/tun` mounted as a hostPath character device | Managed Kubernetes clusters where full privileged mode or host networking is blocked |
+| Rootless lwIP | `networking.mode=lwip` | `hostNetwork: false`, `privileged: false`, drops all capabilities, runs as uid/gid `65532`, no `/dev/net/tun` mount, image `netskopeprivateaccess/publisher_u22_test:10827` | Restricted/serverless container targets with the lwIP Publisher image |
 
 Pod network mode still needs a namespace or policy exception. Kubernetes Pod Security `restricted` policies, and many `baseline`-style policies, reject `NET_ADMIN` and hostPath device volumes. This exception is narrower than privileged host networking, but it is still required.
 
@@ -173,6 +174,21 @@ volumes:
 In pod network mode the Kubernetes bootstrap avoids host-level preparation that is not writable in a pod sandbox. It prepares only the pod network namespace pieces the Publisher needs, skips host-level sysctl tuning, filters known non-fatal startup noise, and removes IPv6 link-local addresses from `tun0` when `networking.disableIPv6=true`.
 
 Pod network mode also avoids the Publisher image's in-container BIND9 path. The chart starts a `local-dns` dnsmasq sidecar that listens only on `127.0.0.1:53`, reads the Kubernetes-provided upstream resolver from `/etc/resolv.conf`, and forwards to cluster DNS/CoreDNS. This preserves Kubernetes service discovery and any cluster-level forwarding or stub-domain rules. Do not set `bind.forwarders` in pod mode; configure CoreDNS forwarding instead when private domains need authoritative external DNS.
+
+### Rootless lwIP Mode
+
+Use this mode only with the lwIP-capable Publisher image:
+
+```yaml
+networking:
+  mode: lwip
+
+lwipImage:
+  repository: netskopeprivateaccess/publisher_u22_test
+  tag: "10827"
+```
+
+In lwIP mode the chart selects `netskopeprivateaccess/publisher_u22_test:10827` by default, sets `DATA_PLANE=lwip`, drops all Linux capabilities, runs the container as uid/gid `65532`, sets `fsGroup: 65532` for the resources volume, and does not mount `/dev/net/tun`. L3 no-NAT mode is not supported by the lwIP data plane.
 
 ## Horizontal Scaling In Pod Mode
 
@@ -332,9 +348,9 @@ workload:
 Constraints:
 
 - StatefulSet mode is supported only with `enrollment.mode=api`.
-- StatefulSet mode requires `networking.mode=pod`.
+- StatefulSet mode requires `networking.mode=pod` or `networking.mode=lwip`.
 - Each scaled Publisher consumes its own Netskope Publisher identity.
-- Namespace policy must still allow `NET_ADMIN`, `NET_RAW`, and the `/dev/net/tun` hostPath character device.
+- Namespace policy must allow `NET_ADMIN`, `NET_RAW`, and the `/dev/net/tun` hostPath character device for `networking.mode=pod`. Rootless lwIP mode does not use those privileges.
 - If the scheduler does not place multiple replicas on one node, check node resources, node selectors, taints, tolerations, affinity, and cluster scheduling policy.
 
 ### Provider Support
@@ -378,7 +394,7 @@ For storage, API mode defaults to pod-local `emptyDir` storage and re-enrolls wh
 | DaemonSet | `workload.type=daemonset` | `api` or `token` | One Publisher pod per matching node |
 | StatefulSet | `workload.type=statefulset` | `api` only | Multiple Publisher pods with stable identities, including multiple pods on one node |
 
-StatefulSet mode requires `networking.mode=pod`. Each replica gets a stable pod name and appends it to `enrollment.commonName`; for example, `prod-k8s-publisher-kubernetes-netskope-publisher-0`. This gives every Publisher instance a unique API-created identity while allowing Kubernetes to restart the same replica with the same name.
+StatefulSet mode requires `networking.mode=pod` or `networking.mode=lwip`. Each replica gets a stable pod name and appends it to `enrollment.commonName`; for example, `prod-k8s-publisher-kubernetes-netskope-publisher-0`. This gives every Publisher instance a unique API-created identity while allowing Kubernetes to restart the same replica with the same name.
 
 ---
 
@@ -426,9 +442,10 @@ The chart default Publisher resources request `500m` CPU and `384Mi` memory, cap
 | Outbound internet | Port 443 TCP open to Netskope cloud from the node |
 | Host mode policy | Must permit privileged containers and host networking when `networking.mode=host` |
 | Pod mode policy | Must permit `NET_ADMIN`, `NET_RAW`, and `/dev/net/tun` hostPath device mount when `networking.mode=pod` |
+| lwIP mode policy | Must permit non-root pods that drop all Linux capabilities when `networking.mode=lwip` |
 | Storage | A working StorageClass that can provision PersistentVolumeClaims for token/PVC deployments. API enrollment can run with `persistence.enabled=false`. |
 
-> **Note:** Host mode requires `hostNetwork: true` and privileged mode. Pod mode avoids both, but still requires `NET_ADMIN`, `NET_RAW`, and `/dev/net/tun` so the Publisher can create its container-local tunnel interface and manage routes/iptables inside the pod network namespace.
+> **Note:** Host mode requires `hostNetwork: true` and privileged mode. Pod mode avoids both, but still requires `NET_ADMIN`, `NET_RAW`, and `/dev/net/tun` so the Publisher can create its container-local tunnel interface and manage routes/iptables inside the pod network namespace. lwIP mode uses a userspace data plane and does not require those capabilities or the tun device.
 
 ### Other Deployment Architectures
 

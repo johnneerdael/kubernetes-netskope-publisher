@@ -15,6 +15,17 @@
       },
       "required": ["repository"]
     },
+    "lwipImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Publisher image used automatically when networking.mode=lwip.",
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag":        { "type": "string", "minLength": 1 },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+      },
+      "required": ["repository", "tag"]
+    },
     "imagePullSecrets": {
       "type": "array",
       "items": {
@@ -126,7 +137,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "mode":         { "type": "string", "enum": ["pod", "host"] },
+        "mode":         { "type": "string", "enum": ["pod", "host", "lwip"] },
         "disableIPv6":  { "type": "boolean" }
       },
       "required": ["mode"]

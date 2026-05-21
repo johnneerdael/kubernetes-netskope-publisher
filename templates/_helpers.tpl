@@ -71,16 +71,57 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if eq (include "kubernetes-netskope-publisher.networkingMode" .) "pod" -}}true{{- end -}}
 {{- end -}}
 
+{{- define "kubernetes-netskope-publisher.isLwipNetworking" -}}
+{{- if eq (include "kubernetes-netskope-publisher.networkingMode" .) "lwip" -}}true{{- end -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.publisherImageRepository" -}}
+{{- if include "kubernetes-netskope-publisher.isLwipNetworking" . -}}
+{{- .Values.lwipImage.repository -}}
+{{- else -}}
+{{- .Values.image.repository -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.publisherImageTag" -}}
+{{- if include "kubernetes-netskope-publisher.isLwipNetworking" . -}}
+{{- .Values.lwipImage.tag -}}
+{{- else -}}
+{{- .Values.image.tag | default .Chart.AppVersion -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.publisherImagePullPolicy" -}}
+{{- if include "kubernetes-netskope-publisher.isLwipNetworking" . -}}
+{{- .Values.lwipImage.pullPolicy | default .Values.image.pullPolicy -}}
+{{- else -}}
+{{- .Values.image.pullPolicy -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.publisherImage" -}}
+{{- printf "%s:%s" (include "kubernetes-netskope-publisher.publisherImageRepository" .) (include "kubernetes-netskope-publisher.publisherImageTag" .) -}}
+{{- end -}}
+
 {{- define "kubernetes-netskope-publisher.hostNetwork" -}}
-{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}false{{- else -}}true{{- end -}}
+{{- if or (include "kubernetes-netskope-publisher.isPodNetworking" .) (include "kubernetes-netskope-publisher.isLwipNetworking" .) -}}false{{- else -}}true{{- end -}}
 {{- end -}}
 
 {{- define "kubernetes-netskope-publisher.dnsPolicy" -}}
-{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}ClusterFirst{{- else -}}ClusterFirstWithHostNet{{- end -}}
+{{- if or (include "kubernetes-netskope-publisher.isPodNetworking" .) (include "kubernetes-netskope-publisher.isLwipNetworking" .) -}}ClusterFirst{{- else -}}ClusterFirstWithHostNet{{- end -}}
 {{- end -}}
 
 {{- define "kubernetes-netskope-publisher.securityContext" -}}
-{{- if include "kubernetes-netskope-publisher.isPodNetworking" . -}}
+{{- if include "kubernetes-netskope-publisher.isLwipNetworking" . -}}
+allowPrivilegeEscalation: false
+capabilities:
+  drop:
+    - ALL
+privileged: false
+runAsNonRoot: true
+runAsUser: 65532
+runAsGroup: 65532
+{{- else if include "kubernetes-netskope-publisher.isPodNetworking" . -}}
 allowPrivilegeEscalation: false
 capabilities:
   add:
@@ -101,6 +142,16 @@ runAsUser: 0
 {{- end -}}
 {{- end -}}
 
+{{- define "kubernetes-netskope-publisher.podSecurityContext" -}}
+{{- if include "kubernetes-netskope-publisher.isLwipNetworking" . -}}
+fsGroup: 65532
+fsGroupChangePolicy: OnRootMismatch
+runAsGroup: 65532
+runAsNonRoot: true
+runAsUser: 65532
+{{- end -}}
+{{- end -}}
+
 {{- define "kubernetes-netskope-publisher.validateEnrollment" -}}
 {{- $mode := include "kubernetes-netskope-publisher.enrollmentMode" . -}}
 {{- if not (or (eq $mode "token") (eq $mode "api")) -}}
@@ -114,14 +165,14 @@ runAsUser: 0
 {{- fail "workload.type=statefulset is only supported when enrollment.mode=api" -}}
 {{- end -}}
 {{- $networkingMode := include "kubernetes-netskope-publisher.networkingMode" . -}}
-{{- if not (or (eq $networkingMode "host") (eq $networkingMode "pod")) -}}
-{{- fail "networking.mode must be either 'host' or 'pod'" -}}
+{{- if not (or (eq $networkingMode "host") (eq $networkingMode "pod") (eq $networkingMode "lwip")) -}}
+{{- fail "networking.mode must be one of 'host', 'pod', or 'lwip'" -}}
 {{- end -}}
-{{- if and (eq $workloadType "statefulset") (ne $networkingMode "pod") -}}
-{{- fail "workload.type=statefulset requires networking.mode=pod" -}}
+{{- if and (eq $workloadType "statefulset") (not (or (eq $networkingMode "pod") (eq $networkingMode "lwip"))) -}}
+{{- fail "workload.type=statefulset requires networking.mode=pod or networking.mode=lwip" -}}
 {{- end -}}
-{{- if and (eq $networkingMode "pod") .Values.bind.forwarders -}}
-{{- fail "bind.forwarders is only supported when networking.mode=host; configure Kubernetes CoreDNS forwarding for private domains in pod network mode" -}}
+{{- if and (ne $networkingMode "host") .Values.bind.forwarders -}}
+{{- fail "bind.forwarders is only supported when networking.mode=host; configure Kubernetes CoreDNS forwarding for private domains in pod or lwip mode" -}}
 {{- end -}}
 {{- if eq $mode "api" -}}
 {{- $_ := required "enrollment.commonName is required when enrollment.mode=api" .Values.enrollment.commonName -}}

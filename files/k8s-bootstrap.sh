@@ -23,6 +23,14 @@ log() {
   echo "k8s-bootstrap: $*"
 }
 
+is_lwip_mode() {
+  [ "${NPA_NETWORKING_MODE:-host}" = "lwip" ] || [ "${DATA_PLANE:-}" = "lwip" ]
+}
+
+is_pod_mode() {
+  [ "${NPA_NETWORKING_MODE:-host}" = "pod" ]
+}
+
 start_process() {
   local name="$1"
   shift
@@ -251,6 +259,11 @@ run_sysctl() {
 }
 
 disable_ipv6_if_requested() {
+  if is_lwip_mode; then
+    log "Skipping IPv6 network namespace changes in lwIP mode"
+    return 0
+  fi
+
   if [ "${NPA_DISABLE_IPV6:-false}" != "true" ]; then
     return 0
   fi
@@ -261,7 +274,12 @@ disable_ipv6_if_requested() {
 }
 
 prepare_network_namespace() {
-  if [ "${NPA_NETWORKING_MODE:-host}" != "pod" ]; then
+  if is_lwip_mode; then
+    log "Skipping tun network namespace preparation in lwIP mode"
+    return 0
+  fi
+
+  if ! is_pod_mode; then
     /home/prepare_host.sh
     return 0
   fi
@@ -363,7 +381,12 @@ apply_bind_forwarders_to_named_config() {
 }
 
 start_dns_forwarder() {
-  if [ "${NPA_NETWORKING_MODE:-host}" = "pod" ]; then
+  if is_lwip_mode; then
+    log "Skipping DNS daemon startup in lwIP mode"
+    return 0
+  fi
+
+  if is_pod_mode; then
     log "Using dnsmasq sidecar for pod-local DNS; preserving Kubernetes cluster DNS from /etc/resolv.conf"
     return 0
   fi
@@ -375,6 +398,11 @@ start_dns_forwarder() {
 }
 
 cleanup_tun0_ipv6_if_requested() {
+  if is_lwip_mode; then
+    log "Skipping tun0 IPv6 cleanup in lwIP mode"
+    return 0
+  fi
+
   if [ "${NPA_DISABLE_IPV6:-false}" != "true" ]; then
     return 0
   fi
@@ -393,7 +421,12 @@ cleanup_tun0_ipv6_if_requested() {
 }
 
 apply_network_sysctls() {
-  if [ "${NPA_NETWORKING_MODE:-host}" = "pod" ]; then
+  if is_lwip_mode; then
+    log "Skipping network sysctl tuning in lwIP mode"
+    return 0
+  fi
+
+  if is_pod_mode; then
     log "Skipping host-level sysctl tuning in pod network mode"
     return 0
   fi
@@ -471,8 +504,13 @@ fi
 
 apply_network_sysctls
 
-IPTABLES_CMD="$(resolve_iptables)"
-log "IPTABLES_CMD is ${IPTABLES_CMD}"
+if is_lwip_mode; then
+  IPTABLES_CMD=""
+  log "Skipping iptables resolution in lwIP mode"
+else
+  IPTABLES_CMD="$(resolve_iptables)"
+  log "IPTABLES_CMD is ${IPTABLES_CMD}"
+fi
 
 log "Starting NPA Publisher"
 LD_PRELOAD=/home/libjemalloc.so.2 \
