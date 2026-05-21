@@ -568,6 +568,8 @@ for unexpected in \
     "mountPath: /dev/net/tun" \
     "path: /dev/net/tun" \
     "type: CharDevice" \
+    "mountPath: /etc/passwd" \
+    "name: fake-root-passwd" \
     "name: NPA_DISABLE_IPV6" \
     "name: local-dns" \
     "dockurr/dnsmasq"; do
@@ -576,6 +578,30 @@ for unexpected in \
         exit 1
     else
         echo -e "  ${GREEN}✓${NC} lwIP mode omits forbidden setting: $unexpected"
+    fi
+done
+
+LWIP_FAKE_ROOT_RENDERED=$(helm template test-release "${CHART_DIR}" \
+    --set networking.mode=lwip \
+    --set lwipRootlessCompat.fakeRootPasswd=true \
+    --set enrollment.mode=api \
+    --set enrollment.commonName="lwip-publisher" \
+    --set enrollment.api.baseUrl="https://tenant.goskope.com" \
+    --set enrollment.api.existingSecret="npa-api-token" \
+    --set persistence.enabled=false)
+
+for expected in \
+    "fake-root-passwd: |" \
+    "root:x:65532:65532:root:/home:/usr/sbin/nologin" \
+    "name: fake-root-passwd" \
+    "mountPath: /etc/passwd" \
+    "subPath: passwd" \
+    "readOnly: true"; do
+    if echo "$LWIP_FAKE_ROOT_RENDERED" | grep -F -q -- "$expected"; then
+        echo -e "  ${GREEN}✓${NC} Found lwIP fake-root passwd setting: $expected"
+    else
+        echo -e "  ${RED}✗${NC} Missing lwIP fake-root passwd setting: $expected"
+        exit 1
     fi
 done
 

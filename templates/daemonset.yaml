@@ -138,6 +138,12 @@ spec:
               mountPath: /home/k8s-bootstrap.sh
               subPath: k8s-bootstrap.sh
               readOnly: true
+            {{- if and (include "kubernetes-netskope-publisher.isLwipNetworking" .) .Values.lwipRootlessCompat.fakeRootPasswd }}
+            - name: fake-root-passwd
+              mountPath: /etc/passwd
+              subPath: passwd
+              readOnly: true
+            {{- end }}
             {{- if and (include "kubernetes-netskope-publisher.isPodNetworking" .) .Values.tunDevice.enabled }}
             - name: dev-net-tun
               mountPath: {{ .Values.tunDevice.mountPath }}
@@ -288,6 +294,14 @@ spec:
             items:
               - key: k8s-bootstrap.sh
                 path: k8s-bootstrap.sh
+        {{- if and (include "kubernetes-netskope-publisher.isLwipNetworking" .) .Values.lwipRootlessCompat.fakeRootPasswd }}
+        - name: fake-root-passwd
+          configMap:
+            name: {{ include "kubernetes-netskope-publisher.fullname" . }}-config
+            items:
+              - key: fake-root-passwd
+                path: passwd
+        {{- end }}
         {{- if and (include "kubernetes-netskope-publisher.isPodNetworking" .) .Values.tunDevice.enabled }}
         - name: dev-net-tun
           hostPath:

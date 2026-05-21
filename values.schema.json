@@ -143,6 +143,19 @@
       "required": ["mode"]
     },
 
+    "lwipRootlessCompat": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Experimental compatibility switches for networking.mode=lwip.",
+      "properties": {
+        "fakeRootPasswd": {
+          "type": "boolean",
+          "description": "Mount a generated /etc/passwd where uid 65532 resolves to username root."
+        }
+      },
+      "required": ["fakeRootPasswd"]
+    },
+
     "tunDevice": {
       "type": "object",
       "additionalProperties": false,

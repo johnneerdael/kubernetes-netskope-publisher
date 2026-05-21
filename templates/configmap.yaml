@@ -21,6 +21,11 @@ data:
   {{- if and (not (include "kubernetes-netskope-publisher.isPodNetworking" .)) .Values.bind.forwarders }}
   BIND_FORWARDERS: {{ join "," .Values.bind.forwarders | quote }}
   {{- end }}
+  {{- if and (include "kubernetes-netskope-publisher.isLwipNetworking" .) .Values.lwipRootlessCompat.fakeRootPasswd }}
+  fake-root-passwd: |
+    root:x:65532:65532:root:/home:/usr/sbin/nologin
+    nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+  {{- end }}
   {{- if include "kubernetes-netskope-publisher.isApiEnrollment" . }}
   ENROLLMENT_MODE: "api"
   NPA_PUBLISHER_COMMON_NAME: {{ .Values.enrollment.commonName | quote }}

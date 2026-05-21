@@ -17,6 +17,9 @@ lwipImage:
   repository: netskopeprivateaccess/publisher_u22_test
   tag: "10827"
   pullPolicy: IfNotPresent
+
+lwipRootlessCompat:
+  fakeRootPasswd: true
 ```
 
 Rootless lwIP mode is intended for SNAT-style publishing. L3 no-NAT mode still depends on kernel networking behavior and should use the normal pod or host networking modes.
@@ -33,6 +36,7 @@ When `networking.mode=lwip` is selected, the chart should render the Publisher w
 - Does not mount `/dev/net/tun`.
 - Does not add the local DNS sidecar used by pod networking mode.
 - Skips TUN namespace setup, interface cleanup, iptables discovery, and network sysctls in the bootstrap script.
+- Optionally mounts a generated `/etc/passwd` where UID `65532` resolves to username `root` when `lwipRootlessCompat.fakeRootPasswd=true`.
 
 ## Example Values
 
@@ -44,6 +48,9 @@ lwipImage:
   repository: netskopeprivateaccess/publisher_u22_test
   tag: "10827"
   pullPolicy: IfNotPresent
+
+lwipRootlessCompat:
+  fakeRootPasswd: true
 
 workload:
   type: statefulset

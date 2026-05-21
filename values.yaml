@@ -144,6 +144,13 @@ networking:
   # network namespace before the Publisher creates tun0.
   disableIPv6: true
 
+# Experimental lwIP rootless compatibility switches.
+# fakeRootPasswd mounts a generated /etc/passwd where uid 65532 resolves
+# to username "root". This is intended only to test binaries that check
+# the username instead of the numeric uid while still running as uid 65532.
+lwipRootlessCompat:
+  fakeRootPasswd: false
+
 # TUN device mount for networking.mode=pod.
 tunDevice:
   enabled: true
