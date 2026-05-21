@@ -14,7 +14,7 @@
 <meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.2 — 2026-05-19Ship values.schema.json at the chart root.  Helm now validates --set &amp;#">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-21T21:47:03.413Z">
+<meta property="article:modified_time" content="2026-05-21T22:01:34.401Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -142,7 +142,7 @@
 <p><strong>Upgrade hazard</strong>: if your values file overrode <code>securityContext</code>,<br><code>hostNetwork</code>, or <code>dnsPolicy</code>, those overrides are now silently<br>ignored. Remove them and switch <code>networking.mode</code> instead.</p>
 <h2><span id="v111-2026-05-18">v1.1.1 — 2026-05-18</span></h2><p>Docs-only release so Artifact Hub picks up the new README.</p>
 <ul>
-<li>README leads with the Artifact Hub install path<br>(<code>helm repo add npa … &amp;&amp; helm install npa/kubernetes-netskope-publisher</code>)<br>instead of the local-clone path; local-clone install becomes a<br>developer footnote.</li>
+<li>README leads with the published chart install path instead of the<br>local-clone path; local-clone install becomes a developer footnote.</li>
 <li>Slimmed example values to only the keys that aren’t covered by<br>1.1.0 defaults (pod networking, tunDevice, persistence: false, and<br>IPv6-disable are all default now).</li>
 <li>Replaced every remaining local-path install&#x2F;upgrade example in the<br>deep-dive sections so the advice stays consistent end-to-end.</li>
 <li>Fixed a stale clone URL in the k3s setup section.</li>

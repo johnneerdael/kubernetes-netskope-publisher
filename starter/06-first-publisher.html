@@ -14,7 +14,7 @@
 <meta property="og:description" content="Time to install. Replace tenant.goskope.com, the Publisher name, andcredential values with values for your environment. 1. Create the namespace and API credential SecretThe default starter path uses a">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-21T21:47:03.413Z">
+<meta property="article:modified_time" content="2026-05-21T22:01:34.402Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -114,7 +114,7 @@
 <blockquote>
 <p>The default chart values use <code>networking.mode: pod</code>. It avoids host<br>network coupling and uses a pod-local dnsmasq sidecar that forwards to<br>Kubernetes cluster DNS. See<br><a href="/kubernetes-netskope-publisher/admin/how-to/pod-vs-host-network/">pod-vs-host network</a>.</p>
 </blockquote>
-<h2><span id="3-install">3. Install</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \</span><br><span class="line">  --namespace npa-publisher \</span><br><span class="line">  -f my-values.yaml</span><br></pre></td></tr></table></figure>
+<h2><span id="3-install">3. Install</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \</span><br><span class="line">  --version 1.4.2 \</span><br><span class="line">  --namespace npa-publisher \</span><br><span class="line">  -f my-values.yaml</span><br></pre></td></tr></table></figure>
 
 <p>You’ll see Helm print the rendered NOTES.txt with the next-step<br>commands. Continue to <a href="/kubernetes-netskope-publisher/starter/07-verify-online/">verify it’s online</a>.</p>
 
