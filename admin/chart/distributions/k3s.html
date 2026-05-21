@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="k3s is the recommended path for first deployments. Single binary, noPSA&#x2F;PSP friction, host network and privileged pods Just Work. Install k3s1234curl -sfL https:&#x2F;&#x2F;get.k3s.io | sh -sudo cp &#x2F;etc&#x2F;ra">
+    <meta name="description" content="k3s is the recommended path for first deployments. Single binary, noPSA&#x2F;PSP friction, host network and privileged pods Just Work. Install k3s12345curl -sfL https:&#x2F;&#x2F;get.k3s.io | sh -mkdir -p ~&#x2F;.ku">
 <meta property="og:type" content="website">
 <meta property="og:title" content="k3s">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/chart/distributions/k3s">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="k3s is the recommended path for first deployments. Single binary, noPSA&#x2F;PSP friction, host network and privileged pods Just Work. Install k3s1234curl -sfL https:&#x2F;&#x2F;get.k3s.io | sh -sudo cp &#x2F;etc&#x2F;ra">
+<meta property="og:description" content="k3s is the recommended path for first deployments. Single binary, noPSA&#x2F;PSP friction, host network and privileged pods Just Work. Install k3s12345curl -sfL https:&#x2F;&#x2F;get.k3s.io | sh -mkdir -p ~&#x2F;.ku">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-20T10:30:29.950Z">
+<meta property="article:modified_time" content="2026-05-21T21:40:22.168Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -99,7 +99,7 @@
   <div class="content" itemprop="articleBody">
       
           <p>k3s is the recommended path for first deployments. Single binary, no<br>PSA&#x2F;PSP friction, host network and privileged pods Just Work.</p>
-<h2><span id="install-k3s">Install k3s</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -sfL https://get.k3s.io | sh -</span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">cp</span> /etc/rancher/k3s/k3s.yaml ~/.kube/config</span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">chown</span> $(<span class="built_in">id</span> -u):$(<span class="built_in">id</span> -g) ~/.kube/config</span><br><span class="line"><span class="built_in">chmod</span> 600 ~/.kube/config</span><br></pre></td></tr></table></figure>
+<h2><span id="install-k3s">Install k3s</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">curl -sfL https://get.k3s.io | sh -</span><br><span class="line"><span class="built_in">mkdir</span> -p ~/.kube</span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">cp</span> /etc/rancher/k3s/k3s.yaml ~/.kube/config</span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">chown</span> $(<span class="built_in">id</span> -u):$(<span class="built_in">id</span> -g) ~/.kube/config</span><br><span class="line"><span class="built_in">chmod</span> 600 ~/.kube/config</span><br></pre></td></tr></table></figure>
 
 <h2><span id="recommended-values">Recommended values</span></h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">workload:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">daemonset</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networking:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">host</span>     <span class="comment"># k3s, single node — host network is the simplest path</span></span><br><span class="line"></span><br><span class="line"><span class="attr">persistence:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
 
