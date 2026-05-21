@@ -2,8 +2,9 @@
 
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kubernetes-netskope-publisher)](https://artifacthub.io/packages/helm/kubernetes-netskope-publisher/kubernetes-netskope-publisher)
 
-The Helm chart is published on [Artifact Hub](https://artifacthub.io/packages/helm/kubernetes-netskope-publisher/kubernetes-netskope-publisher) and served as a Helm repository at
-<https://johnneerdael.github.io/kubernetes-netskope-publisher>.
+The Helm chart is published on [Artifact Hub](https://artifacthub.io/packages/helm/kubernetes-netskope-publisher/kubernetes-netskope-publisher)
+and distributed as an OCI chart from GitHub Container Registry:
+`oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher`.
 
 This guide walks you through deploying the Netskope Private Access (NPA) Publisher with Helm. The recommended beginner path uses a single-node k3s cluster because it keeps the Kubernetes setup small, local to one Linux host, and friendly to operators who have not run Kubernetes before.
 
@@ -16,10 +17,6 @@ The same Helm chart can also run on managed or self-managed Kubernetes platforms
 Use this path to deploy with API enrollment, then validate startup from logs. Replace the tenant URL, API token, and Publisher name for your environment. Everything else uses chart defaults (pod networking, pod-local dnsmasq, daemonset workload, no persistence).
 
 ```bash
-# Add the chart repository (one-time)
-helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher
-helm repo update
-
 # Create namespace + API-token Secret
 kubectl create namespace npa-publisher
 
@@ -38,14 +35,15 @@ enrollment:
     tokenKey: "api-token"
 EOF
 
-helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   --namespace npa-publisher \
   -f my-api-config.yaml
 ```
 
-> Developing on the chart? Clone the repo and swap `npa/kubernetes-netskope-publisher`
-> for `.` in the install command to install from the local source instead of the
-> published release.
+> Developing on the chart? Clone the repo and swap `oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher`
+> for `./kubernetes-netskope-publisher` when running Helm from the parent
+> directory of the local clone.
 
 Watch the pod and then follow the publisher container logs:
 
@@ -317,7 +315,8 @@ resources:
 Install or upgrade with the scaled values file:
 
 ```bash
-helm upgrade --install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm upgrade --install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-statefulset-config.yaml
@@ -540,15 +539,22 @@ Token mode needs a one-time registration token from your Netskope tenant. This t
 
 ## Part 3 — Obtain the Helm Chart
 
-The chart is distributed as a folder containing `Chart.yaml`, `values.yaml`, and a `templates/` directory. Obtain it from your internal artifact repository, package registry, or the distribution archive provided by your team.
+The chart is published on Artifact Hub and distributed as an OCI chart:
+`oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher`.
+Use that published reference for normal installs.
 
-Once you have the chart folder, confirm its contents:
+For local chart development or testing unreleased changes, clone the
+repository and run Helm from the directory that contains the clone. The
+local chart path should be `./kubernetes-netskope-publisher`:
+
 ```bash
-ls ./kubernetes/
+ls ./kubernetes-netskope-publisher/
 # Expected: Chart.yaml  values.yaml  templates/  guide.md  ...
 ```
 
-All `helm` commands in this guide assume you are running them from the directory **containing** the chart folder — i.e. the chart folder itself is `./kubernetes/`.
+All install and upgrade examples below use the published OCI chart. For
+a local clone, replace the OCI chart reference with
+`./kubernetes-netskope-publisher`.
 
 ---
 
@@ -747,10 +753,11 @@ page for the detailed walkthrough.
 
 ## Part 5 — Deploy
 
-From the directory containing both the chart folder (`./kubernetes/`) and your config file (`./my-api-config.yaml`), run:
+Using the published OCI chart, run:
 
 ```bash
-helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-config.yaml
@@ -758,9 +765,14 @@ helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
 
 What each part does:
 - `kubernetes-netskope-publisher` — the name of this Helm release (used in all future `helm upgrade`/`uninstall` commands)
-- `./kubernetes` — path to the chart folder
+- `oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher` — the published OCI chart
+- `--version 1.4.2` — the chart version to install
 - `--namespace npa-publisher --create-namespace` — deploys into an isolated namespace, creating it if it doesn't exist
 - `-f my-api-config.yaml` — applies your tenant URL, API token Secret name, Publisher name, and DNS settings on top of the chart defaults. The default image is `netskopeprivateaccess/publisher_u22:latest`.
+
+If you cloned the chart locally, run Helm from the directory containing
+the clone and replace the OCI chart reference with
+`./kubernetes-netskope-publisher`.
 
 Expected output:
 ```
@@ -776,7 +788,8 @@ If you see `Error: INSTALLATION FAILED`, check the error message — the most co
 For token mode:
 
 ```bash
-helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   --namespace npa-publisher \
   --create-namespace \
   -f my-token-config.yaml
@@ -877,14 +890,16 @@ Edit your values file, then run `helm upgrade` with the same file you used for i
 
 For API mode:
 ```bash
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   --namespace npa-publisher \
   -f my-api-config.yaml
 ```
 
 For token mode:
 ```bash
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   --namespace npa-publisher \
   -f my-token-config.yaml
 ```
@@ -918,7 +933,8 @@ Changing `image.tag` changes the pod template, so the DaemonSet or
 StatefulSet performs a rolling restart automatically:
 
 ```bash
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   -n npa-publisher \
   -f my-values.yaml \
   --set image.tag=10784
@@ -996,7 +1012,10 @@ In pod network mode, fix Kubernetes cluster DNS/CoreDNS. The default chart runs 
 
 In host network mode, fix `bind.forwarders` in your values file with DNS servers that work in your network, then:
 ```bash
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher -n npa-publisher -f my-api-config.yaml
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
+  -n npa-publisher \
+  -f my-api-config.yaml
 kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher
 ```
 
@@ -1101,10 +1120,16 @@ kubectl exec -n npa-publisher $(kubectl get pod -n npa-publisher -o name) \
   -c publisher -- ls /home/resources/
 
 # Upgrade after API mode config change
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher -n npa-publisher -f my-api-config.yaml
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
+  -n npa-publisher \
+  -f my-api-config.yaml
 
 # Upgrade after token mode config change
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher -n npa-publisher -f my-token-config.yaml
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
+  -n npa-publisher \
+  -f my-token-config.yaml
 
 # Force pod restart without config change
 kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher

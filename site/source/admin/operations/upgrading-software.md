@@ -18,7 +18,8 @@ the published Publisher image tags on Docker Hub:
 <https://hub.docker.com/r/netskopeprivateaccess/publisher_u22/tags>.
 
 ```bash
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   -n npa-publisher \
   -f my-values.yaml \
   --set image.tag=10784
@@ -47,7 +48,8 @@ Use `latest` only for disposable test environments. If you do, force a
 pull and a rollout explicitly:
 
 ```bash
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   -n npa-publisher \
   -f my-values.yaml \
   --set image.tag=latest \
@@ -65,8 +67,8 @@ kubectl rollout restart statefulset/kubernetes-netskope-publisher -n npa-publish
 ## Upgrading the chart
 
 ```bash
-helm repo update
-helm upgrade kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   -n npa-publisher \
   -f my-values.yaml
 ```

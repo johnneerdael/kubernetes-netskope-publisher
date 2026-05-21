@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.4.1
+version: 1.4.2
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
@@ -34,5 +34,7 @@ annotations:
     - name: John Neerdael
       email: john@neerdael.nl
   artifacthub.io/changes: |
-    - kind: added
-      description: values.schema.json. Helm validates --set / -f overrides against it on install/upgrade, and Artifact Hub renders it as an interactive values form on the listing.
+    - kind: fixed
+      description: Rootless lwIP bootstrap skips root-only host and service setup paths.
+    - kind: changed
+      description: Documentation now prefers the OCI chart reference and Artifact Hub package page over the legacy Helm repository alias.

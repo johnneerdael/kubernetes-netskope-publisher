@@ -83,10 +83,8 @@ ignored. Remove them and switch `networking.mode` instead.
 
 Docs-only release so Artifact Hub picks up the new README.
 
-- README leads with the Artifact Hub install path
-  (`helm repo add npa … && helm install npa/kubernetes-netskope-publisher`)
-  instead of the local-clone path; local-clone install becomes a
-  developer footnote.
+- README leads with the published chart install path instead of the
+  local-clone path; local-clone install becomes a developer footnote.
 - Slimmed example values to only the keys that aren't covered by
   1.1.0 defaults (pod networking, tunDevice, persistence: false, and
   IPv6-disable are all default now).

@@ -15,25 +15,21 @@ OpenShift, or bare-metal.
 
 ## Install
 
-Pick the install source that suits your Helm version. Both ship the
-same chart from the same release.
-
-**Classic Helm repo** (works on any Helm 3.x):
+Use the Artifact Hub package page to inspect releases and values, then
+install the OCI chart from GitHub Container Registry.
 
 ```bash
-helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher
-helm repo update
-helm install kubernetes-netskope-publisher npa/kubernetes-netskope-publisher \
+helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
+  --version 1.4.2 \
   --namespace npa-publisher --create-namespace \
   -f my-values.yaml
 ```
 
-**OCI registry** (Helm 3.8+, no `repo add` step):
+For local chart development, clone the repository and run Helm from the
+directory that contains the clone:
 
 ```bash
-helm install kubernetes-netskope-publisher \
-  oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.0 \
+helm install kubernetes-netskope-publisher ./kubernetes-netskope-publisher \
   --namespace npa-publisher --create-namespace \
   -f my-values.yaml
 ```

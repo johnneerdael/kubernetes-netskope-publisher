@@ -6,7 +6,7 @@ date: 2026-05-18
 Two things need to be in place before `helm install`:
 
 1. `kubectl` can talk to the cluster.
-2. The Helm chart repository is added locally.
+2. Helm can read the published OCI chart or a local chart clone.
 
 ## kubectl
 
@@ -26,37 +26,29 @@ with the VM's reachable IP, and set `KUBECONFIG` to that file.
 
 ## Helm chart source
 
-The chart is published in two places that ship the same release —
-pick whichever your Helm client supports.
+The chart is listed on
+[Artifact Hub](https://artifacthub.io/packages/helm/kubernetes-netskope-publisher/kubernetes-netskope-publisher)
+and published as an OCI chart in GitHub Container Registry.
 
-### Option A — Classic Helm repository (works on any Helm 3.x)
-
-```bash
-helm repo add npa https://johnneerdael.github.io/kubernetes-netskope-publisher
-helm repo update
-helm search repo npa/kubernetes-netskope-publisher
-```
-
-You should see:
-
-```text
-NAME                                 CHART VERSION  APP VERSION  DESCRIPTION
-npa/kubernetes-netskope-publisher    1.4.0          1.4.0        Netskope Private Access Publisher for Kubernetes
-```
-
-> If the repo doesn't list yet (404 on `index.yaml`), the first chart
-> release workflow hasn't run yet. You can install directly from the
-> source as a fallback: `git clone … && helm install kubernetes-netskope-publisher ./kubernetes-netskope-publisher`.
-
-### Option B — OCI registry (Helm 3.8+, no `repo add` step)
-
-The chart is also pushed to GitHub Container Registry as an OCI
-artifact. There's no equivalent of `helm search repo` for OCI, but
-`helm show chart` works against the OCI URL directly:
+### Option A — OCI chart
 
 ```bash
-helm show chart oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher --version 1.4.0
+helm show chart oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher --version 1.4.2
 ```
 
-You'll use this URL in place of `npa/kubernetes-netskope-publisher` in
-the subsequent `helm install` step.
+You should see chart metadata for `kubernetes-netskope-publisher` with
+`version: 1.4.2`.
+
+### Option B — local clone
+
+If you cloned the repository locally, run Helm from the directory that
+contains the clone and use the local chart path:
+
+```bash
+helm install kubernetes-netskope-publisher ./kubernetes-netskope-publisher \
+  --namespace npa-publisher \
+  -f my-values.yaml
+```
+
+Use the OCI URL in the next install step unless you are intentionally
+testing a local checkout.

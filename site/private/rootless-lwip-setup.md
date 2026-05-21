@@ -63,20 +63,22 @@ For DaemonSet installs, keep the same `networking` and `lwipImage` settings, the
 ## Install Or Upgrade
 
 ```bash
-helm upgrade --install kubernetes-netskope-publisher ./chart \
+helm upgrade --install kubernetes-netskope-publisher ./kubernetes-netskope-publisher \
   -n npa-publisher \
   --create-namespace \
   -f rootless-lwip-values.yaml
 ```
 
-For repository-based installs, replace `./chart` with the configured chart reference.
+When running from the parent directory of a local clone, use
+`./kubernetes-netskope-publisher`. For published installs, use
+`oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher`.
 
 ## Render Checks
 
 Before applying to a cluster, render the manifests and confirm the security-sensitive fields:
 
 ```bash
-helm template kubernetes-netskope-publisher ./chart \
+helm template kubernetes-netskope-publisher ./kubernetes-netskope-publisher \
   -n npa-publisher \
   -f rootless-lwip-values.yaml
 ```
