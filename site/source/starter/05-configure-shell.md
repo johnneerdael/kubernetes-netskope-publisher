@@ -13,6 +13,7 @@ Two things need to be in place before `helm install`:
 If you installed k3s on the same host you're running commands from:
 
 ```bash
+mkdir -p ~/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 sudo chown $(id -u):$(id -g) ~/.kube/config
 chmod 600 ~/.kube/config
