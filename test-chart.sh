@@ -549,8 +549,10 @@ for expected in \
     "imagePullPolicy: IfNotPresent" \
     "name: DATA_PLANE" \
     "value: \"lwip\"" \
+    "Skipping hosts alias update in lwIP mode" \
     "Skipping tun network namespace preparation in lwIP mode" \
     "Skipping DNS daemon startup in lwIP mode" \
+    "Skipping root-managed system services in lwIP mode" \
     "Skipping network sysctl tuning in lwIP mode"; do
     if echo "$LWIP_RENDERED" | grep -F -q -- "$expected"; then
         echo -e "  ${GREEN}✓${NC} Found lwIP setting: $expected"

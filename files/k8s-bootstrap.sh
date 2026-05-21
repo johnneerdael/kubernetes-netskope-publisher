@@ -441,6 +441,32 @@ apply_network_sysctls() {
   run_sysctl net.netfilter.nf_conntrack_tcp_timeout_established 86400
 }
 
+configure_hosts_aliases() {
+  if is_lwip_mode; then
+    log "Skipping hosts alias update in lwIP mode"
+    return 0
+  fi
+
+  echo '127.0.0.1 guacamole-frontend' >> /etc/hosts
+}
+
+start_system_services() {
+  if is_lwip_mode; then
+    log "Skipping root-managed system services in lwIP mode"
+    return 0
+  fi
+
+  systemctl enable rsyslog
+  systemctl start rsyslog
+  monitor_service "rsyslog" "rsyslogd" &
+  RSYSLOGD_PID="$(pgrep -x rsyslogd | head -1 || true)"
+
+  systemctl enable cron
+  systemctl start cron
+  monitor_service "cron" "cron" &
+  CRON_PID="$(pgrep -x cron | head -1 || true)"
+}
+
 install_systemctl_shim
 install_iptables_stderr_filter
 install_sysctl_stderr_filter
@@ -451,22 +477,14 @@ fi
 
 disable_ipv6_if_requested
 
-echo '127.0.0.1 guacamole-frontend' >> /etc/hosts
+configure_hosts_aliases
 
 prepare_network_namespace
 start_dns_forwarder
 
 ulimit -n 32000
 
-systemctl enable rsyslog
-systemctl start rsyslog
-monitor_service "rsyslog" "rsyslogd" &
-RSYSLOGD_PID="$(pgrep -x rsyslogd | head -1 || true)"
-
-systemctl enable cron
-systemctl start cron
-monitor_service "cron" "cron" &
-CRON_PID="$(pgrep -x cron | head -1 || true)"
+start_system_services
 
 cp -f /home/npa_publisher_collect_host_os_info.sh /home/resources/npa_publisher_collect_host_os_info.sh
 cp -f /home/npa_publisher_collect_metrics.sh /home/resources/npa_publisher_collect_metrics.sh
