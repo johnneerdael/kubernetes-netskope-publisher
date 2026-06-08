@@ -3,6 +3,46 @@ entries:
   kubernetes-netskope-publisher:
   - annotations:
       artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: fixed\n  description: StatefulSet replicas\
+        \ now register as <commonName>-<ordinal> (e.g. npa-publisher-0) instead of\
+        \ embedding the full StatefulSet name in the publisher name.\n- kind: fixed\n\
+        \  description: API publisher creation now includes a labels array in the\
+        \ request body, fixing \"Labels are not present in the request\" rejections\
+        \ on tenants that require it.\n- kind: added\n  description: New enrollment.api.publisherLabels\
+        \ value to supply tenant-required publisher labels on creation.\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-06-08T15:28:47.135343113Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: c1f8c3985263d7fd53e52ebbc808ccd52dbda915e1084d923040f2f0ad3150cd
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://johnneerdael.github.io/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.5.0/kubernetes-netskope-publisher-1.5.0.tgz
+    version: 1.5.0
+  - annotations:
+      artifacthub.io/category: networking
       artifacthub.io/changes: "- kind: fixed\n  description: Rootless lwIP bootstrap\
         \ skips root-only host and service setup paths.\n- kind: changed\n  description:\
         \ Documentation now prefers the OCI chart reference and Artifact Hub package\
@@ -411,4 +451,4 @@ entries:
     urls:
     - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
     version: 1.0.0
-generated: '2026-05-21T22:01:22.698356484Z'
+generated: '2026-06-08T15:28:47.133826867Z'
