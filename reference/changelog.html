@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.2 — 2026-05-19Ship values.schema.json at the chart root.  Helm now validates --set &amp;#">
+    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.5.0 — 2026-06-08StatefulSet replica naming and API publisher-creation fixes.  Fixed — S">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Changelog">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/reference/changelog">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.3.2 — 2026-05-19Ship values.schema.json at the chart root.  Helm now validates --set &amp;#">
+<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.5.0 — 2026-06-08StatefulSet replica naming and API publisher-creation fixes.  Fixed — S">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-21T22:12:57.754Z">
+<meta property="article:modified_time" content="2026-06-08T15:28:55.838Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -99,6 +99,12 @@
   <div class="content" itemprop="articleBody">
       
           <p>Hand-maintained — mirrors <code>Chart.yaml</code> <code>version:</code> bumps. See the<br>GitHub Releases page for the published artifacts.</p>
+<h2><span id="v150-2026-06-08">v1.5.0 — 2026-06-08</span></h2><p>StatefulSet replica naming and API publisher-creation fixes.</p>
+<ul>
+<li><strong>Fixed — StatefulSet replica names.</strong> Replicas now register as<br><code>&lt;commonName&gt;-&lt;ordinal&gt;</code> (e.g. <code>npa-publisher-0</code>, <code>npa-publisher-1</code>)<br>instead of <code>&lt;commonName&gt;-&lt;full-pod-name&gt;</code><br>(<code>npa-publisher-kubernetes-netskope-publisher-0</code>). The chart appends<br>only the StatefulSet ordinal. The internal enrollment toggle was<br>renamed <code>NPA_COMMON_NAME_APPEND_POD_NAME</code> → <code>NPA_COMMON_NAME_APPEND_ORDINAL</code>.<br><strong>Behaviour change:</strong> existing StatefulSet deployments that already<br>enrolled under the old long names will create new <code>&lt;commonName&gt;-N</code><br>Publisher records on next pod start; prune the stale long-named<br>records from the tenant after upgrading.</li>
+<li><strong>Fixed — publisher creation labels.</strong> The create-Publisher request<br>now always includes a <code>labels</code> array, fixing<br><code>Labels are not present in the request</code> rejections on tenants that<br>require it.</li>
+<li><strong>Added — <code>enrollment.api.publisherLabels</code>.</strong> Supply tenant-required<br>publisher labels (defaults to <code>[]</code>).</li>
+</ul>
 <h2><span id="v132-2026-05-19">v1.3.2 — 2026-05-19</span></h2><p>Ship <code>values.schema.json</code> at the chart root.</p>
 <ul>
 <li>Helm now validates <code>--set</code> &#x2F; <code>-f</code> overrides against the schema on<br>install and upgrade — typos and wrong-type values fail loudly<br>instead of rendering quietly bad manifests.</li>

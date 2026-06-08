@@ -14,7 +14,7 @@
 <meta property="og:description" content="Every notable key in values.yaml, grouped by topic. Defaults are shownin parentheses. Image   Key Default Notes    image.repository netskopeprivateaccess&#x2F;publisher_u22 Ubuntu 22 Publisher image.   ima">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-21T22:12:57.753Z">
+<meta property="article:modified_time" content="2026-06-08T15:28:55.836Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -198,7 +198,7 @@
 <tr>
 <td><code>enrollment.commonName</code></td>
 <td><code>npa-publisher</code></td>
-<td>Name shown in the Netskope console.</td>
+<td>Name shown in the Netskope console. In <code>workload.type: statefulset</code>, each replica appends its StatefulSet ordinal, so they register as <code>&lt;commonName&gt;-0</code>, <code>&lt;commonName&gt;-1</code>, … (e.g. <code>npa-publisher-0</code>).</td>
 </tr>
 <tr>
 <td><code>enrollment.api.baseUrl</code></td>
@@ -219,6 +219,11 @@
 <td><code>enrollment.api.tokenKey</code></td>
 <td><code>api-token</code></td>
 <td>API token key within that secret.</td>
+</tr>
+<tr>
+<td><code>enrollment.api.publisherLabels</code></td>
+<td><code>[]</code></td>
+<td>Labels included in the create-Publisher request body. Empty list is the safe default; some tenants reject creation with “Labels are not present in the request” unless the array is present. Supply objects such as <code>- id: 1</code> when your tenant requires specific labels (look up IDs via <code>GET /api/v2/infrastructure/publishers/labels</code>).</td>
 </tr>
 <tr>
 <td><code>enrollment.api.oauth2.tokenUrl</code></td>
