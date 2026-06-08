@@ -106,7 +106,7 @@ spec:
               value: "true"
             {{- end }}
             {{- if include "kubernetes-netskope-publisher.isStatefulSet" . }}
-            - name: NPA_COMMON_NAME_APPEND_POD_NAME
+            - name: NPA_COMMON_NAME_APPEND_ORDINAL
               value: "true"
             {{- end }}
             {{- if include "kubernetes-netskope-publisher.isApiEnrollment" . }}

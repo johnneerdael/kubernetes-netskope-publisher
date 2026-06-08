@@ -504,8 +504,8 @@ for expected in \
     "replicas: 3" \
     "serviceName: test-release-kubernetes-netskope-publisher-headless" \
     "podManagementPolicy: Parallel" \
-    "name: NPA_COMMON_NAME_APPEND_POD_NAME" \
-    "NPA_PUBLISHER_COMMON_NAME=\"\${NPA_PUBLISHER_COMMON_NAME}-\${POD_NAME}\""; do
+    "name: NPA_COMMON_NAME_APPEND_ORDINAL" \
+    "NPA_PUBLISHER_COMMON_NAME=\"\${NPA_PUBLISHER_COMMON_NAME}-\${pod_ordinal}\""; do
     if echo "$STATEFULSET_RENDERED" | grep -q "$expected"; then
         echo -e "  ${GREEN}✓${NC} Found StatefulSet setting: $expected"
     else

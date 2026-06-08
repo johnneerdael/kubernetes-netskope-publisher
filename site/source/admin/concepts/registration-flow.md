@@ -17,8 +17,11 @@ init container (npa-bootstrap)
     │
     ├── If no match:
     │     POST /api/v2/infrastructure/publishers
-    │       body: { "name": <commonName>, ... }
+    │       body: { "name": <commonName>, "labels": <publisherLabels> }
     │     ↳ Tenant returns publisher_id + bootstrap config.
+    │       `labels` defaults to [] and is always sent — some tenants
+    │       reject creation without it ("Labels are not present in the
+    │       request"). Override via enrollment.api.publisherLabels.
     │
     ├── POST /api/v2/infrastructure/publishers/<id>/registration_token
     │     ↳ Tenant returns a short-lived registration token.

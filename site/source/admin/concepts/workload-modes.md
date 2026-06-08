@@ -31,8 +31,11 @@ workload:
 ```
 
 - N pods with stable identities: `<release>-0`, `<release>-1`, ...
-- Each pod's `commonName` becomes `<configured-commonName>-<pod-name>`,
-  so they appear as distinct Publishers in the tenant.
+- Each pod's `commonName` becomes `<configured-commonName>-<ordinal>` —
+  the chart appends only the StatefulSet ordinal (`0`, `1`, `2`, …), so
+  with `commonName: npa-publisher` the replicas register as
+  `npa-publisher-0`, `npa-publisher-1`, `npa-publisher-2` and appear as
+  distinct Publishers in the tenant.
 - Works **only with `enrollment.mode: api`** — token enrollment cannot
   scale to multiple replicas without manual token-per-pod handling.
 - **Good for:** HA pairs, replicated regional deployments inside one

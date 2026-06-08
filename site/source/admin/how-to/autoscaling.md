@@ -54,7 +54,8 @@ kubernetes-netskope-publisher     StatefulSet/kubernetes-netskope-publisher  35%
    `replicas`.
 2. Kubernetes creates a new pod (`<release>-N`).
 3. The new pod runs `npa-bootstrap`, calls the Netskope API with
-   `commonName-<pod-name>`, gets a publisher_id, enrols.
+   `commonName-<ordinal>` (e.g. `npa-publisher-3` for the pod
+   `<release>-3`), gets a publisher_id, enrols.
 4. Once `NPACONNECTED` shows up in the publisher logs, Netskope
    load-balancers route new private-app sessions to the new
    replica.

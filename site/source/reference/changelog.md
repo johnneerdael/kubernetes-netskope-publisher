@@ -6,6 +6,27 @@ date: 2026-05-18
 Hand-maintained — mirrors `Chart.yaml` `version:` bumps. See the
 GitHub Releases page for the published artifacts.
 
+## v1.5.0 — 2026-06-08
+
+StatefulSet replica naming and API publisher-creation fixes.
+
+- **Fixed — StatefulSet replica names.** Replicas now register as
+  `<commonName>-<ordinal>` (e.g. `npa-publisher-0`, `npa-publisher-1`)
+  instead of `<commonName>-<full-pod-name>`
+  (`npa-publisher-kubernetes-netskope-publisher-0`). The chart appends
+  only the StatefulSet ordinal. The internal enrollment toggle was
+  renamed `NPA_COMMON_NAME_APPEND_POD_NAME` → `NPA_COMMON_NAME_APPEND_ORDINAL`.
+  **Behaviour change:** existing StatefulSet deployments that already
+  enrolled under the old long names will create new `<commonName>-N`
+  Publisher records on next pod start; prune the stale long-named
+  records from the tenant after upgrading.
+- **Fixed — publisher creation labels.** The create-Publisher request
+  now always includes a `labels` array, fixing
+  `Labels are not present in the request` rejections on tenants that
+  require it.
+- **Added — `enrollment.api.publisherLabels`.** Supply tenant-required
+  publisher labels (defaults to `[]`).
+
 ## v1.3.2 — 2026-05-19
 
 Ship `values.schema.json` at the chart root.

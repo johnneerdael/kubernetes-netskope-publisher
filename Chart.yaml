@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.4.2
+version: 1.5.0
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
@@ -35,6 +35,8 @@ annotations:
       email: john@neerdael.nl
   artifacthub.io/changes: |
     - kind: fixed
-      description: Rootless lwIP bootstrap skips root-only host and service setup paths.
-    - kind: changed
-      description: Documentation now prefers the OCI chart reference and Artifact Hub package page over the legacy Helm repository alias.
+      description: StatefulSet replicas now register as <commonName>-<ordinal> (e.g. npa-publisher-0) instead of embedding the full StatefulSet name in the publisher name.
+    - kind: fixed
+      description: API publisher creation now includes a labels array in the request body, fixing "Labels are not present in the request" rejections on tenants that require it.
+    - kind: added
+      description: New enrollment.api.publisherLabels value to supply tenant-required publisher labels on creation.

@@ -29,6 +29,7 @@ data:
   {{- if include "kubernetes-netskope-publisher.isApiEnrollment" . }}
   ENROLLMENT_MODE: "api"
   NPA_PUBLISHER_COMMON_NAME: {{ .Values.enrollment.commonName | quote }}
+  NPA_PUBLISHER_LABELS: {{ .Values.enrollment.api.publisherLabels | default list | toJson | quote }}
   NPA_API_BASE_URL: {{ trimSuffix "/" .Values.enrollment.api.baseUrl | quote }}
   NPA_API_AUTH_MODE: {{ include "kubernetes-netskope-publisher.apiAuthMode" . | quote }}
   {{- if include "kubernetes-netskope-publisher.isApiOauth2Auth" . }}
@@ -189,7 +190,9 @@ data:
       local create_response="$1"
 
       log "Publisher name/common_name=${NPA_PUBLISHER_COMMON_NAME} not found; creating Publisher"
-      jq -n --arg name "${NPA_PUBLISHER_COMMON_NAME}" '{name: $name}' \
+      jq -n --arg name "${NPA_PUBLISHER_COMMON_NAME}" \
+        --argjson labels "${NPA_PUBLISHER_LABELS:-[]}" \
+        '{name: $name, labels: $labels}' \
         | curl --fail --silent --show-error \
           --request POST \
           --header "Authorization: Bearer ${api_access_token}" \
@@ -222,9 +225,21 @@ data:
     require_env NPA_API_BASE_URL
     require_env NPA_PUBLISHER_COMMON_NAME
 
-    if [ "${NPA_COMMON_NAME_APPEND_POD_NAME:-false}" = "true" ]; then
+    if [ "${NPA_COMMON_NAME_APPEND_ORDINAL:-false}" = "true" ]; then
       require_env POD_NAME
-      NPA_PUBLISHER_COMMON_NAME="${NPA_PUBLISHER_COMMON_NAME}-${POD_NAME}"
+      # StatefulSet pods are named <statefulset>-<ordinal>. Append only the
+      # stable ordinal so replicas register as <commonName>-0, -1, -2 rather
+      # than embedding the full StatefulSet name
+      # (e.g. npa-publisher-0, not npa-publisher-kubernetes-netskope-publisher-0).
+      # Fall back to the full pod name if the trailing segment is not a plain
+      # ordinal, which preserves a unique name on any non-standard pod naming.
+      pod_ordinal="${POD_NAME##*-}"
+      case "${pod_ordinal}" in
+        ''|*[!0-9]*)
+          NPA_PUBLISHER_COMMON_NAME="${NPA_PUBLISHER_COMMON_NAME}-${POD_NAME}" ;;
+        *)
+          NPA_PUBLISHER_COMMON_NAME="${NPA_PUBLISHER_COMMON_NAME}-${pod_ordinal}" ;;
+      esac
     fi
 
     log "API enrollment mode active for common_name=${NPA_PUBLISHER_COMMON_NAME}"

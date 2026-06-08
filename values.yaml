@@ -76,6 +76,18 @@ enrollment:
     # Required when mode=api and authMode=token. Secret must contain the Netskope API token.
     existingSecret: "npa-api-token"
     tokenKey: "api-token"
+    # Labels to include in the create-Publisher request body.
+    #
+    # Some Netskope tenants reject Publisher creation with
+    # "Labels are not present in the request" unless a labels array is
+    # present in the body. An empty list satisfies that validation and is
+    # the safe default. If your tenant requires specific labels, list them
+    # here as objects, for example:
+    #   publisherLabels:
+    #     - id: 1
+    # Look up valid label IDs via
+    # GET /api/v2/infrastructure/publishers/labels on your tenant.
+    publisherLabels: []
     oauth2:
       # Required when authMode=oauth2. Full OAuth2 token endpoint URL for your tenant/identity provider.
       tokenUrl: ""

@@ -40,11 +40,12 @@ for the full setup.
 | Key | Default | Notes |
 |---|---|---|
 | `enrollment.mode` | `api` | `api` (recommended) or `token`. |
-| `enrollment.commonName` | `npa-publisher` | Name shown in the Netskope console. |
+| `enrollment.commonName` | `npa-publisher` | Name shown in the Netskope console. In `workload.type: statefulset`, each replica appends its StatefulSet ordinal, so they register as `<commonName>-0`, `<commonName>-1`, … (e.g. `npa-publisher-0`). |
 | `enrollment.api.baseUrl` | `https://tenant.goskope.com` | Tenant URL, no trailing slash. |
 | `enrollment.api.authMode` | `token` | API credential mode: `token` for a static API token or `oauth2` for client credentials. |
 | `enrollment.api.existingSecret` | `npa-api-token` | Secret containing the API token when `authMode=token`. |
 | `enrollment.api.tokenKey` | `api-token` | API token key within that secret. |
+| `enrollment.api.publisherLabels` | `[]` | Labels included in the create-Publisher request body. Empty list is the safe default; some tenants reject creation with "Labels are not present in the request" unless the array is present. Supply objects such as `- id: 1` when your tenant requires specific labels (look up IDs via `GET /api/v2/infrastructure/publishers/labels`). |
 | `enrollment.api.oauth2.tokenUrl` | `""` | Full OAuth2 token endpoint URL when `authMode=oauth2`. |
 | `enrollment.api.oauth2.existingSecret` | `npa-api-oauth` | Secret containing the OAuth2 client ID and client secret. |
 | `enrollment.api.oauth2.clientIdKey` | `client-id` | OAuth2 client ID key within that secret. |
