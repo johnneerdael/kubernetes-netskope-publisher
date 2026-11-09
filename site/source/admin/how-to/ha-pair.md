@@ -41,7 +41,7 @@ resources:
 
 ```bash
 helm upgrade --install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   -n npa-publisher -f my-values.yaml
 ```
 

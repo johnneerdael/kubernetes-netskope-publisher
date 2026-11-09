@@ -12,7 +12,7 @@ the Publisher needs. The chart's ServiceAccount must be granted the
 ```bash
 oc create namespace npa-publisher
 helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   --namespace npa-publisher \
   -f my-values.yaml
 

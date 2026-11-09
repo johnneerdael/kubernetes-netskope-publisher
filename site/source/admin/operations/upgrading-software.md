@@ -19,7 +19,7 @@ the published Publisher image tags on Docker Hub:
 
 ```bash
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   -n npa-publisher \
   -f my-values.yaml \
   --set image.tag=10784
@@ -49,7 +49,7 @@ pull and a rollout explicitly:
 
 ```bash
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   -n npa-publisher \
   -f my-values.yaml \
   --set image.tag=latest \
@@ -68,7 +68,7 @@ kubectl rollout restart statefulset/kubernetes-netskope-publisher -n npa-publish
 
 ```bash
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   -n npa-publisher \
   -f my-values.yaml
 ```

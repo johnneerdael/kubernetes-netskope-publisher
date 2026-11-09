@@ -36,7 +36,7 @@ enrollment:
 EOF
 
 helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.5.0 \
+  --version 1.6.0 \
   --namespace npa-publisher \
   -f my-api-config.yaml
 ```
@@ -316,7 +316,7 @@ Install or upgrade with the scaled values file:
 
 ```bash
 helm upgrade --install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-statefulset-config.yaml
@@ -785,7 +785,7 @@ Using the published OCI chart, run:
 
 ```bash
 helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   --namespace npa-publisher \
   --create-namespace \
   -f my-api-config.yaml
@@ -794,7 +794,7 @@ helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kub
 What each part does:
 - `kubernetes-netskope-publisher` — the name of this Helm release (used in all future `helm upgrade`/`uninstall` commands)
 - `oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher` — the published OCI chart
-- `--version 1.4.2` — the chart version to install
+- `--version 1.6.0` — the chart version to install
 - `--namespace npa-publisher --create-namespace` — deploys into an isolated namespace, creating it if it doesn't exist
 - `-f my-api-config.yaml` — applies your tenant URL, API token Secret name, Publisher name, and DNS settings on top of the chart defaults. The default image is `netskopeprivateaccess/publisher_u22:latest`.
 
@@ -817,7 +817,7 @@ For token mode:
 
 ```bash
 helm install kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   --namespace npa-publisher \
   --create-namespace \
   -f my-token-config.yaml
@@ -919,7 +919,7 @@ Edit your values file, then run `helm upgrade` with the same file you used for i
 For API mode:
 ```bash
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   --namespace npa-publisher \
   -f my-api-config.yaml
 ```
@@ -927,7 +927,7 @@ helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kub
 For token mode:
 ```bash
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   --namespace npa-publisher \
   -f my-token-config.yaml
 ```
@@ -962,7 +962,7 @@ StatefulSet performs a rolling restart automatically:
 
 ```bash
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   -n npa-publisher \
   -f my-values.yaml \
   --set image.tag=10784
@@ -1038,7 +1038,7 @@ In pod network mode, fix Kubernetes cluster DNS/CoreDNS. The default chart runs 
 In host network mode, fix `bind.forwarders` in your values file with DNS servers that work in your network, then:
 ```bash
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   -n npa-publisher \
   -f my-api-config.yaml
 kubectl rollout restart daemonset/kubernetes-netskope-publisher -n npa-publisher
@@ -1146,13 +1146,13 @@ kubectl exec -n npa-publisher $(kubectl get pod -n npa-publisher -o name) \
 
 # Upgrade after API mode config change
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   -n npa-publisher \
   -f my-api-config.yaml
 
 # Upgrade after token mode config change
 helm upgrade kubernetes-netskope-publisher oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \
-  --version 1.4.2 \
+  --version 1.6.0 \
   -n npa-publisher \
   -f my-token-config.yaml
 

@@ -777,6 +777,27 @@ else
     exit 1
 fi
 
+# Test: documented chart versions match Chart.yaml
+echo -e "\n${YELLOW}[TEST]${NC} Checking documented chart versions match Chart.yaml..."
+CHART_VERSION="$(awk '/^version:/ {print $2; exit}' "${CHART_DIR}/Chart.yaml")"
+STALE_VERSIONS="$(
+    {
+        grep -rnoE -- '(^|[^a-z-])--version [0-9]+\.[0-9]+\.[0-9]+' \
+            "${CHART_DIR}/README.md" "${CHART_DIR}/site/source" 2>/dev/null
+        grep -rnoE -- '(chart_version|version)[[:space:]]+=[[:space:]]+"[0-9]+\.[0-9]+\.[0-9]+"' \
+            "${CHART_DIR}/examples" "${CHART_DIR}/site/source" 2>/dev/null
+        grep -rnA3 'variable "chart_version"' "${CHART_DIR}/examples" 2>/dev/null \
+            | grep -oE 'default[[:space:]]+=[[:space:]]+"[0-9]+\.[0-9]+\.[0-9]+"' | sed 's/^/examples default: /'
+    } | grep -vF "${CHART_VERSION}" || true
+)"
+if [ -z "${STALE_VERSIONS}" ]; then
+    echo -e "  ${GREEN}✓${NC} All documented chart versions are ${CHART_VERSION}"
+else
+    echo -e "  ${RED}✗${NC} Documented chart versions differ from Chart.yaml ${CHART_VERSION}:"
+    echo "${STALE_VERSIONS}" | sed "s#${CHART_DIR}/##" | sed 's/^/      /'
+    exit 1
+fi
+
 echo -e "\n${GREEN}=========================================${NC}"
 echo -e "${GREEN}All tests passed!${NC}"
 echo -e "${GREEN}=========================================${NC}"
