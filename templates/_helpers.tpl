@@ -55,6 +55,22 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if eq (include "kubernetes-netskope-publisher.apiAuthMode" .) "oauth2" -}}true{{- end -}}
 {{- end -}}
 
+{{- define "kubernetes-netskope-publisher.tokenKeyBy" -}}
+{{- default "single" .Values.registrationToken.keyBy -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.tokenSecretName" -}}
+{{- .Values.registrationToken.existingSecret | default (printf "%s-token" (include "kubernetes-netskope-publisher.fullname" .)) -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.persistenceType" -}}
+{{- default "pvc" .Values.persistence.type -}}
+{{- end -}}
+
+{{- define "kubernetes-netskope-publisher.usesVolumeClaimTemplate" -}}
+{{- if and .Values.persistence.enabled (eq (include "kubernetes-netskope-publisher.persistenceType" .) "pvc") (include "kubernetes-netskope-publisher.isStatefulSet" .) -}}true{{- end -}}
+{{- end -}}
+
 {{- define "kubernetes-netskope-publisher.workloadType" -}}
 {{- default "daemonset" .Values.workload.type -}}
 {{- end -}}
@@ -161,8 +177,46 @@ runAsUser: 65532
 {{- if not (or (eq $workloadType "daemonset") (eq $workloadType "statefulset")) -}}
 {{- fail "workload.type must be either 'daemonset' or 'statefulset'" -}}
 {{- end -}}
-{{- if and (eq $workloadType "statefulset") (ne $mode "api") -}}
-{{- fail "workload.type=statefulset is only supported when enrollment.mode=api" -}}
+{{- if eq $mode "token" -}}
+{{- $keyBy := include "kubernetes-netskope-publisher.tokenKeyBy" . -}}
+{{- if not (has $keyBy (list "single" "ordinal" "node")) -}}
+{{- fail "registrationToken.keyBy must be one of 'single', 'ordinal', or 'node'" -}}
+{{- end -}}
+{{- if and (eq $workloadType "statefulset") (ne $keyBy "ordinal") -}}
+{{- fail "workload.type=statefulset with enrollment.mode=token requires registrationToken.keyBy=ordinal (one pre-provisioned token per replica)" -}}
+{{- end -}}
+{{- if and (eq $keyBy "ordinal") (ne $workloadType "statefulset") -}}
+{{- fail "registrationToken.keyBy=ordinal requires workload.type=statefulset" -}}
+{{- end -}}
+{{- if and (eq $workloadType "statefulset") .Values.hpa.enabled -}}
+{{- fail "hpa.enabled is not supported with enrollment.mode=token: each replica needs a pre-provisioned registration token, so scale by changing workload.replicas together with the number of tokens (for example the Terraform count)" -}}
+{{- end -}}
+{{- if not .Values.registrationToken.existingSecret -}}
+{{- if eq $keyBy "single" -}}
+{{- $_ := required "enrollment.mode=token requires registrationToken.value or registrationToken.existingSecret" .Values.registrationToken.value -}}
+{{- else -}}
+{{- if not .Values.registrationToken.tokens -}}
+{{- fail (printf "registrationToken.keyBy=%s requires registrationToken.tokens or registrationToken.existingSecret" $keyBy) -}}
+{{- end -}}
+{{- if eq $keyBy "ordinal" -}}
+{{- range $i := until (int .Values.workload.replicas) -}}
+{{- if not (hasKey $.Values.registrationToken.tokens (toString $i)) -}}
+{{- fail (printf "registrationToken.tokens is missing key %q: workload.replicas=%d needs one token per replica (keys \"0\"..\"%d\")" (toString $i) (int $.Values.workload.replicas) (sub (int $.Values.workload.replicas) 1)) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $persistenceType := include "kubernetes-netskope-publisher.persistenceType" . -}}
+{{- if not (or (eq $persistenceType "pvc") (eq $persistenceType "hostPath")) -}}
+{{- fail "persistence.type must be either 'pvc' or 'hostPath'" -}}
+{{- end -}}
+{{- if and (eq $workloadType "statefulset") .Values.persistence.enabled (eq $persistenceType "hostPath") -}}
+{{- fail "persistence.type=hostPath is not supported with workload.type=statefulset (replicas could share a node directory and therefore a Publisher identity); use persistence.type=pvc" -}}
+{{- end -}}
+{{- if and (eq $workloadType "statefulset") .Values.persistence.enabled (eq $persistenceType "pvc") .Values.persistence.existingClaim -}}
+{{- fail "persistence.existingClaim is not supported with workload.type=statefulset; each replica gets its own claim from volumeClaimTemplates" -}}
 {{- end -}}
 {{- $networkingMode := include "kubernetes-netskope-publisher.networkingMode" . -}}
 {{- if not (or (eq $networkingMode "host") (eq $networkingMode "pod") (eq $networkingMode "lwip")) -}}

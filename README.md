@@ -379,7 +379,7 @@ Unsupported or not recommended:
 
 The NPA Publisher is a container that connects your private network to the Netskope cloud. Once running, it acts as an outbound-only secure tunnel — your users reach internal apps through Netskope without any inbound firewall rules needed.
 
-By default, the Helm chart deploys a DaemonSet with one Publisher pod per matching node. API mode can also run as a StatefulSet when you need multiple Publisher pods that may land on the same node. The pod always includes the **main container** (`publisher`) that runs the tunnel process after enrollment completes. Enrollment can run in either of two modes:
+By default, the Helm chart deploys a DaemonSet with one Publisher pod per matching node. The chart can also run as a StatefulSet when you need multiple Publisher pods that may land on the same node. The pod always includes the **main container** (`publisher`) that runs the tunnel process after enrollment completes. Enrollment can run in either of two modes:
 
 - **API mode**: the Kubernetes-native default. The main container starts a chart-mounted wrapper script, looks up or creates the Publisher object through the Netskope API, generates a registration token, enrolls, and then starts the tunnel process.
 - **Token mode**: an `enroll` init container consumes a one-time registration token and writes enrollment artifacts before the main container starts.
@@ -391,9 +391,9 @@ For storage, API mode defaults to pod-local `emptyDir` storage and re-enrolls wh
 | Type | Value | Enrollment modes | Best for |
 |---|---|---|---|
 | DaemonSet | `workload.type=daemonset` | `api` or `token` | One Publisher pod per matching node |
-| StatefulSet | `workload.type=statefulset` | `api` only | Multiple Publisher pods with stable identities, including multiple pods on one node |
+| StatefulSet | `workload.type=statefulset` | `api`, or `token` with `registrationToken.keyBy=ordinal` | Multiple Publisher pods with stable identities, including multiple pods on one node |
 
-StatefulSet mode requires `networking.mode=pod` or `networking.mode=lwip`. Each replica gets a stable pod name and appends it to `enrollment.commonName`; for example, `prod-k8s-publisher-kubernetes-netskope-publisher-0`. This gives every Publisher instance a unique API-created identity while allowing Kubernetes to restart the same replica with the same name.
+StatefulSet mode requires `networking.mode=pod` or `networking.mode=lwip`. In API mode each replica appends its ordinal to `enrollment.commonName` (for example `prod-k8s-publisher-0`). In token mode replica N enrolls with its own pre-provisioned token from Secret key `"N"`. See [Token Mode With Terraform-Issued Tokens](#token-mode-with-terraform-issued-tokens).
 
 ---
 
@@ -409,6 +409,34 @@ The chart supports two enrollment modes. Pick one before creating your configura
 Use **API mode** unless you have a specific reason to avoid API-driven startup enrollment. If a Publisher with the configured common name or publisher name already exists, the chart reuses it. If it does not exist, the chart creates it with `enrollment.commonName` as the Publisher `name`. Multiple matches still fail because the lookup is ambiguous.
 
 Use **token mode** when your deployment must avoid storing a Netskope API credential in Kubernetes or when you explicitly want certificate/config artifacts persisted on a PVC.
+
+### Token Mode With Terraform-Issued Tokens
+
+Customers who manage their tenant with the official [`netskopeoss/netskope`](https://registry.terraform.io/providers/netskopeoss/netskope) Terraform provider can let Terraform issue the tokens. In this setup the cluster holds no Netskope API credential. Terraform creates one `netskope_npa_publisher` and one `netskope_npa_publisher_token` per pod, writes the tokens to a Kubernetes Secret, and installs the chart in token mode. This uses the provider's existing resources, so no provider change is needed (written against provider `0.4.13`).
+
+`registrationToken.keyBy` controls how each pod finds its token in the Secret:
+
+| `keyBy` | Workload | Secret keys | Use for |
+|---|---|---|---|
+| `single` (default) | DaemonSet pinned to one node | `existingSecretKey` (`token`) | One Publisher per release |
+| `ordinal` | StatefulSet | `"0"` .. `"N-1"` | N replicas, one token each |
+| `node` | DaemonSet | Kubernetes node names | One Publisher per node |
+
+```yaml
+# StatefulSet with 3 Terraform-issued tokens in Secret npa-publisher-registration-tokens
+workload:
+  type: statefulset
+  replicas: 3
+enrollment:
+  mode: token
+registrationToken:
+  keyBy: ordinal
+  existingSecret: npa-publisher-registration-tokens
+persistence:
+  enabled: true     # one PVC per replica via volumeClaimTemplates
+```
+
+The `enroll` init container records a SHA-256 fingerprint of the token it used. On restart it skips enrollment while the fingerprint matches. When a different token arrives (`terraform apply -replace=...`), it re-enrolls and restores the previous state if that fails. `hpa.enabled` is rejected in token mode because an autoscaler cannot obtain new tokens. Scale by changing `workload.replicas` together with the Terraform token count. A complete example lives in [`examples/terraform-token-enrollment`](examples/terraform-token-enrollment/), and the step-by-step customer guide is [Deploy Publisher replicas with the Netskope Terraform provider](https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/how-to/terraform-replicas/).
 
 ---
 
@@ -954,12 +982,9 @@ cloud-side profile cannot update the Helm release or restart the pods.
 
 If you need to re-register (e.g. the existing registration is broken or you are moving tenants):
 
-1. Delete the existing PVC to clear the old certificates:
-```bash
-kubectl delete pvc -n npa-publisher --all
-```
-2. Update `registrationToken.value` in `my-token-config.yaml` with a new token from the console
-3. Run `helm upgrade` — the pod will restart, enrollment will run again with the new token
+1. Disconnect the Publisher (scale the workload down or stop the pod). The tenant does not issue a new token for a connected Publisher.
+2. Deliver a new token: update `registrationToken.value` in `my-token-config.yaml`, update your existing Secret, or with Terraform run `terraform apply -replace='netskope_npa_publisher_token.<name>'`
+3. Run `helm upgrade` or restart the pod. The `enroll` init container sees a new token fingerprint and re-enrolls over the persisted state. Deleting the PVC is no longer required.
 
 ### Re-enroll in API Mode
 

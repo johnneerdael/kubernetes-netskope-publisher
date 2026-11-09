@@ -22,7 +22,7 @@ workload:
 - **Good for:** dedicated "publisher nodes", host-network deployments,
   k3s single-node setups.
 
-## StatefulSet (`workload.type: statefulset`) — API mode only
+## StatefulSet (`workload.type: statefulset`)
 
 ```yaml
 workload:
@@ -36,8 +36,11 @@ workload:
   with `commonName: npa-publisher` the replicas register as
   `npa-publisher-0`, `npa-publisher-1`, `npa-publisher-2` and appear as
   distinct Publishers in the tenant.
-- Works **only with `enrollment.mode: api`** — token enrollment cannot
-  scale to multiple replicas without manual token-per-pod handling.
+- Works with `enrollment.mode: api`, or with `enrollment.mode: token` plus
+  `registrationToken.keyBy: ordinal`. In token mode replica N enrolls with
+  its own pre-provisioned token from Secret key `"N"`, typically issued by
+  Terraform ([guide](/kubernetes-netskope-publisher/admin/how-to/terraform-token-enrollment/)).
+  HPA is API-mode only.
 - **Good for:** HA pairs, replicated regional deployments inside one
   cluster, autoscaling by replica count.
 
@@ -48,4 +51,5 @@ workload:
 | Single host, k3s, kind | DaemonSet, replicas 1 |
 | Production cluster, HA, want explicit replica count | StatefulSet, replicas 2–3 |
 | One Publisher per worker node by design | DaemonSet + node selector |
-| Token enrollment (air-gapped tenant) | DaemonSet, replicas 1 |
+| Token enrollment, one Publisher | DaemonSet pinned to one node, `keyBy: single` |
+| Token enrollment, several Publishers (Terraform-issued tokens) | StatefulSet + `keyBy: ordinal`, or DaemonSet + `keyBy: node` |

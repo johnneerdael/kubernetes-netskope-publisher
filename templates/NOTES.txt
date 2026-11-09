@@ -34,10 +34,34 @@ To view enrollment logs:
 
 RESOURCES:
 Publisher data is stored in:
-{{- if .Values.persistence.enabled }}
-  PersistentVolumeClaim: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "kubernetes-netskope-publisher.fullname" .)) }}
-{{- else }}
+{{- if not .Values.persistence.enabled }}
   EmptyDir (data will be lost on pod restart)
+{{- else if eq (include "kubernetes-netskope-publisher.persistenceType" .) "hostPath" }}
+  hostPath on each node: {{ printf "%s/%s-%s" (trimSuffix "/" .Values.persistence.hostPath.path) .Release.Namespace (include "kubernetes-netskope-publisher.fullname" .) }}
+{{- else if include "kubernetes-netskope-publisher.isStatefulSet" . }}
+  One PersistentVolumeClaim per replica: resources-{{ include "kubernetes-netskope-publisher.fullname" . }}-<ordinal>
+{{- else }}
+  PersistentVolumeClaim: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "kubernetes-netskope-publisher.fullname" .)) }}
+{{- end }}
+{{- if not (include "kubernetes-netskope-publisher.isApiEnrollment" .) }}
+{{- $keyBy := include "kubernetes-netskope-publisher.tokenKeyBy" . }}
+
+TOKEN ENROLLMENT:
+No Netskope API credential is used. Registration tokens are read from Secret
+"{{ include "kubernetes-netskope-publisher.tokenSecretName" . }}"
+{{- if eq $keyBy "ordinal" }} using one key per replica ("0" .. "{{ sub (int .Values.workload.replicas) 1 }}").
+{{- else if eq $keyBy "node" }} using one key per Kubernetes node name.
+{{- else }} (single token: run exactly one Publisher pod per release).
+{{- end }}
+Enrollment is skipped while the persisted state matches the current token.
+Deliver a different token (for example `terraform apply -replace=...`) and
+restart the pod to re-enroll.
+{{- if not .Values.persistence.enabled }}
+
+WARNING: persistence.enabled=false. Registration tokens are single-use, so a
+recreated pod cannot re-enroll with the token it already consumed. Enable
+persistence (persistence.type=pvc or hostPath) for token mode.
+{{- end }}
 {{- end }}
 
 TROUBLESHOOTING:

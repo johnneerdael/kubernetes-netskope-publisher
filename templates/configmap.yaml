@@ -26,6 +26,10 @@ data:
     root:x:65532:65532:root:/home:/usr/sbin/nologin
     nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
   {{- end }}
+  {{- if not (include "kubernetes-netskope-publisher.isApiEnrollment" .) }}
+  k8s-token-enroll.sh: |
+{{- .Files.Get "files/k8s-token-enroll.sh" | nindent 4 }}
+  {{- end }}
   {{- if include "kubernetes-netskope-publisher.isApiEnrollment" . }}
   ENROLLMENT_MODE: "api"
   NPA_PUBLISHER_COMMON_NAME: {{ .Values.enrollment.commonName | quote }}

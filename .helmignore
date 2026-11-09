@@ -25,6 +25,7 @@
 # Repo content that is not part of the chart
 site/
 docs/
+examples/
 scripts/
 .github/
 .claude/

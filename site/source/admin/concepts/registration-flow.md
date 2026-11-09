@@ -42,16 +42,22 @@ to the tenant.
 ## `mode: token`
 
 ```text
-init container (npa-enroll)
+init container (enroll)
     │
-    └── Reads `registrationToken.value` (or existingSecret) → exit 0
+    ├── Picks its token from the Secret (registrationToken.keyBy):
+    │     single → key "token" · ordinal → key "<N>" · node → key "<node>"
+    ├── State present + same token fingerprint → skip, exit 0
+    ├── State present + new token → back up state, re-enroll (restore on failure)
+    └── No state → npa_publisher_wizard -token … (burns the token) → exit 0
 
 publisher container
-    └── Uses the one-time token on first start. Burns it.
+    └── Starts from the persisted enrollment artifacts.
 ```
 
 ### When to use
-- Air-gapped tenants where the cluster cannot reach the management API.
+- Tenant objects and tokens are managed by Terraform (`netskope_npa_publisher`
+  + `netskope_npa_publisher_token`) and the cluster must not hold an API
+  credential. See [Terraform-issued tokens](/kubernetes-netskope-publisher/admin/how-to/terraform-token-enrollment/).
 - Strict change-management environments where token issuance is gated.
 
 ### Constraint

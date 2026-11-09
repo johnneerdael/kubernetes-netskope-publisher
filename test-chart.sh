@@ -169,10 +169,10 @@ OUTPUT=$(helm template test-release "${CHART_DIR}" \
     --set enrollment.mode=token \
     --set networking.mode=pod \
     --set registrationToken.value="test-token" 2>&1 || true)
-if echo "$OUTPUT" | grep -q "workload.type=statefulset is only supported when enrollment.mode=api"; then
-    echo -e "${GREEN}✓ StatefulSet API-only validation working${NC}"
+if echo "$OUTPUT" | grep -q "workload.type=statefulset with enrollment.mode=token requires registrationToken.keyBy=ordinal"; then
+    echo -e "${GREEN}✓ StatefulSet token mode requires per-replica tokens${NC}"
 else
-    echo -e "${RED}✗ StatefulSet API-only validation missing${NC}"
+    echo -e "${RED}✗ StatefulSet token-mode keyBy validation missing${NC}"
     exit 1
 fi
 
@@ -604,6 +604,119 @@ for expected in \
         exit 1
     fi
 done
+
+# Test: token mode with pre-provisioned (e.g. Terraform-issued) tokens
+echo -e "\n${YELLOW}[TEST]${NC} Validating token mode with pre-provisioned per-replica tokens..."
+TF_STS_RENDERED=$(helm template test-release "${CHART_DIR}" \
+    --set workload.type=statefulset \
+    --set workload.replicas=3 \
+    --set enrollment.mode=token \
+    --set registrationToken.keyBy=ordinal \
+    --set registrationToken.existingSecret=npa-tf-tokens \
+    --set persistence.enabled=true)
+
+for expected in \
+    "kind: StatefulSet" \
+    "replicas: 3" \
+    "/home/k8s-token-enroll.sh" \
+    "name: NPA_TOKEN_KEY_BY" \
+    'value: "ordinal"' \
+    "secretName: npa-tf-tokens" \
+    "volumeClaimTemplates:" \
+    "k8s-token-enroll.sh: |"; do
+    if echo "$TF_STS_RENDERED" | grep -F -q -- "$expected"; then
+        echo -e "  ${GREEN}✓${NC} Found token-mode StatefulSet setting: $expected"
+    else
+        echo -e "  ${RED}✗${NC} Missing token-mode StatefulSet setting: $expected"
+        exit 1
+    fi
+done
+
+# Token mode must not need or reference any Netskope API credential.
+for unexpected in \
+    "NPA_API_TOKEN" \
+    "NPA_API_OAUTH" \
+    "NPA_API_BASE_URL" \
+    "npa-api-token" \
+    "kind: HorizontalPodAutoscaler" \
+    "kind: PersistentVolumeClaim" \
+    "path: token"; do
+    if echo "$TF_STS_RENDERED" | grep -F -q -- "$unexpected"; then
+        echo -e "  ${RED}✗${NC} Token-mode StatefulSet rendered unexpected setting: $unexpected"
+        exit 1
+    else
+        echo -e "  ${GREEN}✓${NC} Token-mode StatefulSet omits: $unexpected"
+    fi
+done
+
+TF_STS_CHART_SECRET=$(helm template test-release "${CHART_DIR}" \
+    --set workload.type=statefulset \
+    --set workload.replicas=2 \
+    --set enrollment.mode=token \
+    --set registrationToken.keyBy=ordinal \
+    --set-string 'registrationToken.tokens.0=tok-0,registrationToken.tokens.1=tok-1' \
+    --set persistence.enabled=true)
+if echo "$TF_STS_CHART_SECRET" | grep -F -q '"0": "tok-0"' \
+    && echo "$TF_STS_CHART_SECRET" | grep -F -q '"1": "tok-1"'; then
+    echo -e "  ${GREEN}✓${NC} Chart-managed per-replica token Secret rendered"
+else
+    echo -e "  ${RED}✗${NC} Chart-managed per-replica token Secret missing keys"
+    exit 1
+fi
+
+TF_DS_RENDERED=$(helm template test-release "${CHART_DIR}" \
+    --set enrollment.mode=token \
+    --set registrationToken.keyBy=node \
+    --set registrationToken.existingSecret=npa-tf-tokens \
+    --set persistence.enabled=true \
+    --set persistence.type=hostPath)
+if echo "$TF_DS_RENDERED" | grep -F -q 'value: "node"' \
+    && echo "$TF_DS_RENDERED" | grep -F -q "path: /var/lib/netskope-publisher/default-test-release-kubernetes-netskope-publisher" \
+    && ! echo "$TF_DS_RENDERED" | grep -F -q "kind: PersistentVolumeClaim"; then
+    echo -e "  ${GREEN}✓${NC} DaemonSet per-node tokens with hostPath state rendered"
+else
+    echo -e "  ${RED}✗${NC} DaemonSet per-node token / hostPath rendering wrong"
+    exit 1
+fi
+
+expect_failure() {
+    local message="$1"
+    shift
+    local output
+    output=$(helm template test-release "${CHART_DIR}" "$@" 2>&1 || true)
+    if echo "$output" | grep -F -q -- "$message"; then
+        echo -e "  ${GREEN}✓${NC} Rejected: $message"
+    else
+        echo -e "  ${RED}✗${NC} Expected failure not raised: $message"
+        echo "$output" | tail -3
+        exit 1
+    fi
+}
+
+expect_failure "hpa.enabled is not supported with enrollment.mode=token" \
+    --set workload.type=statefulset --set enrollment.mode=token \
+    --set registrationToken.keyBy=ordinal --set registrationToken.existingSecret=x \
+    --set hpa.enabled=true
+expect_failure 'registrationToken.tokens is missing key "2"' \
+    --set workload.type=statefulset --set workload.replicas=3 --set enrollment.mode=token \
+    --set registrationToken.keyBy=ordinal \
+    --set-string 'registrationToken.tokens.0=a,registrationToken.tokens.1=b'
+expect_failure "registrationToken.keyBy=ordinal requires workload.type=statefulset" \
+    --set enrollment.mode=token --set registrationToken.keyBy=ordinal \
+    --set registrationToken.existingSecret=x
+expect_failure "enrollment.mode=token requires registrationToken.value or registrationToken.existingSecret" \
+    --set enrollment.mode=token
+expect_failure "persistence.type=hostPath is not supported with workload.type=statefulset" \
+    --set workload.type=statefulset --set enrollment.mode=token \
+    --set registrationToken.keyBy=ordinal --set registrationToken.existingSecret=x \
+    --set persistence.enabled=true --set persistence.type=hostPath
+
+if bash -n "${CHART_DIR}/files/k8s-token-enroll.sh"; then
+    echo -e "  ${GREEN}✓${NC} k8s-token-enroll.sh syntax OK"
+else
+    echo -e "  ${RED}✗${NC} k8s-token-enroll.sh has syntax errors"
+    exit 1
+fi
 
 echo -e "\n${GREEN}=========================================${NC}"
 echo -e "${GREEN}All tests passed!${NC}"

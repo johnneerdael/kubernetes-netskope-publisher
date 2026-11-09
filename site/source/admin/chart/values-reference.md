@@ -26,7 +26,7 @@ in parentheses.
 
 | Key | Default | Notes |
 |---|---|---|
-| `hpa.enabled` | `false` | Renders an `HorizontalPodAutoscaler` for the StatefulSet. Ignored for DaemonSets. |
+| `hpa.enabled` | `false` | Renders an `HorizontalPodAutoscaler` for the StatefulSet. Ignored for DaemonSets. Rejected with `mode: token`. |
 | `hpa.minReplicas` | `2` |  |
 | `hpa.maxReplicas` | `6` |  |
 | `hpa.targetCPUUtilizationPercentage` | `70` | Scale up when average CPU exceeds this. |
@@ -52,8 +52,11 @@ for the full setup.
 | `enrollment.api.oauth2.clientSecretKey` | `client-secret` | OAuth2 client secret key within that secret. |
 | `enrollment.api.oauth2.scope` | `""` | Optional scope sent with the OAuth2 client credentials request. |
 | `enrollment.api.cleanupOnDelete` | `false` | Opt-in preStop hook that deletes the tenant-side Publisher record on pod termination. Only safe when scaled replicas never carry Private App attachments — the Netskope API rejects DELETE on Publishers with apps assigned. |
-| `registrationToken.value` | `""` | `mode: token` only — pass via `--set`. |
-| `registrationToken.existingSecret` | `""` | Alternative to inline value. |
+| `registrationToken.keyBy` | `single` | `mode: token` only. `single`: one token. `ordinal`: StatefulSet replica N uses Secret key `"N"`. `node`: DaemonSet pod uses the key named after its node. |
+| `registrationToken.value` | `""` | `keyBy: single` — pass via `--set`. |
+| `registrationToken.tokens` | `{}` | `keyBy: ordinal|node` — chart-managed key → token map. |
+| `registrationToken.existingSecret` | `""` | Alternative to inline values, e.g. a Terraform-managed Secret. |
+| `registrationToken.existingSecretKey` | `token` | `keyBy: single` with `existingSecret` only. |
 
 ## Networking
 
@@ -78,10 +81,13 @@ comparison table for what each mode renders.
 
 | Key | Default | Notes |
 |---|---|---|
-| `persistence.enabled` | `false` | Set `true` for `mode: token` HA. |
+| `persistence.enabled` | `false` | Set `true` for `mode: token` (tokens are single-use). |
+| `persistence.type` | `pvc` | `pvc` (StatefulSet: one PVC per replica) or `hostPath` (per-node directory, DaemonSet only). |
+| `persistence.hostPath.path` | `/var/lib/netskope-publisher` | Base dir; the chart appends `<namespace>-<fullname>`. In lwIP mode pre-create it owned by uid 65532. |
+| `persistence.hostPath.type` | `DirectoryOrCreate` | Or `Directory` for pre-created directories. |
 | `persistence.storageClass` | `""` | Empty = cluster default. |
 | `persistence.size` | `10Gi` |  |
-| `persistence.existingClaim` | `""` | Reuse an existing PVC. |
+| `persistence.existingClaim` | `""` | Reuse an existing PVC (DaemonSet only). |
 
 ## DNS forwarders
 
