@@ -14,7 +14,7 @@
 <meta property="og:description" content="What state does the Publisher carry?   State Where it lives Survives pod restart?    Tenant identity (publisher_id) &#x2F;etc&#x2F;npa&#x2F;registration-config Only if persistence.enabled: true, OR re-derived by mod">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-06-08T15:28:55.837Z">
+<meta property="article:modified_time" content="2026-11-09T18:31:14.350Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -133,7 +133,10 @@
 <h2><span id="token-mode">Token mode</span></h2><p><code>enrollment.mode: token</code> consumes the registration token on first start.<br>The pod <strong>must</strong> keep the resulting <code>/etc/npa</code> files, or it cannot<br>restart without manual re-tokening.</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">persistence:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">storageClass:</span> <span class="string">&quot;&quot;</span>          <span class="comment"># cluster default</span></span><br><span class="line">  <span class="attr">accessMode:</span> <span class="string">ReadWriteOnce</span></span><br><span class="line">  <span class="attr">size:</span> <span class="string">1Gi</span>                 <span class="comment"># /etc/npa is small</span></span><br></pre></td></tr></table></figure>
 
-<p>In a StatefulSet the chart provisions one PVC per replica<br>(<code>volumeClaimTemplates</code>). In a DaemonSet, persistence pins the Pod to<br>its current node — be deliberate about that.</p>
+<p>In a StatefulSet the chart provisions one PVC per replica<br>(<code>volumeClaimTemplates</code>). In a DaemonSet, a PVC pins the Pod to its<br>current node. For more than one node use per-node host storage:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">persistence:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">hostPath</span></span><br><span class="line">  <span class="attr">hostPath:</span></span><br><span class="line">    <span class="attr">path:</span> <span class="string">/var/lib/netskope-publisher</span>   <span class="comment"># chart appends &lt;namespace&gt;-&lt;fullname&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>The <code>enroll</code> init container records a fingerprint of the token it used<br>(<code>.k8s-registration-token.sha256</code>). Restarts with the same token skip<br>enrollment, and a newly delivered token triggers re-enrollment.</p>
 <h2><span id="reusing-an-existing-pvc">Reusing an existing PVC</span></h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">persistence:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">existingClaim:</span> <span class="string">my-publisher-pvc</span></span><br></pre></td></tr></table></figure>
 
 <p>Only valid for <code>workload.type: daemonset</code> with <code>replicas: 1</code> (one<br>Publisher, one volume). StatefulSet always generates per-replica claims.</p>

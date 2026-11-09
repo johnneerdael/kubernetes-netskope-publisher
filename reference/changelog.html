@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.5.0 — 2026-06-08StatefulSet replica naming and API publisher-creation fixes.  Fixed — S">
+    <meta name="description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.6.0 — 2026-11-09Token mode for multiple replicas, with Terraform-issued registration to">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Changelog">
 <meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/reference/changelog">
 <meta property="og:site_name" content="kubernetes-netskope-publisher">
-<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.5.0 — 2026-06-08StatefulSet replica naming and API publisher-creation fixes.  Fixed — S">
+<meta property="og:description" content="Hand-maintained — mirrors Chart.yaml version: bumps. See theGitHub Releases page for the published artifacts. v1.6.0 — 2026-11-09Token mode for multiple replicas, with Terraform-issued registration to">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-05-17T22:00:00.000Z">
-<meta property="article:modified_time" content="2026-06-08T15:28:55.838Z">
+<meta property="article:modified_time" content="2026-11-09T18:31:14.350Z">
 <meta property="article:author" content="John Neerdael">
 <meta name="twitter:card" content="summary">
     
@@ -99,6 +99,15 @@
   <div class="content" itemprop="articleBody">
       
           <p>Hand-maintained — mirrors <code>Chart.yaml</code> <code>version:</code> bumps. See the<br>GitHub Releases page for the published artifacts.</p>
+<h2><span id="v160-2026-11-09">v1.6.0 — 2026-11-09</span></h2><p>Token mode for multiple replicas, with Terraform-issued registration tokens.</p>
+<ul>
+<li><strong>Added — <code>registrationToken.keyBy</code></strong> (<code>single</code> | <code>ordinal</code> | <code>node</code>).<br>Token mode now runs as a StatefulSet: replica N enrolls with Secret<br>key <code>&quot;N&quot;</code>. A DaemonSet can pick its token by node name. This pairs<br>with <code>netskope_npa_publisher</code> + <code>netskope_npa_publisher_token</code> from<br>the official Netskope Terraform provider, so the cluster holds no<br>Netskope API credential. Start with the customer guide<br><a href="/kubernetes-netskope-publisher/admin/how-to/terraform-replicas/">Deploy Publisher replicas with the Netskope Terraform provider</a>.<br>See also<br><a href="/kubernetes-netskope-publisher/admin/how-to/terraform-token-enrollment/">Terraform-issued tokens</a><br>and <code>examples/terraform-token-enrollment/</code>.</li>
+<li><strong>Added — <code>registrationToken.tokens</code></strong> chart-managed key → token map.</li>
+<li><strong>Added — idempotent token enrollment.</strong> The <code>enroll</code> init container<br>skips enrollment when persisted state matches the current token<br>fingerprint and re-enrolls when a new token is delivered, restoring<br>the previous state on failure. Pod recreation no longer burns or<br>re-uses a spent token.</li>
+<li><strong>Added — <code>persistence.type: hostPath</code></strong> for per-node DaemonSet state.</li>
+<li><strong>Changed — StatefulSet persistence uses <code>volumeClaimTemplates</code></strong><br>(one PVC per replica) instead of one shared claim. <strong>Upgrade note:</strong><br><code>volumeClaimTemplates</code> is immutable on an existing StatefulSet. If<br>you ran <code>workload.type=statefulset</code> with <code>persistence.enabled=true</code>,<br>delete the StatefulSet with <code>kubectl delete statefulset &lt;name&gt; --cascade=orphan</code> before <code>helm upgrade</code>.</li>
+<li><strong>Validation</strong> — the chart now rejects token mode without a token<br>source, <code>hpa.enabled</code> with token mode, missing per-replica keys,<br>hostPath persistence on StatefulSets, and <code>existingClaim</code> on<br>StatefulSets.</li>
+</ul>
 <h2><span id="v150-2026-06-08">v1.5.0 — 2026-06-08</span></h2><p>StatefulSet replica naming and API publisher-creation fixes.</p>
 <ul>
 <li><strong>Fixed — StatefulSet replica names.</strong> Replicas now register as<br><code>&lt;commonName&gt;-&lt;ordinal&gt;</code> (e.g. <code>npa-publisher-0</code>, <code>npa-publisher-1</code>)<br>instead of <code>&lt;commonName&gt;-&lt;full-pod-name&gt;</code><br>(<code>npa-publisher-kubernetes-netskope-publisher-0</code>). The chart appends<br>only the StatefulSet ordinal. The internal enrollment toggle was<br>renamed <code>NPA_COMMON_NAME_APPEND_POD_NAME</code> → <code>NPA_COMMON_NAME_APPEND_ORDINAL</code>.<br><strong>Behaviour change:</strong> existing StatefulSet deployments that already<br>enrolled under the old long names will create new <code>&lt;commonName&gt;-N</code><br>Publisher records on next pod start; prune the stale long-named<br>records from the tenant after upgrading.</li>

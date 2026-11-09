@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="This guide is for teams that already manage their Netskope tenant with theofficial netskopeoss&#x2F;netskopeTerraform provider and want to run several NPA Publishers on Kubernetes withthis Helm chart. Terr">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Deploy Publisher replicas with the Netskope Terraform provider">
+<meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/how-to/terraform-replicas">
+<meta property="og:site_name" content="kubernetes-netskope-publisher">
+<meta property="og:description" content="This guide is for teams that already manage their Netskope tenant with theofficial netskopeoss&#x2F;netskopeTerraform provider and want to run several NPA Publishers on Kubernetes withthis Helm chart. Terr">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-11-08T23:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-09T18:31:14.349Z">
+<meta property="article:author" content="John Neerdael">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/kubernetes-netskope-publisher/images/netskope-favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/kubernetes-netskope-publisher/images/netskope-apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Deploy Publisher replicas with the Netskope Terraform provider</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/kubernetes-netskope-publisher/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+    <div class="content index py4 ">
+        
+          <header id="header">
+  <a class="u-url u-uid" href="/kubernetes-netskope-publisher/">
+  
+    
+      <img id="logo" alt class="u-logo" src="/kubernetes-netskope-publisher/images/netskope-logo.png" />
+    
+  
+    <div id="title">
+      <h1 class="p-name">kubernetes-netskope-publisher</h1>
+    </div>
+  </a>
+  <div id="nav">
+    <ul>
+      <li class="icon">
+        <a href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-2x"></i></a>
+      </li>
+      <!--
+     --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+   --><!--
+     --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+   -->
+    </ul>
+  </div>
+</header>
+
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  
+
+  <div class="content" itemprop="articleBody">
+      
+          <p>This guide is for teams that already manage their Netskope tenant with the<br>official <a target="_blank" rel="noopener" href="https://registry.terraform.io/providers/netskopeoss/netskope"><code>netskopeoss/netskope</code></a><br>Terraform provider and want to run several NPA Publishers on Kubernetes with<br>this Helm chart.</p>
+<p>Terraform creates the Publishers and their registration tokens. Kubernetes<br>runs the Publishers. The cluster never receives a Netskope API token or OAuth2<br>client: each pod gets only its own single-use registration token.</p>
+<p>By the end you will have:</p>
+<ul>
+<li>N Publishers in your tenant, named <code>&lt;prefix&gt;-0</code> .. <code>&lt;prefix&gt;-N-1</code>.</li>
+<li>A StatefulSet with N replicas. Each replica enrolls with its own token and<br>keeps its identity on its own PersistentVolumeClaim.</li>
+<li>One Terraform workflow for scaling, re-enrolling and attaching private apps.</li>
+</ul>
+<p>Requirements: chart <code>1.6.0</code> or later, Netskope provider <code>0.4.13</code> or later.</p>
+<h2><span id="how-it-works">How it works</span></h2><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">           Terraform (holds the Netskope API key)</span><br><span class="line">┌───────────────────────────────────────────────────────────────┐</span><br><span class="line">│ netskope_npa_publisher[&quot;0&quot;] ─► netskope_npa_publisher_token[&quot;0&quot;]│</span><br><span class="line">│ netskope_npa_publisher[&quot;1&quot;] ─► netskope_npa_publisher_token[&quot;1&quot;]│</span><br><span class="line">│ netskope_npa_publisher[&quot;2&quot;] ─► netskope_npa_publisher_token[&quot;2&quot;]│</span><br><span class="line">│                         │                                     │</span><br><span class="line">│ kubernetes_secret_v1 ◄──┘  data = &#123; &quot;0&quot; = tok0, &quot;1&quot; = tok1, … &#125;│</span><br><span class="line">│ helm_release  (enrollment.mode=token, keyBy=ordinal)          │</span><br><span class="line">└───────────────────────────────────────────────────────────────┘</span><br><span class="line">                             │</span><br><span class="line">           Kubernetes        ▼</span><br><span class="line">┌───────────────────────────────────────────────────────────────┐</span><br><span class="line">│ StatefulSet  npa-publisher-kubernetes-netskope-publisher      │</span><br><span class="line">│   pod -0 ── reads Secret key &quot;0&quot; ── PVC resources-…-0         │</span><br><span class="line">│   pod -1 ── reads Secret key &quot;1&quot; ── PVC resources-…-1         │</span><br><span class="line">│   pod -2 ── reads Secret key &quot;2&quot; ── PVC resources-…-2         │</span><br><span class="line">└───────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p>Each replica is tied to one Publisher, one token and one volume:</p>
+<table>
+<thead>
+<tr>
+<th>StatefulSet pod</th>
+<th>Secret key</th>
+<th>Terraform address</th>
+<th>Tenant Publisher</th>
+<th>Volume</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>…-0</code></td>
+<td><code>&quot;0&quot;</code></td>
+<td><code>netskope_npa_publisher.this[&quot;0&quot;]</code></td>
+<td><code>k8s-publisher-0</code></td>
+<td><code>resources-…-0</code></td>
+</tr>
+<tr>
+<td><code>…-1</code></td>
+<td><code>&quot;1&quot;</code></td>
+<td><code>netskope_npa_publisher.this[&quot;1&quot;]</code></td>
+<td><code>k8s-publisher-1</code></td>
+<td><code>resources-…-1</code></td>
+</tr>
+<tr>
+<td><code>…-N</code></td>
+<td><code>&quot;N&quot;</code></td>
+<td><code>netskope_npa_publisher.this[&quot;N&quot;]</code></td>
+<td><code>k8s-publisher-N</code></td>
+<td><code>resources-…-N</code></td>
+</tr>
+</tbody></table>
+<p>A StatefulSet is used rather than a Deployment because Deployment pods<br>(ReplicaSet pods) have random names and shared templates, so a pod cannot know<br>which token belongs to it. StatefulSet pods have stable ordinals, and the<br>chart uses the ordinal as the Secret key.</p>
+<h3><span id="what-happens-when-a-pod-starts">What happens when a pod starts</span></h3><p>The <code>enroll</code> init container runs before the Publisher starts:</p>
+<ol>
+<li>It reads the Secret key that matches its ordinal. If the key is missing it<br>stops with an error and never uses another replica’s token.</li>
+<li>If the volume already holds an enrollment made with <strong>this</strong> token (the<br>chart records a SHA-256 fingerprint), it skips enrollment. Restarts,<br>reschedules and <code>helm upgrade</code> rollouts don’t spend the token again.</li>
+<li>If the volume holds an enrollment made with a <strong>different</strong> token, a new<br>token has been delivered. It backs up the old state, enrolls with the new<br>token, and restores the old state if enrollment fails.</li>
+<li>If the volume is empty, it enrolls with the token.</li>
+</ol>
+<p>The main container then starts the Publisher from the enrolled state.</p>
+<h2><span id="prerequisites">Prerequisites</span></h2><h3><span id="tools">Tools</span></h3><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Terraform</td>
+<td><code>&gt;= 1.5</code></td>
+</tr>
+<tr>
+<td><code>kubectl</code></td>
+<td>Matching your cluster</td>
+</tr>
+<tr>
+<td>Helm CLI</td>
+<td>Optional. Terraform’s <code>helm</code> provider installs the chart.</td>
+</tr>
+</tbody></table>
+<h3><span id="terraform-providers">Terraform providers</span></h3><table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>netskopeoss/netskope</code></td>
+<td><code>&gt;= 0.4.13</code></td>
+<td>Publishers and registration tokens</td>
+</tr>
+<tr>
+<td><code>hashicorp/kubernetes</code></td>
+<td><code>&gt;= 2.30</code></td>
+<td>Namespace and token Secret</td>
+</tr>
+<tr>
+<td><code>hashicorp/helm</code></td>
+<td><code>&gt;= 3.0</code></td>
+<td>Chart installation</td>
+</tr>
+</tbody></table>
+<h3><span id="kubernetes-cluster">Kubernetes cluster</span></h3><ul>
+<li>Kubernetes <code>&gt;= 1.27</code>.</li>
+<li>A StorageClass that can provision <code>ReadWriteOnce</code> volumes. Run<br><code>kubectl get storageclass</code> and check for one marked <code>(default)</code>, or set<br><code>persistence.storageClass</code>.</li>
+<li>Pod networking requirements of the chart (<code>networking.mode</code>):<ul>
+<li><code>pod</code> (default): pods need the <code>NET_ADMIN</code> and <code>NET_RAW</code> capabilities and<br>access to <code>/dev/net/tun</code>. Under Pod Security Admission the namespace must<br>allow this (<code>privileged</code> level, or a policy exception).</li>
+<li><code>lwip</code>: rootless and needs no extra capabilities. See<br><a href="/kubernetes-netskope-publisher/admin/how-to/pod-vs-host-network/">pod vs host network</a>.</li>
+<li><code>host</code> cannot be used with a StatefulSet.</li>
+</ul>
+</li>
+<li>Outbound HTTPS from the pods to your Netskope tenant and stitcher PoPs,<br>directly or through <code>proxy.*</code>.</li>
+</ul>
+<h3><span id="netskope-tenant">Netskope tenant</span></h3><ul>
+<li>A REST API v2 token for <strong>Terraform only</strong>, with read&#x2F;write access to NPA<br>Publishers. This credential stays on the machine or CI runner that runs<br>Terraform.</li>
+<li>Optional: label IDs, if your tenant requires labels on new Publishers.</li>
+<li>Optional: an upgrade profile ID, if you don’t want the tenant default.</li>
+</ul>
+<h2><span id="step-1-get-the-example">Step 1 — Get the example</span></h2><p>The repository ships a working module at<br><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher/tree/main/examples/terraform-token-enrollment"><code>examples/terraform-token-enrollment</code></a>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/johnneerdael/kubernetes-netskope-publisher.git</span><br><span class="line"><span class="built_in">cp</span> -r kubernetes-netskope-publisher/examples/terraform-token-enrollment ./npa-publishers</span><br><span class="line"><span class="built_in">cd</span> npa-publishers</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>versions.tf</code></td>
+<td>Provider requirements and provider configuration</td>
+</tr>
+<tr>
+<td><code>variables.tf</code></td>
+<td>Inputs: replicas, names, namespace, chart version, …</td>
+</tr>
+<tr>
+<td><code>main.tf</code></td>
+<td>Publishers, tokens, Secret and Helm release</td>
+</tr>
+<tr>
+<td><code>outputs.tf</code></td>
+<td>Publisher IDs and the Secret name</td>
+</tr>
+<tr>
+<td><code>tests/</code></td>
+<td>Offline <code>terraform test</code> suite with mocked providers</td>
+</tr>
+</tbody></table>
+<h2><span id="step-2-configure-credentials">Step 2 — Configure credentials</span></h2><p>The Netskope provider reads its credentials from the environment:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> NETSKOPE_SERVER_URL=<span class="string">&quot;https://&lt;tenant&gt;.goskope.com/api/v2&quot;</span></span><br><span class="line"><span class="built_in">export</span> NETSKOPE_API_KEY=<span class="string">&quot;&lt;rest-api-v2-token&gt;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>The <code>kubernetes</code> and <code>helm</code> providers use your kubeconfig. Set<br><code>kubeconfig_path</code> and <code>kube_context</code> if you don’t want the defaults<br>(<code>~/.kube/config</code>, current context).</p>
+<p>In CI, store <code>NETSKOPE_API_KEY</code> as a masked secret of the pipeline, not in<br><code>.tfvars</code> files.</p>
+<h2><span id="step-3-choose-your-settings">Step 3 — Choose your settings</span></h2><p>Create <code>terraform.tfvars</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">namespace             = &quot;npa-publisher&quot;</span><br><span class="line">release_name          = &quot;npa-publisher&quot;</span><br><span class="line">chart_version         = &quot;1.6.0&quot;</span><br><span class="line"></span><br><span class="line">workload_type         = &quot;statefulset&quot;</span><br><span class="line">replicas              = 3</span><br><span class="line">publisher_name_prefix = &quot;prod-k8s-publisher&quot;   # tenant names: prod-k8s-publisher-0..2</span><br><span class="line"></span><br><span class="line">networking_mode       = &quot;pod&quot;                  # or &quot;lwip&quot; for rootless</span><br><span class="line">storage_size          = &quot;1Gi&quot;</span><br><span class="line"></span><br><span class="line"># Optional</span><br><span class="line"># publisher_label_ids          = [&quot;&lt;label-id&gt;&quot;]</span><br><span class="line"># publisher_upgrade_profile_id = 2</span><br><span class="line"># kube_context                 = &quot;prod-cluster&quot;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>replicas</code></td>
+<td><code>2</code></td>
+<td>Number of Publishers, tokens and pods. Change this to scale.</td>
+</tr>
+<tr>
+<td><code>publisher_name_prefix</code></td>
+<td><code>k8s-publisher</code></td>
+<td>Publisher names in the tenant are <code>&lt;prefix&gt;-&lt;ordinal&gt;</code>. Keep it unique per cluster.</td>
+</tr>
+<tr>
+<td><code>namespace</code></td>
+<td><code>npa-publisher</code></td>
+<td>Created by Terraform.</td>
+</tr>
+<tr>
+<td><code>release_name</code></td>
+<td><code>npa-publisher</code></td>
+<td>Helm release name; the Secret is <code>&lt;release_name&gt;-registration-tokens</code>.</td>
+</tr>
+<tr>
+<td><code>chart_version</code></td>
+<td><code>1.6.0</code></td>
+<td>Chart from <code>oci://ghcr.io/johnneerdael/charts</code>.</td>
+</tr>
+<tr>
+<td><code>networking_mode</code></td>
+<td><code>pod</code></td>
+<td><code>pod</code> or <code>lwip</code> for StatefulSets.</td>
+</tr>
+<tr>
+<td><code>storage_size</code></td>
+<td><code>1Gi</code></td>
+<td>Size of each replica’s PVC. The enrollment state is small.</td>
+</tr>
+<tr>
+<td><code>publisher_label_ids</code></td>
+<td><code>[]</code></td>
+<td>Labels on each new Publisher.</td>
+</tr>
+<tr>
+<td><code>publisher_upgrade_profile_id</code></td>
+<td><code>null</code></td>
+<td>Tenant upgrade profile for each Publisher.</td>
+</tr>
+</tbody></table>
+<h3><span id="more-chart-settings">More chart settings</span></h3><p><code>main.tf</code> builds the Helm values in <code>local.base_values</code>. Add any other chart<br>value there, for example:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">base_values = &#123;</span><br><span class="line">  # ... existing keys ...</span><br><span class="line">  resources = &#123;</span><br><span class="line">    requests = &#123; cpu = &quot;500m&quot;, memory = &quot;1024Mi&quot; &#125;</span><br><span class="line">    limits   = &#123; cpu = &quot;1000m&quot;, memory = &quot;1536Mi&quot; &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  nodeSelector = &#123; &quot;node-role.kubernetes.io/worker&quot; = &quot;true&quot; &#125;</span><br><span class="line">  proxy = &#123;</span><br><span class="line">    enabled    = true</span><br><span class="line">    httpsProxy = &quot;http://proxy.example.com:8080&quot;</span><br><span class="line">    noProxy    = &quot;localhost,127.0.0.1,.cluster.local&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>To spread replicas across nodes, add a pod anti-affinity (<code>affinity</code>) or<br><code>topologySpreadConstraints</code> through the same map. See the<br><a href="/kubernetes-netskope-publisher/admin/chart/values-reference/">values reference</a>.</p>
+<p>Leave these keys alone. They are what tie each pod to its token:<br><code>enrollment.mode</code>, <code>registrationToken.*</code>, <code>workload.*</code> and <code>persistence.enabled</code>.</p>
+<h2><span id="step-4-deploy">Step 4 — Deploy</span></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">terraform init</span><br><span class="line">terraform plan</span><br><span class="line">terraform apply</span><br></pre></td></tr></table></figure>
+
+<p>The plan creates, in order:</p>
+<ol>
+<li><code>netskope_npa_publisher.this[&quot;0&quot;..&quot;N-1&quot;]</code> — the Publisher records.</li>
+<li><code>netskope_npa_publisher_token.this[&quot;0&quot;..&quot;N-1&quot;]</code> — one token each.</li>
+<li><code>kubernetes_namespace_v1.this</code> and <code>kubernetes_secret_v1.registration_tokens</code>.</li>
+<li><code>helm_release.publisher</code> — the StatefulSet, its headless Service and<br>ConfigMap.</li>
+</ol>
+<p>The plan shows tokens as <code>(sensitive value)</code>. The Helm release values contain<br>only the Secret name and a SHA-256 fingerprint of the tokens.</p>
+<p>After apply:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">terraform output publishers</span><br><span class="line"><span class="comment"># &#123;</span></span><br><span class="line"><span class="comment">#   &quot;0&quot; = &#123; publisher_id = 1234, publisher_name = &quot;prod-k8s-publisher-0&quot; &#125;</span></span><br><span class="line"><span class="comment">#   &quot;1&quot; = &#123; publisher_id = 1235, publisher_name = &quot;prod-k8s-publisher-1&quot; &#125;</span></span><br><span class="line"><span class="comment">#   &quot;2&quot; = &#123; publisher_id = 1236, publisher_name = &quot;prod-k8s-publisher-2&quot; &#125;</span></span><br><span class="line"><span class="comment"># &#125;</span></span><br></pre></td></tr></table></figure>
+
+<h2><span id="step-5-verify">Step 5 — Verify</span></h2><h3><span id="pods-and-volumes">Pods and volumes</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl -n npa-publisher get statefulset,pods,pvc</span><br></pre></td></tr></table></figure>
+
+<p>Expect <code>READY 3/3</code>, three pods <code>…-0</code>, <code>…-1</code>, <code>…-2</code> in <code>Running</code>, and three<br><code>Bound</code> PVCs named <code>resources-&lt;statefulset&gt;-&lt;ordinal&gt;</code>. The first start takes<br>a minute or two while each pod enrolls.</p>
+<h3><span id="enrollment-logs">Enrollment logs</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl -n npa-publisher logs npa-publisher-kubernetes-netskope-publisher-0 -c enroll</span><br></pre></td></tr></table></figure>
+
+<p>First start:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[npa-token-enrollment] Running Publisher enrollment wizard (Secret key &#x27;0&#x27; (replica 0))</span><br><span class="line">[npa-token-enrollment] Enrollment complete</span><br></pre></td></tr></table></figure>
+
+<p>Any later restart:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[npa-token-enrollment] Already enrolled with the current registration token; skipping enrollment</span><br></pre></td></tr></table></figure>
+
+<h3><span id="publisher-logs">Publisher logs</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl -n npa-publisher logs npa-publisher-kubernetes-netskope-publisher-0 -c publisher</span><br></pre></td></tr></table></figure>
+
+<h3><span id="tenant">Tenant</span></h3><p>In the Netskope console (<strong>Settings → Security Cloud Platform → Publishers</strong>)<br>the Publishers <code>prod-k8s-publisher-0..2</code> should show as connected. To check<br>from Terraform:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">data &quot;netskope_npa_publisher&quot; &quot;check&quot; &#123;</span><br><span class="line">  for_each     = netskope_npa_publisher.this</span><br><span class="line">  publisher_id = each.value.publisher_id</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">output &quot;publisher_status&quot; &#123;</span><br><span class="line">  value = &#123; for k, p in data.netskope_npa_publisher.check : k =&gt; p.status &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2><span id="step-6-attach-private-apps">Step 6 — Attach private apps</span></h2><p>Reference the Publishers directly from <code>netskope_npa_private_app</code>, so every<br>replica serves the app:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">resource &quot;netskope_npa_private_app&quot; &quot;intranet&quot; &#123;</span><br><span class="line">  private_app_name     = &quot;intranet&quot;</span><br><span class="line">  private_app_hostname = &quot;intranet.corp.internal&quot;</span><br><span class="line">  private_app_protocol = &quot;tcp&quot;</span><br><span class="line">  real_host            = &quot;intranet.corp.internal&quot;</span><br><span class="line"></span><br><span class="line">  protocols = [</span><br><span class="line">    &#123; port = &quot;443&quot;, protocol = &quot;tcp&quot; &#125;</span><br><span class="line">  ]</span><br><span class="line"></span><br><span class="line">  publishers = [</span><br><span class="line">    for p in netskope_npa_publisher.this : &#123;</span><br><span class="line">      publisher_id   = tostring(p.publisher_id)</span><br><span class="line">      publisher_name = p.publisher_name</span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>When you change <code>replicas</code>, the publisher list changes with it, so new<br>replicas serve the app straight away. Before scaling down, read the<br>scale-down notes below.</p>
+<h2><span id="day-2-operations">Day-2 operations</span></h2><h3><span id="scale-up">Scale up</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">terraform apply -var replicas=5</span><br></pre></td></tr></table></figure>
+
+<p>Terraform creates Publishers and tokens <code>&quot;3&quot;</code> and <code>&quot;4&quot;</code>, adds the keys to the<br>Secret, and raises the StatefulSet replica count. The changed fingerprint<br>annotation rolls the existing pods. Their own tokens haven’t changed, so they<br>skip enrollment and come back with their existing identities.</p>
+<p>A StatefulSet rolling update restarts the existing pods one at a time, highest<br>ordinal first. Each replica is briefly offline while the others keep serving.<br>If you want new replicas without restarting the existing ones, see the FAQ.</p>
+<h3><span id="scale-down">Scale down</span></h3><p>Pods with the highest ordinals are removed first. Before you lower <code>replicas</code>:</p>
+<ol>
+<li><p>Make sure no private app still references the Publishers you are<br>retiring. Netskope refuses to delete a Publisher that has private apps<br>attached. With the <code>for</code> expression above, apps managed in the same<br>configuration are updated in the same apply, before Terraform deletes the<br>Publishers they depended on. Detach apps managed elsewhere (console, other<br>workspaces) first.</p>
+</li>
+<li><p>Apply the lower count:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">terraform apply -var replicas=3</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>Terraform deletes the retired Publisher records and drops their Secret keys,<br>and Helm lowers the replica count. The PVCs of removed replicas are kept,<br>because a StatefulSet never deletes PVCs by default. If you scale up again<br>later, the old volume holds a fingerprint of an old token, so the replica<br>re-enrolls with its new token automatically. To free the storage:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl -n npa-publisher delete pvc resources-npa-publisher-kubernetes-netskope-publisher-4</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>HPA is not supported in token mode, and the chart refuses <code>hpa.enabled</code>.<br>An autoscaler can add pods but cannot create Publishers or tokens. Scale<br>through Terraform as shown above.</p>
+</blockquote>
+<h3><span id="re-enroll-one-replica">Re-enroll one replica</span></h3><p>Use this after certificate problems, after a volume is lost, or when moving<br>a Publisher. Tokens are single-use, and the tenant won’t issue a new token<br>for a Publisher that is connected, so:</p>
+<ol>
+<li><p>Stop the replica, or wait for it to show as disconnected.</p>
+</li>
+<li><p>Replace only its token:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">terraform apply -replace=<span class="string">&#x27;netskope_npa_publisher_token.this[&quot;1&quot;]&#x27;</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>The Secret’s key <code>&quot;1&quot;</code> changes, the pods roll, and only replica 1 sees a new<br>fingerprint and re-enrolls. All other replicas skip enrollment. If enrollment<br>fails, replica 1 restores its previous state and its <code>enroll</code> container exits<br>with the reason in its log.</p>
+<h3><span id="lost-or-deleted-volume">Lost or deleted volume</span></h3><p>A replica whose PVC was deleted starts with an empty volume. Its token in the<br>Secret has already been spent, so enrollment fails with:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Publisher enrollment failed (wizard exit …). Registration tokens are single-use …</span><br></pre></td></tr></table></figure>
+
+<p>Replace that replica’s token as in the previous section.</p>
+<h3><span id="upgrade-the-chart">Upgrade the chart</span></h3><p>Raise <code>chart_version</code> and apply. Pods restart and skip enrollment, because<br>their tokens haven’t changed.</p>
+<blockquote>
+<p>**Upgrading from chart &lt; 1.6.0 with StatefulSet persistence:** chart 1.6.0<br>switches StatefulSets to per-replica <code>volumeClaimTemplates</code>, which Kubernetes<br>does not allow to change on an existing StatefulSet. Delete the StatefulSet<br>without deleting its pods first:<br><code>kubectl -n npa-publisher delete statefulset &lt;name&gt; --cascade=orphan</code>.</p>
+</blockquote>
+<h3><span id="upgrade-the-publisher-software">Upgrade the Publisher software</span></h3><p>The Publisher image comes from <code>image.repository</code> and <code>image.tag</code><br>(<code>lwipImage.*</code> in <code>lwip</code> mode). Pin a tag in <code>local.base_values</code> and apply to<br>roll out a new version. Enrollment state<br>is kept across image upgrades.</p>
+<h3><span id="remove-everything">Remove everything</span></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">terraform destroy</span><br></pre></td></tr></table></figure>
+
+<p>This uninstalls the chart, deletes the Secret and namespace, and deletes the<br>Publisher records. Detach private apps first. Terraform does this in the same<br>run when the apps are managed in the same configuration, because the apps<br>depend on the Publishers. Deleting the namespace also removes the PVCs.</p>
+<h2><span id="variations">Variations</span></h2><h3><span id="install-the-chart-with-helm-or-gitops-instead">Install the chart with Helm or GitOps instead</span></h3><p>Terraform can manage only the tenant objects and the Secret, while Helm,<br>Argo CD or Flux installs the chart. Drop <code>helm_release.publisher</code> and use<br>these values:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">workload:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">statefulset</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span>                 <span class="comment"># must equal the Terraform count</span></span><br><span class="line"><span class="attr">enrollment:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">token</span></span><br><span class="line"><span class="attr">registrationToken:</span></span><br><span class="line">  <span class="attr">keyBy:</span> <span class="string">ordinal</span></span><br><span class="line">  <span class="attr">existingSecret:</span> <span class="string">npa-publisher-registration-tokens</span></span><br><span class="line"><span class="attr">persistence:</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">size:</span> <span class="string">1Gi</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">helm upgrade --install npa-publisher \</span><br><span class="line">  oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher \</span><br><span class="line">  --version 1.6.0 -n npa-publisher -f values.yaml</span><br></pre></td></tr></table></figure>
+
+<p>Keep <code>workload.replicas</code> equal to the Terraform count. A replica without a<br>Secret key stops with <code>No registration token found for replica N</code>.</p>
+<h3><span id="one-publisher-per-node-daemonset">One Publisher per node (DaemonSet)</span></h3><p>Set <code>workload_type = &quot;daemonset&quot;</code> and list the nodes in <code>node_names</code>. Secret<br>keys become node names, the chart uses <code>keyBy=node</code> with per-node hostPath<br>storage, and node affinity keeps pods on listed nodes. See<br><a href="/kubernetes-netskope-publisher/admin/how-to/terraform-token-enrollment/">Token enrollment with Terraform-issued tokens</a>.</p>
+<h2><span id="security">Security</span></h2><ul>
+<li><strong>No API credential in the cluster.</strong> Pods receive only their registration<br>token. In token mode the chart renders no <code>NPA_API_*</code> settings.</li>
+<li><strong>Terraform state holds the tokens.</strong> <code>netskope_npa_publisher_token.token</code><br>is sensitive but stored in state. Use an encrypted remote backend with<br>restricted access.</li>
+<li><strong>Tokens are single-use.</strong> A token from state or the Secret can’t enroll a<br>second Publisher once it has been used.</li>
+<li><strong>Restrict the Secret.</strong> Limit <code>get</code> on Secrets in the Publisher namespace<br>with Kubernetes RBAC.</li>
+<li><strong>Helm values are clean.</strong> The release stores the Secret name and a<br>fingerprint, never a token.</li>
+</ul>
+<h2><span id="troubleshooting">Troubleshooting</span></h2><table>
+<thead>
+<tr>
+<th>Symptom (<code>enroll</code> log or pod state)</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>No registration token found for replica N</code></td>
+<td><code>workload.replicas</code> is larger than the number of Secret keys</td>
+<td>Make the Terraform count and <code>replicas</code> equal</td>
+</tr>
+<tr>
+<td><code>Publisher enrollment failed … single-use</code></td>
+<td>The token was already spent (lost volume, manual reuse)</td>
+<td><code>terraform apply -replace=&#39;netskope_npa_publisher_token.this[&quot;N&quot;]&#39;</code></td>
+</tr>
+<tr>
+<td><code>Cannot derive a StatefulSet ordinal from pod name</code></td>
+<td><code>keyBy=ordinal</code> used outside a StatefulSet</td>
+<td>Use <code>workload.type=statefulset</code></td>
+</tr>
+<tr>
+<td>Terraform: token creation error for a connected Publisher</td>
+<td>The tenant won’t issue tokens for connected Publishers</td>
+<td>Stop the replica first, then replace the token</td>
+</tr>
+<tr>
+<td>Terraform: Publisher delete fails</td>
+<td>Private apps are still attached</td>
+<td>Remove the Publisher from the apps’ <code>publishers</code> lists first</td>
+</tr>
+<tr>
+<td>Pod <code>Pending</code>, PVC <code>Pending</code></td>
+<td>No default StorageClass</td>
+<td>Set <code>persistence.storageClass</code></td>
+</tr>
+<tr>
+<td>Pod rejected by admission</td>
+<td>The namespace disallows <code>NET_ADMIN</code>&#x2F;<code>NET_RAW</code> or <code>/dev/net/tun</code></td>
+<td>Allow it, or use <code>networking_mode = &quot;lwip&quot;</code></td>
+</tr>
+<tr>
+<td><code>helm install</code> error: <code>hpa.enabled is not supported with enrollment.mode=token</code></td>
+<td>HPA enabled</td>
+<td>Remove <code>hpa.enabled</code>; scale with Terraform</td>
+</tr>
+</tbody></table>
+<p>Useful commands:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl -n npa-publisher describe pod &lt;pod&gt;</span><br><span class="line">kubectl -n npa-publisher logs &lt;pod&gt; -c enroll</span><br><span class="line">kubectl -n npa-publisher logs &lt;pod&gt; -c publisher</span><br><span class="line">kubectl -n npa-publisher get secret npa-publisher-registration-tokens \</span><br><span class="line">  -o jsonpath=<span class="string">&#x27;&#123;.data&#125;&#x27;</span> | jq <span class="string">&#x27;keys&#x27;</span>          <span class="comment"># key names only</span></span><br></pre></td></tr></table></figure>
+
+<h2><span id="faq">FAQ</span></h2><p><strong>Do I need to change the Terraform provider?</strong> No. The provider’s<br><code>netskope_npa_publisher</code> and <code>netskope_npa_publisher_token</code> resources already<br>do everything this setup needs.</p>
+<p><strong>Why not a Deployment?</strong> Deployment pods are interchangeable and have random<br>names, so a pod can’t pick its own token. StatefulSet ordinals give each pod<br>a stable key.</p>
+<p><strong>Can I add replicas without restarting the existing ones?</strong> Yes, if you<br>remove the <code>npa.netskope.io/registration-tokens-sha256</code> pod annotation from<br><code>main.tf</code>. New replicas still start correctly, because they read the Secret<br>at start-up. You then have to restart a replica yourself after replacing its<br>token.</p>
+<p><strong>What happens if I run <code>terraform apply</code> twice?</strong> Nothing. Tokens are<br>created once and stay in state. The token resource doesn’t refresh from the<br>API.</p>
+<p><strong>Can several clusters share one Terraform configuration?</strong> Yes. Give each<br>cluster its own <code>publisher_name_prefix</code> and module instance, so Publisher<br>names and Secrets don’t collide.</p>
+<h2><span id="reference">Reference</span></h2><ul>
+<li>Example module: <a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher/tree/main/examples/terraform-token-enrollment"><code>examples/terraform-token-enrollment</code></a></li>
+<li><a href="/kubernetes-netskope-publisher/admin/how-to/terraform-token-enrollment/">Token enrollment with Terraform-issued tokens</a> (short version, DaemonSet variant)</li>
+<li><a href="/kubernetes-netskope-publisher/admin/concepts/workload-modes/">Workload modes</a></li>
+<li><a href="/kubernetes-netskope-publisher/admin/concepts/registration-flow/">Registration flow</a></li>
+<li><a href="/kubernetes-netskope-publisher/admin/chart/values-reference/">Values reference</a></li>
+<li>Provider docs: <a target="_blank" rel="noopener" href="https://registry.terraform.io/providers/netskopeoss/netskope/latest/docs/resources/npa_publisher"><code>netskope_npa_publisher</code></a>,<br><a target="_blank" rel="noopener" href="https://registry.terraform.io/providers/netskopeoss/netskope/latest/docs/resources/npa_publisher_token"><code>netskope_npa_publisher_token</code></a>,<br><a target="_blank" rel="noopener" href="https://registry.terraform.io/providers/netskopeoss/netskope/latest/docs/resources/npa_private_app"><code>netskope_npa_private_app</code></a></li>
+</ul>
+
+        
+  </div>
+</article>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2026
+    John Neerdael
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+
+<script src="/kubernetes-netskope-publisher/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

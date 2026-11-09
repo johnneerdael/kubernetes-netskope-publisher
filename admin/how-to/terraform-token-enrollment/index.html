@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="Use this when the tenant is managed with the officialnetskopeoss&#x2F;netskopeTerraform provider and the cluster must not hold a Netskope API credential.Terraform creates the Publishers and their single-us">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Token enrollment with Terraform-issued tokens">
+<meta property="og:url" content="https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/how-to/terraform-token-enrollment">
+<meta property="og:site_name" content="kubernetes-netskope-publisher">
+<meta property="og:description" content="Use this when the tenant is managed with the officialnetskopeoss&#x2F;netskopeTerraform provider and the cluster must not hold a Netskope API credential.Terraform creates the Publishers and their single-us">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-11-08T23:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-09T18:31:14.349Z">
+<meta property="article:author" content="John Neerdael">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/kubernetes-netskope-publisher/images/netskope-favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/kubernetes-netskope-publisher/images/netskope-apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Token enrollment with Terraform-issued tokens</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/kubernetes-netskope-publisher/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+    <div class="content index py4 ">
+        
+          <header id="header">
+  <a class="u-url u-uid" href="/kubernetes-netskope-publisher/">
+  
+    
+      <img id="logo" alt class="u-logo" src="/kubernetes-netskope-publisher/images/netskope-logo.png" />
+    
+  
+    <div id="title">
+      <h1 class="p-name">kubernetes-netskope-publisher</h1>
+    </div>
+  </a>
+  <div id="nav">
+    <ul>
+      <li class="icon">
+        <a href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-2x"></i></a>
+      </li>
+      <!--
+     --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+   --><!--
+     --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+   --><!--
+     --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+   -->
+    </ul>
+  </div>
+</header>
+
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  
+
+  <div class="content" itemprop="articleBody">
+      
+          <p>Use this when the tenant is managed with the official<br><a target="_blank" rel="noopener" href="https://registry.terraform.io/providers/netskopeoss/netskope"><code>netskopeoss/netskope</code></a><br>Terraform provider and the cluster must not hold a Netskope API credential.<br>Terraform creates the Publishers and their single-use registration tokens.<br>The chart only consumes the tokens (<code>enrollment.mode: token</code>).</p>
+<p>For a full walkthrough with prerequisites, verification, scaling and<br>troubleshooting, see <a href="/kubernetes-netskope-publisher/admin/how-to/terraform-replicas/">Deploy Publisher replicas with the Netskope Terraform provider</a>.</p>
+<p>Requires chart <code>&gt;= 1.6.0</code>. It uses the provider’s existing<br><code>netskope_npa_publisher</code> and <code>netskope_npa_publisher_token</code> resources and<br>needs no provider change.</p>
+<h2><span id="how-the-pieces-fit">How the pieces fit</span></h2><table>
+<thead>
+<tr>
+<th>Terraform</th>
+<th>Kubernetes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>netskope_npa_publisher</code> × N</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>netskope_npa_publisher_token</code> × N</td>
+<td>Secret, one key per pod</td>
+</tr>
+<tr>
+<td><code>helm_release</code></td>
+<td>StatefulSet (or DaemonSet) in token mode</td>
+</tr>
+</tbody></table>
+<p>Each pod selects its key with <code>registrationToken.keyBy</code>:</p>
+<table>
+<thead>
+<tr>
+<th><code>keyBy</code></th>
+<th>Workload</th>
+<th>Secret keys</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>single</code></td>
+<td>DaemonSet pinned to one node</td>
+<td><code>token</code> (or <code>existingSecretKey</code>)</td>
+</tr>
+<tr>
+<td><code>ordinal</code></td>
+<td>StatefulSet</td>
+<td><code>&quot;0&quot;</code> .. <code>&quot;N-1&quot;</code></td>
+</tr>
+<tr>
+<td><code>node</code></td>
+<td>DaemonSet</td>
+<td>node names (<code>spec.nodeName</code>)</td>
+</tr>
+</tbody></table>
+<h2><span id="terraform">Terraform</span></h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">resource &quot;netskope_npa_publisher&quot; &quot;this&quot; &#123;</span><br><span class="line">  for_each       = toset([for i in range(var.replicas) : tostring(i)])</span><br><span class="line">  publisher_name = &quot;k8s-publisher-$&#123;each.key&#125;&quot;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">resource &quot;netskope_npa_publisher_token&quot; &quot;this&quot; &#123;</span><br><span class="line">  for_each     = netskope_npa_publisher.this</span><br><span class="line">  publisher_id = each.value.publisher_id</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">resource &quot;kubernetes_secret_v1&quot; &quot;registration_tokens&quot; &#123;</span><br><span class="line">  metadata &#123;</span><br><span class="line">    name      = &quot;npa-publisher-registration-tokens&quot;</span><br><span class="line">    namespace = &quot;npa-publisher&quot;</span><br><span class="line">  &#125;</span><br><span class="line">  data = &#123; for k, t in netskope_npa_publisher_token.this : k =&gt; t.token &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">resource &quot;helm_release&quot; &quot;publisher&quot; &#123;</span><br><span class="line">  name       = &quot;npa-publisher&quot;</span><br><span class="line">  namespace  = &quot;npa-publisher&quot;</span><br><span class="line">  repository = &quot;oci://ghcr.io/johnneerdael/charts&quot;</span><br><span class="line">  chart      = &quot;kubernetes-netskope-publisher&quot;</span><br><span class="line">  version    = &quot;1.6.0&quot;</span><br><span class="line"></span><br><span class="line">  values = [yamlencode(&#123;</span><br><span class="line">    workload          = &#123; type = &quot;statefulset&quot;, replicas = var.replicas &#125;</span><br><span class="line">    enrollment        = &#123; mode = &quot;token&quot; &#125;</span><br><span class="line">    registrationToken = &#123; keyBy = &quot;ordinal&quot;, existingSecret = kubernetes_secret_v1.registration_tokens.metadata[0].name &#125;</span><br><span class="line">    persistence       = &#123; enabled = true &#125;</span><br><span class="line">    podAnnotations = &#123;</span><br><span class="line">      # Roll pods when a token is added or rotated.</span><br><span class="line">      &quot;npa.netskope.io/registration-tokens-sha256&quot; = nonsensitive(sha256(jsonencode(kubernetes_secret_v1.registration_tokens.data)))</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The complete example, with a DaemonSet variant, lives in the repository at<br><code>examples/terraform-token-enrollment/</code>.</p>
+<h2><span id="what-the-chart-does">What the chart does</span></h2><ul>
+<li>The <code>enroll</code> init container reads only its own key. A missing key fails<br>with a clear message, so a replica never borrows another replica’s token.</li>
+<li>After enrollment it stores a SHA-256 fingerprint of the token in the<br>persisted state. Restarts with the same token skip enrollment.</li>
+<li>A different token triggers re-enrollment. The previous state is backed up<br>and restored if the wizard fails.</li>
+<li>With <code>persistence.enabled: true</code> a StatefulSet gets one PVC per replica<br>(<code>volumeClaimTemplates</code>). A DaemonSet can use <code>persistence.type: hostPath</code><br>for per-node state.</li>
+</ul>
+<h2><span id="guard-rails">Guard rails</span></h2><p>The chart refuses to render:</p>
+<ul>
+<li><code>workload.type: statefulset</code> + token mode unless <code>keyBy: ordinal</code>.</li>
+<li><code>hpa.enabled</code> in token mode. An autoscaler cannot get new tokens, so<br>scale with <code>workload.replicas</code> and the Terraform count together.</li>
+<li>Chart-managed <code>registrationToken.tokens</code> that lack a key for some replica.</li>
+<li><code>persistence.type: hostPath</code> on a StatefulSet (replicas could share a<br>node directory and so a Publisher identity).</li>
+</ul>
+<h2><span id="day-2">Day-2</span></h2><ul>
+<li><strong>Scale</strong>: change <code>replicas</code> and apply. Terraform adds the Publisher and<br>token, the Secret gains a key, and Helm scales the StatefulSet.</li>
+<li><strong>Re-enroll one replica</strong>: disconnect it, then run<br><code>terraform apply -replace=&#39;netskope_npa_publisher_token.this[&quot;1&quot;]&#39;</code>.<br>Only replica 1 sees a new fingerprint and re-enrolls.</li>
+<li><strong>State</strong>: Terraform state contains the tokens. Protect the backend.</li>
+</ul>
+
+        
+  </div>
+</article>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2026
+    John Neerdael
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/kubernetes-netskope-publisher/">Home</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/starter/">starter</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/admin/">admin</a></li><!--
+     --><!--
+       --><li><a href="/kubernetes-netskope-publisher/reference/">reference</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/johnneerdael/kubernetes-netskope-publisher">github</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+
+<script src="/kubernetes-netskope-publisher/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
