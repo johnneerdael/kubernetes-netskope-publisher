@@ -750,9 +750,23 @@ enroll_case "retry after a failed first enrollment re-runs the wizard" tok-A 0 "
 enroll_case "same token skips enrollment" tok-A 0 "id-tok-A"
 enroll_case "failed rotation restores the previous identity" bad 1 "id-tok-A"
 enroll_case "new token re-enrolls" tok-B 0 "id-tok-B"
-touch "${ENROLL_RES}/.k8s-enrollment-in-progress"
+# Crash while backing up the identity: the live identity must survive.
+echo backup > "${ENROLL_RES}/.k8s-enrollment-in-progress"
+mkdir -p "${ENROLL_RES}/.k8s-reenroll-backup.partial"
+cp -a "${ENROLL_RES}/publisherid" "${ENROLL_RES}/.k8s-reenroll-backup.partial/"
+enroll_case "interrupted backup keeps the identity through a failed retry" bad 1 "id-tok-B"
+# Crash mid-wizard during a rotation: the complete backup is restored.
+mkdir -p "${ENROLL_RES}/.k8s-reenroll-backup"
+cp -a "${ENROLL_RES}/publisherid" "${ENROLL_RES}/sslcert" "${ENROLL_RES}/settings.json" "${ENROLL_RES}/.k8s-reenroll-backup/"
+cp -a "${ENROLL_RES}/.k8s-registration-token.sha256" "${ENROLL_RES}/.k8s-reenroll-backup/token.sha256"
+echo wizard > "${ENROLL_RES}/.k8s-enrollment-in-progress"
+rm -rf "${ENROLL_RES}/sslcert" "${ENROLL_RES}/.k8s-registration-token.sha256"
 echo junk > "${ENROLL_RES}/publisherid"
-rm -f "${ENROLL_RES}/.k8s-registration-token.sha256"
+enroll_case "interrupted rotation restores the previous identity" tok-B 0 "id-tok-B"
+# Crash mid-wizard on a first enrollment: partial state is discarded.
+rm -rf "${ENROLL_RES:?}"/* "${ENROLL_RES}"/.k8s*
+echo wizard > "${ENROLL_RES}/.k8s-enrollment-in-progress"
+echo junk > "${ENROLL_RES}/publisherid"
 enroll_case "interrupted first enrollment is discarded and redone" tok-C 0 "id-tok-C"
 rm -rf "${ENROLL_TMP}"
 

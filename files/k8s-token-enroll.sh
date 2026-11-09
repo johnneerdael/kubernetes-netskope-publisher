@@ -12,11 +12,19 @@
 #                                               "N", one token per replica)
 #       node    -> <token dir>/<NODE_NAME>     (DaemonSet, one token per node)
 #   - Registration tokens are single-use. When the resources volume already
-#     holds enrollment artifacts for the current token, enrollment is skipped.
+#     holds a complete enrollment for the current token, enrollment is skipped.
 #   - A SHA-256 fingerprint of the token used for enrollment is kept in the
 #     resources volume. If a different token is delivered (token rotation),
 #     the Publisher re-enrolls with it; on failure the previous state is
 #     restored and the init container fails loudly.
+#
+# Crash safety. An attempt records its phase in ENROLL_MARKER:
+#   backup  copying the current identity into BACKUP_STAGING, then renaming it
+#           to BACKUP_DIR in one step. Live state is not modified in this phase.
+#   wizard  live state may be partial. BACKUP_DIR (if present) is a complete
+#           copy of the previous identity.
+# On start, an interrupted attempt is rolled back based on its phase, so a
+# partial enrollment is never adopted and a working identity is never lost.
 
 set -euo pipefail
 
@@ -24,9 +32,7 @@ RESOURCES_DIR="/home/resources"
 TOKEN_DIR="${NPA_TOKEN_DIR:-/tmp/token}"
 TOKEN_STAMP="${RESOURCES_DIR}/.k8s-registration-token.sha256"
 BACKUP_DIR="${RESOURCES_DIR}/.k8s-reenroll-backup"
-# Present only while the wizard runs. If a run is interrupted (crash, OOM,
-# SIGKILL), the next start finds it and discards the partial state instead
-# of mistaking it for a finished enrollment.
+BACKUP_STAGING="${RESOURCES_DIR}/.k8s-reenroll-backup.partial"
 ENROLL_MARKER="${RESOURCES_DIR}/.k8s-enrollment-in-progress"
 # Files the enrollment wizard and the first bootstrap write for one Publisher
 # identity. nsconfig.json is included so bootstrap re-pulls it after a
@@ -66,52 +72,90 @@ discard_enrollment_state() {
   done
 }
 
+set_phase() {
+  printf '%s\n' "$1" > "${ENROLL_MARKER}"
+}
+
 token_fingerprint() {
   printf '%s' "$1" | sha256sum | awk '{ print $1 }'
 }
 
+# Copy the current identity aside, then publish the copy with one rename so
+# BACKUP_DIR is either absent or complete. Live state is untouched.
 backup_enrollment_state() {
   local item
-  rm -rf "${BACKUP_DIR}"
-  mkdir -p "${BACKUP_DIR}"
+  set_phase backup
+  rm -rf "${BACKUP_STAGING}" "${BACKUP_DIR}"
+  mkdir -p "${BACKUP_STAGING}"
   for item in "${ENROLLMENT_STATE[@]}"; do
     if [ -e "${RESOURCES_DIR}/${item}" ]; then
-      mv "${RESOURCES_DIR}/${item}" "${BACKUP_DIR}/${item}"
+      cp -a "${RESOURCES_DIR}/${item}" "${BACKUP_STAGING}/${item}"
     fi
   done
   if [ -e "${TOKEN_STAMP}" ]; then
-    mv "${TOKEN_STAMP}" "${BACKUP_DIR}/token.sha256"
+    cp -a "${TOKEN_STAMP}" "${BACKUP_STAGING}/token.sha256"
   fi
+  mv "${BACKUP_STAGING}" "${BACKUP_DIR}"
 }
 
+# Put the backed-up identity back. Copies rather than moves, so an
+# interrupted restore can simply run again from the intact backup.
 restore_enrollment_state() {
   local item
-  [ -d "${BACKUP_DIR}" ] || return 0
   log "Restoring previous enrollment state"
-  # Drop everything the failed attempt wrote, including files the previous
-  # enrollment did not have, before putting the backup back.
   discard_enrollment_state
+  rm -f "${TOKEN_STAMP}"
   for item in "${ENROLLMENT_STATE[@]}"; do
     if [ -e "${BACKUP_DIR}/${item}" ]; then
-      mv "${BACKUP_DIR}/${item}" "${RESOURCES_DIR}/${item}"
+      cp -a "${BACKUP_DIR}/${item}" "${RESOURCES_DIR}/${item}"
     fi
   done
   if [ -e "${BACKUP_DIR}/token.sha256" ]; then
-    mv "${BACKUP_DIR}/token.sha256" "${TOKEN_STAMP}"
+    cp -a "${BACKUP_DIR}/token.sha256" "${TOKEN_STAMP}"
   fi
   rm -rf "${BACKUP_DIR}"
 }
 
-# Undo a failed or interrupted attempt: restore the previous enrollment if one
-# was backed up, otherwise remove the partial state so it is never adopted.
+# Undo a failed or interrupted wizard run: restore the previous identity if
+# one was backed up, otherwise remove the partial state so it is never adopted.
 roll_back_attempt() {
   if [ -d "${BACKUP_DIR}" ]; then
     restore_enrollment_state
   else
     log "Removing partial state from the failed enrollment attempt"
     discard_enrollment_state
+    rm -f "${TOKEN_STAMP}"
   fi
   rm -f "${ENROLL_MARKER}"
+}
+
+recover_interrupted_attempt() {
+  local phase=""
+
+  # A staging copy is never complete enough to trust.
+  rm -rf "${BACKUP_STAGING}"
+  [ -e "${ENROLL_MARKER}" ] || return 0
+  phase="$(cat "${ENROLL_MARKER}" 2>/dev/null || true)"
+
+  case "${phase}" in
+    backup)
+      # Interrupted while copying; the live identity was never modified.
+      log "Found an interrupted backup; keeping the current enrollment state"
+      rm -rf "${BACKUP_DIR}"
+      rm -f "${ENROLL_MARKER}"
+      ;;
+    *)
+      if [ -s "${TOKEN_STAMP}" ] && have_enrollment_artifacts; then
+        # The stamp is written to live state only after a successful wizard
+        # run, so the attempt finished and was interrupted during cleanup.
+        rm -rf "${BACKUP_DIR}"
+        rm -f "${ENROLL_MARKER}"
+      else
+        log "Found an interrupted enrollment attempt"
+        roll_back_attempt
+      fi
+      ;;
+  esac
 }
 
 TOKEN_KEY_BY="${NPA_TOKEN_KEY_BY:-single}"
@@ -140,21 +184,7 @@ case "${TOKEN_KEY_BY}" in
 esac
 token_file="${TOKEN_DIR}/${token_key}"
 
-# Recover from an interrupted previous run.
-if [ -e "${ENROLL_MARKER}" ]; then
-  if [ -s "${TOKEN_STAMP}" ] && have_enrollment_artifacts; then
-    # The stamp is written only after a successful wizard run (and is moved
-    # into the backup while an attempt runs), so the run finished and was
-    # interrupted only during cleanup.
-    rm -rf "${BACKUP_DIR}"
-    rm -f "${ENROLL_MARKER}"
-  else
-    log "Found an interrupted enrollment attempt"
-    roll_back_attempt
-  fi
-elif [ -d "${BACKUP_DIR}" ] && ! have_enrollment_artifacts; then
-  restore_enrollment_state
-fi
+recover_interrupted_attempt
 
 if [ ! -s "${token_file}" ]; then
   case "${TOKEN_KEY_BY}" in
@@ -195,13 +225,15 @@ elif have_any_enrollment_state; then
   # Incomplete state (for example left by an older chart version after a
   # failed enrollment) is not a usable identity. Start from a clean slate.
   log "Discarding incomplete enrollment state before enrolling"
-  discard_enrollment_state
-  rm -f "${TOKEN_STAMP}"
 fi
+
+# From here on live state may be partial until the wizard succeeds.
+set_phase wizard
+discard_enrollment_state
+rm -f "${TOKEN_STAMP}"
 
 log "Running Publisher enrollment wizard (${token_source})"
 cd /home
-touch "${ENROLL_MARKER}"
 wizard_status=0
 /home/npa_publisher_wizard -token "${registration_token}" || wizard_status=$?
 unset registration_token
