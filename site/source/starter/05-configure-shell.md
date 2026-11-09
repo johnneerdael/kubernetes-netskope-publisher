@@ -33,11 +33,11 @@ and published as an OCI chart in GitHub Container Registry.
 ### Option A — OCI chart
 
 ```bash
-helm show chart oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher --version 1.4.2
+helm show chart oci://ghcr.io/johnneerdael/charts/kubernetes-netskope-publisher --version 1.6.0
 ```
 
 You should see chart metadata for `kubernetes-netskope-publisher` with
-`version: 1.4.2`.
+`version: 1.6.0`.
 
 ### Option B — local clone
 

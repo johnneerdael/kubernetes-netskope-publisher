@@ -26,12 +26,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
         with:
           version: v3.16.2
 
@@ -87,7 +87,7 @@ jobs:
 
       - name: Check out gh-pages branch
         if: steps.gate.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: gh-pages
           path: gh-pages
