@@ -3,6 +3,52 @@ entries:
   kubernetes-netskope-publisher:
   - annotations:
       artifacthub.io/category: networking
+      artifacthub.io/changes: "- kind: added\n  description: Token mode now supports\
+        \ StatefulSets with one pre-provisioned registration token per replica (registrationToken.keyBy=ordinal),\
+        \ for tokens issued by the Netskope Terraform provider without any API credential\
+        \ in the cluster.\n  links:\n    - name: Customer guide\n      url: https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/how-to/terraform-replicas/\n\
+        - kind: added\n  description: registrationToken.keyBy=node lets a DaemonSet\
+        \ pick a per-node token; registrationToken.tokens provides a chart-managed\
+        \ key to token map.\n- kind: added\n  description: Token enrollment is idempotent.\
+        \ It skips enrollment when persisted state matches the token fingerprint and\
+        \ re-enrolls when a new token is delivered.\n- kind: added\n  description:\
+        \ persistence.type=hostPath for per-node DaemonSet state.\n- kind: changed\n\
+        \  description: StatefulSet persistence now uses volumeClaimTemplates (one\
+        \ PVC per replica). Existing StatefulSets with persistence must be deleted\
+        \ with --cascade=orphan before upgrading.\n"
+      artifacthub.io/license: MIT
+      artifacthub.io/links: "- name: Documentation\n  url: https://johnneerdael.github.io/kubernetes-netskope-publisher\n\
+        - name: Source\n  url: https://github.com/johnneerdael/kubernetes-netskope-publisher\n"
+      artifacthub.io/maintainers: "- name: John Neerdael\n  email: john@neerdael.nl\n"
+    apiVersion: v2
+    appVersion: 1.0.0
+    created: '2026-11-09T18:30:16.255267243Z'
+    description: Netskope Private Access Publisher for Kubernetes
+    digest: 26df4d9571b7bbd67ff9a7aa212d0b6d07e2926f147667935922ca0d585f4850
+    home: https://johnneerdael.github.io/kubernetes-netskope-publisher
+    icon: https://johnneerdael.github.io/kubernetes-netskope-publisher/images/netskope-favicon-192x192.png
+    keywords:
+    - netskope
+    - npa
+    - publisher
+    - private-access
+    - zero-trust
+    - sase
+    - ztna
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: john@neerdael.nl
+      name: John Neerdael
+      url: https://github.com/johnneerdael
+    name: kubernetes-netskope-publisher
+    sources:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher
+    type: application
+    urls:
+    - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.6.0/kubernetes-netskope-publisher-1.6.0.tgz
+    version: 1.6.0
+  - annotations:
+      artifacthub.io/category: networking
       artifacthub.io/changes: "- kind: fixed\n  description: StatefulSet replicas\
         \ now register as <commonName>-<ordinal> (e.g. npa-publisher-0) instead of\
         \ embedding the full StatefulSet name in the publisher name.\n- kind: fixed\n\
@@ -451,4 +497,4 @@ entries:
     urls:
     - https://github.com/johnneerdael/kubernetes-netskope-publisher/releases/download/kubernetes-netskope-publisher-1.0.0/kubernetes-netskope-publisher-1.0.0.tgz
     version: 1.0.0
-generated: '2026-06-08T15:28:47.133826867Z'
+generated: '2026-11-09T18:30:16.254133259Z'
