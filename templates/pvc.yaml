@@ -1,4 +1,4 @@
-{{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
+{{- if and .Values.persistence.enabled (eq (include "kubernetes-netskope-publisher.persistenceType" .) "pvc") (not .Values.persistence.existingClaim) (not (include "kubernetes-netskope-publisher.isStatefulSet" .)) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

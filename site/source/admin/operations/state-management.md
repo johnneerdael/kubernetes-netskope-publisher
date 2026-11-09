@@ -38,8 +38,20 @@ persistence:
 ```
 
 In a StatefulSet the chart provisions one PVC per replica
-(`volumeClaimTemplates`). In a DaemonSet, persistence pins the Pod to
-its current node — be deliberate about that.
+(`volumeClaimTemplates`). In a DaemonSet, a PVC pins the Pod to its
+current node. For more than one node use per-node host storage:
+
+```yaml
+persistence:
+  enabled: true
+  type: hostPath
+  hostPath:
+    path: /var/lib/netskope-publisher   # chart appends <namespace>-<fullname>
+```
+
+The `enroll` init container records a fingerprint of the token it used
+(`.k8s-registration-token.sha256`). Restarts with the same token skip
+enrollment, and a newly delivered token triggers re-enrollment.
 
 ## Reusing an existing PVC
 

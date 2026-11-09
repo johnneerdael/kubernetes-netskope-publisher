@@ -64,9 +64,19 @@
     "registrationToken": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Only used when enrollment.mode=token.",
+      "description": "Only used when enrollment.mode=token. Tokens are pre-provisioned (for example by the Netskope Terraform provider), so no Netskope API credential is needed.",
       "properties": {
+        "keyBy": {
+          "type": "string",
+          "enum": ["single", "ordinal", "node"],
+          "description": "single: one token; ordinal: StatefulSet replica N uses Secret key \"N\"; node: DaemonSet pod uses the key named after its node."
+        },
         "value":             { "type": "string" },
+        "tokens": {
+          "type": "object",
+          "description": "Chart-managed Secret key -> token map for keyBy=ordinal or keyBy=node.",
+          "additionalProperties": { "type": "string" }
+        },
         "existingSecret":    { "type": "string" },
         "existingSecretKey": { "type": "string" }
       }
@@ -132,7 +142,16 @@
         "storageClass":  { "type": "string" },
         "accessMode":    { "type": "string", "enum": ["ReadWriteOnce", "ReadWriteMany", "ReadOnlyMany", "ReadWriteOncePod"] },
         "size":          { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?(E|P|T|G|M|K|Ei|Pi|Ti|Gi|Mi|Ki)?$" },
-        "existingClaim": { "type": "string" }
+        "existingClaim": { "type": "string" },
+        "type":          { "type": "string", "enum": ["pvc", "hostPath"] },
+        "hostPath": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": { "type": "string", "pattern": "^/" },
+            "type": { "type": "string", "enum": ["DirectoryOrCreate", "Directory"] }
+          }
+        }
       },
       "required": ["enabled"]
     },

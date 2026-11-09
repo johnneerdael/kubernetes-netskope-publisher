@@ -2,7 +2,7 @@ apiVersion: v2
 name: kubernetes-netskope-publisher
 description: Netskope Private Access Publisher for Kubernetes
 type: application
-version: 1.5.0
+version: 1.6.0
 appVersion: "1.0.0"
 kubeVersion: ">=1.27.0-0"
 keywords:
@@ -34,9 +34,16 @@ annotations:
     - name: John Neerdael
       email: john@neerdael.nl
   artifacthub.io/changes: |
-    - kind: fixed
-      description: StatefulSet replicas now register as <commonName>-<ordinal> (e.g. npa-publisher-0) instead of embedding the full StatefulSet name in the publisher name.
-    - kind: fixed
-      description: API publisher creation now includes a labels array in the request body, fixing "Labels are not present in the request" rejections on tenants that require it.
     - kind: added
-      description: New enrollment.api.publisherLabels value to supply tenant-required publisher labels on creation.
+      description: Token mode now supports StatefulSets with one pre-provisioned registration token per replica (registrationToken.keyBy=ordinal), for tokens issued by the Netskope Terraform provider without any API credential in the cluster.
+      links:
+        - name: Customer guide
+          url: https://johnneerdael.github.io/kubernetes-netskope-publisher/admin/how-to/terraform-replicas/
+    - kind: added
+      description: registrationToken.keyBy=node lets a DaemonSet pick a per-node token; registrationToken.tokens provides a chart-managed key to token map.
+    - kind: added
+      description: Token enrollment is idempotent. It skips enrollment when persisted state matches the token fingerprint and re-enrolls when a new token is delivered.
+    - kind: added
+      description: persistence.type=hostPath for per-node DaemonSet state.
+    - kind: changed
+      description: StatefulSet persistence now uses volumeClaimTemplates (one PVC per replica). Existing StatefulSets with persistence must be deleted with --cascade=orphan before upgrading.

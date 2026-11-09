@@ -49,21 +49,32 @@ spec:
           imagePullPolicy: {{ include "kubernetes-netskope-publisher.publisherImagePullPolicy" . }}
           command:
             - /bin/bash
-          args:
-            - -c
-            - |
-              cd /home && /home/npa_publisher_wizard -token "$(cat /tmp/token/token)"
+            - /home/k8s-token-enroll.sh
           env:
             - name: LOG_LEVEL
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "kubernetes-netskope-publisher.fullname" . }}-config
                   key: LOG_LEVEL
+            - name: NPA_TOKEN_KEY_BY
+              value: {{ include "kubernetes-netskope-publisher.tokenKeyBy" . | quote }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           volumeMounts:
             - name: resources
               mountPath: /home/resources
             - name: token
               mountPath: /tmp/token
+              readOnly: true
+            - name: token-enroll
+              mountPath: /home/k8s-token-enroll.sh
+              subPath: k8s-token-enroll.sh
               readOnly: true
           resources:
             {{- toYaml .Values.initContainer.resources | nindent 12 }}
@@ -105,7 +116,7 @@ spec:
             - name: NPA_DISABLE_IPV6
               value: "true"
             {{- end }}
-            {{- if include "kubernetes-netskope-publisher.isStatefulSet" . }}
+            {{- if and (include "kubernetes-netskope-publisher.isStatefulSet" .) (include "kubernetes-netskope-publisher.isApiEnrollment" .) }}
             - name: NPA_COMMON_NAME_APPEND_ORDINAL
               value: "true"
             {{- end }}
@@ -280,13 +291,19 @@ spec:
             {{- toYaml .Values.localDns.resources | nindent 12 }}
         {{- end }}
       volumes:
+        {{- if not (include "kubernetes-netskope-publisher.usesVolumeClaimTemplate" .) }}
         - name: resources
-          {{- if .Values.persistence.enabled }}
+          {{- if and .Values.persistence.enabled (eq (include "kubernetes-netskope-publisher.persistenceType" .) "hostPath") }}
+          hostPath:
+            path: {{ printf "%s/%s-%s" (trimSuffix "/" .Values.persistence.hostPath.path) .Release.Namespace (include "kubernetes-netskope-publisher.fullname" .) }}
+            type: {{ .Values.persistence.hostPath.type | default "DirectoryOrCreate" }}
+          {{- else if .Values.persistence.enabled }}
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "kubernetes-netskope-publisher.fullname" .)) }}
           {{- else }}
           emptyDir: {}
           {{- end }}
+        {{- end }}
         - name: k8s-bootstrap
           configMap:
             name: {{ include "kubernetes-netskope-publisher.fullname" . }}-config
@@ -320,10 +337,19 @@ spec:
         {{- if not (include "kubernetes-netskope-publisher.isApiEnrollment" .) }}
         - name: token
           secret:
-            secretName: {{ .Values.registrationToken.existingSecret | default (printf "%s-token" (include "kubernetes-netskope-publisher.fullname" .)) }}
+            secretName: {{ include "kubernetes-netskope-publisher.tokenSecretName" . }}
+            {{- if eq (include "kubernetes-netskope-publisher.tokenKeyBy" .) "single" }}
             items:
-              - key: {{ .Values.registrationToken.existingSecretKey }}
+              - key: {{ if .Values.registrationToken.existingSecret }}{{ .Values.registrationToken.existingSecretKey }}{{ else }}token{{ end }}
                 path: token
+            {{- end }}
+        - name: token-enroll
+          configMap:
+            name: {{ include "kubernetes-netskope-publisher.fullname" . }}-config
+            defaultMode: 0755
+            items:
+              - key: k8s-token-enroll.sh
+                path: k8s-token-enroll.sh
         {{- end }}
         {{- if .Values.customSettings.enabled }}
         - name: custom-settings
@@ -342,3 +368,20 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+  {{- if include "kubernetes-netskope-publisher.usesVolumeClaimTemplate" . }}
+  volumeClaimTemplates:
+    - metadata:
+        name: resources
+        labels:
+          app.kubernetes.io/name: {{ include "kubernetes-netskope-publisher.name" . }}
+          app.kubernetes.io/instance: {{ .Release.Name }}
+      spec:
+        accessModes:
+          - {{ .Values.persistence.accessMode }}
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: {{ .Values.persistence.storageClass }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+  {{- end }}

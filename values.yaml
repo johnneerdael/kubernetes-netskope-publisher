@@ -27,14 +27,17 @@ fullnameOverride: ""
 
 # Workload configuration.
 # daemonset: one Publisher pod per matching node.
-# statefulset: API-mode-only multi-replica mode. Each pod gets a stable
-#              identity and appends its pod name to enrollment.commonName.
+# statefulset: multi-replica mode. Each pod gets a stable identity.
+#   - enrollment.mode=api: appends the ordinal to enrollment.commonName.
+#   - enrollment.mode=token: requires registrationToken.keyBy=ordinal, so
+#     replica N enrolls with its own pre-provisioned token (Secret key "N").
 workload:
   type: "daemonset"
   replicas: 1
 
 # HorizontalPodAutoscaler.
-# Only meaningful when workload.type=statefulset. The HPA scales the
+# Only meaningful when workload.type=statefulset with enrollment.mode=api
+# (token mode cannot mint tokens for new replicas). The HPA scales the
 # StatefulSet on CPU utilisation; each new replica enrols itself via the
 # API. Scale-down deletes the tenant-side Publisher record via the
 # preStop hook (controlled by enrollment.api.cleanupOnDelete).
@@ -48,12 +51,29 @@ hpa:
   behavior: {}
 
 # Registration token configuration
-# Only used when enrollment.mode=token.
+# Only used when enrollment.mode=token. Token mode needs no Netskope API
+# credential in the cluster: tokens are pre-provisioned, for example by the
+# Netskope Terraform provider (netskope_npa_publisher + netskope_npa_publisher_token).
+# Registration tokens are single-use, so pair token mode with persistence.
 registrationToken:
-  # Token value (provide via --set for security)
+  # How each pod picks its token from the Secret:
+  #   single:  one token under existingSecretKey (chart-managed key "token").
+  #            One Publisher per release: use a DaemonSet pinned to one node.
+  #   ordinal: StatefulSet replica N reads Secret key "N" ("0", "1", ...).
+  #            Requires workload.type=statefulset; provide one token per replica.
+  #   node:    DaemonSet pod reads the Secret key named after its Kubernetes
+  #            node (spec.nodeName). Requires workload.type=daemonset.
+  keyBy: "single"
+  # keyBy=single: token value for a chart-managed Secret (prefer --set or
+  # Terraform set_sensitive / an existing Secret).
   value: ""
-  # Or reference an existing secret
+  # keyBy=ordinal|node: chart-managed map of Secret key -> token, e.g.
+  #   tokens: {"0": "<token-0>", "1": "<token-1>"}
+  tokens: {}
+  # Or reference an existing Secret (recommended with Terraform:
+  # kubernetes_secret_v1 holding netskope_npa_publisher_token.*.token).
   existingSecret: ""
+  # keyBy=single only: key inside existingSecret holding the token.
   existingSecretKey: "token"
 
 # Enrollment configuration
@@ -130,16 +150,29 @@ publisher:
   discoveryRefresh: true
 
 # Persistent storage configuration
+# Token mode should persist /home/resources: a pod that loses its enrollment
+# state cannot re-enroll with an already-consumed token.
 persistence:
   enabled: false
+  # pvc:      DaemonSet uses one PVC (single-node only); StatefulSet gets one
+  #           PVC per replica through volumeClaimTemplates.
+  # hostPath: per-node directory, the natural fit for a multi-node DaemonSet.
+  type: "pvc"
   # Storage class (use default if not specified)
   storageClass: ""
   # Access mode
   accessMode: ReadWriteOnce
   # Size of the PVC
   size: 10Gi
-  # Existing PVC name (optional, creates new if not specified)
+  # Existing PVC name (optional, creates new if not specified).
+  # DaemonSet only; StatefulSet always uses per-replica claims.
   existingClaim: ""
+  hostPath:
+    # Base directory on each node; the chart appends <namespace>-<fullname>.
+    # In networking.mode=lwip the directory must be pre-created and writable
+    # by uid/gid 65532, because kubelet creates hostPath directories as root.
+    path: /var/lib/netskope-publisher
+    type: DirectoryOrCreate
 
 # Network namespace / data-plane mode.
 # pod (default): runs in the pod network namespace without hostNetwork or

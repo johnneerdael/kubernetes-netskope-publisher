@@ -6,6 +6,38 @@ date: 2026-05-18
 Hand-maintained — mirrors `Chart.yaml` `version:` bumps. See the
 GitHub Releases page for the published artifacts.
 
+## v1.6.0 — 2026-11-09
+
+Token mode for multiple replicas, with Terraform-issued registration tokens.
+
+- **Added — `registrationToken.keyBy`** (`single` | `ordinal` | `node`).
+  Token mode now runs as a StatefulSet: replica N enrolls with Secret
+  key `"N"`. A DaemonSet can pick its token by node name. This pairs
+  with `netskope_npa_publisher` + `netskope_npa_publisher_token` from
+  the official Netskope Terraform provider, so the cluster holds no
+  Netskope API credential. Start with the customer guide
+  [Deploy Publisher replicas with the Netskope Terraform provider](/kubernetes-netskope-publisher/admin/how-to/terraform-replicas/).
+  See also
+  [Terraform-issued tokens](/kubernetes-netskope-publisher/admin/how-to/terraform-token-enrollment/)
+  and `examples/terraform-token-enrollment/`.
+- **Added — `registrationToken.tokens`** chart-managed key → token map.
+- **Added — idempotent token enrollment.** The `enroll` init container
+  skips enrollment when persisted state matches the current token
+  fingerprint and re-enrolls when a new token is delivered, restoring
+  the previous state on failure. Pod recreation no longer burns or
+  re-uses a spent token.
+- **Added — `persistence.type: hostPath`** for per-node DaemonSet state.
+- **Changed — StatefulSet persistence uses `volumeClaimTemplates`**
+  (one PVC per replica) instead of one shared claim. **Upgrade note:**
+  `volumeClaimTemplates` is immutable on an existing StatefulSet. If
+  you ran `workload.type=statefulset` with `persistence.enabled=true`,
+  delete the StatefulSet with `kubectl delete statefulset <name>
+  --cascade=orphan` before `helm upgrade`.
+- **Validation** — the chart now rejects token mode without a token
+  source, `hpa.enabled` with token mode, missing per-replica keys,
+  hostPath persistence on StatefulSets, and `existingClaim` on
+  StatefulSets.
+
 ## v1.5.0 — 2026-06-08
 
 StatefulSet replica naming and API publisher-creation fixes.
