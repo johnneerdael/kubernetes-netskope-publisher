@@ -24,6 +24,10 @@ RESOURCES_DIR="/home/resources"
 TOKEN_DIR="${NPA_TOKEN_DIR:-/tmp/token}"
 TOKEN_STAMP="${RESOURCES_DIR}/.k8s-registration-token.sha256"
 BACKUP_DIR="${RESOURCES_DIR}/.k8s-reenroll-backup"
+# Present only while the wizard runs. If a run is interrupted (crash, OOM,
+# SIGKILL), the next start finds it and discards the partial state instead
+# of mistaking it for a finished enrollment.
+ENROLL_MARKER="${RESOURCES_DIR}/.k8s-enrollment-in-progress"
 # Files the enrollment wizard and the first bootstrap write for one Publisher
 # identity. nsconfig.json is included so bootstrap re-pulls it after a
 # re-enrollment instead of reusing configuration for the previous identity.
@@ -38,10 +42,28 @@ fail() {
   exit 1
 }
 
+# A complete enrollment has every artifact k8s-bootstrap.sh waits for.
 have_enrollment_artifacts() {
   test -s "${RESOURCES_DIR}/publisherid" \
+    && test -s "${RESOURCES_DIR}/sslcert/agent.key" \
     && test -s "${RESOURCES_DIR}/sslcert/agent.pem" \
+    && test -s "${RESOURCES_DIR}/sslcert/tenantca.pem" \
     && test -s "${RESOURCES_DIR}/settings.json"
+}
+
+have_any_enrollment_state() {
+  local item
+  for item in "${ENROLLMENT_STATE[@]}"; do
+    [ -e "${RESOURCES_DIR}/${item}" ] && return 0
+  done
+  return 1
+}
+
+discard_enrollment_state() {
+  local item
+  for item in "${ENROLLMENT_STATE[@]}"; do
+    rm -rf "${RESOURCES_DIR:?}/${item}"
+  done
 }
 
 token_fingerprint() {
@@ -66,9 +88,11 @@ restore_enrollment_state() {
   local item
   [ -d "${BACKUP_DIR}" ] || return 0
   log "Restoring previous enrollment state"
+  # Drop everything the failed attempt wrote, including files the previous
+  # enrollment did not have, before putting the backup back.
+  discard_enrollment_state
   for item in "${ENROLLMENT_STATE[@]}"; do
     if [ -e "${BACKUP_DIR}/${item}" ]; then
-      rm -rf "${RESOURCES_DIR:?}/${item}"
       mv "${BACKUP_DIR}/${item}" "${RESOURCES_DIR}/${item}"
     fi
   done
@@ -76,6 +100,18 @@ restore_enrollment_state() {
     mv "${BACKUP_DIR}/token.sha256" "${TOKEN_STAMP}"
   fi
   rm -rf "${BACKUP_DIR}"
+}
+
+# Undo a failed or interrupted attempt: restore the previous enrollment if one
+# was backed up, otherwise remove the partial state so it is never adopted.
+roll_back_attempt() {
+  if [ -d "${BACKUP_DIR}" ]; then
+    restore_enrollment_state
+  else
+    log "Removing partial state from the failed enrollment attempt"
+    discard_enrollment_state
+  fi
+  rm -f "${ENROLL_MARKER}"
 }
 
 TOKEN_KEY_BY="${NPA_TOKEN_KEY_BY:-single}"
@@ -104,8 +140,19 @@ case "${TOKEN_KEY_BY}" in
 esac
 token_file="${TOKEN_DIR}/${token_key}"
 
-# A previous run may have been interrupted between backup and wizard success.
-if [ -d "${BACKUP_DIR}" ] && ! have_enrollment_artifacts; then
+# Recover from an interrupted previous run.
+if [ -e "${ENROLL_MARKER}" ]; then
+  if [ -s "${TOKEN_STAMP}" ] && have_enrollment_artifacts; then
+    # The stamp is written only after a successful wizard run (and is moved
+    # into the backup while an attempt runs), so the run finished and was
+    # interrupted only during cleanup.
+    rm -rf "${BACKUP_DIR}"
+    rm -f "${ENROLL_MARKER}"
+  else
+    log "Found an interrupted enrollment attempt"
+    roll_back_attempt
+  fi
+elif [ -d "${BACKUP_DIR}" ] && ! have_enrollment_artifacts; then
   restore_enrollment_state
 fi
 
@@ -144,19 +191,27 @@ if have_enrollment_artifacts; then
 
   log "Registration token changed since the last enrollment; re-enrolling with the new token"
   backup_enrollment_state
+elif have_any_enrollment_state; then
+  # Incomplete state (for example left by an older chart version after a
+  # failed enrollment) is not a usable identity. Start from a clean slate.
+  log "Discarding incomplete enrollment state before enrolling"
+  discard_enrollment_state
+  rm -f "${TOKEN_STAMP}"
 fi
 
 log "Running Publisher enrollment wizard (${token_source})"
 cd /home
+touch "${ENROLL_MARKER}"
 wizard_status=0
 /home/npa_publisher_wizard -token "${registration_token}" || wizard_status=$?
 unset registration_token
 
 if [ "${wizard_status}" -ne 0 ] || ! have_enrollment_artifacts; then
-  restore_enrollment_state
+  roll_back_attempt
   fail "Publisher enrollment failed (wizard exit ${wizard_status}). Registration tokens are single-use: if this token was already consumed (for example because the pod lost its state on emptyDir storage), issue a new token, e.g. 'terraform apply -replace=netskope_npa_publisher_token.<name>', then restart the pod."
 fi
 
 printf '%s\n' "${current_fingerprint}" > "${TOKEN_STAMP}"
 rm -rf "${BACKUP_DIR}"
+rm -f "${ENROLL_MARKER}"
 log "Enrollment complete"

@@ -711,6 +711,51 @@ expect_failure "persistence.type=hostPath is not supported with workload.type=st
     --set registrationToken.keyBy=ordinal --set registrationToken.existingSecret=x \
     --set persistence.enabled=true --set persistence.type=hostPath
 
+# Behavioural test of k8s-token-enroll.sh against a fake enrollment wizard.
+ENROLL_TMP="$(mktemp -d "${TMPDIR:-/tmp}/npa-enroll-test.XXXXXX")"
+ENROLL_RES="${ENROLL_TMP}/home/resources"
+mkdir -p "${ENROLL_RES}" "${ENROLL_TMP}/tok"
+cat > "${ENROLL_TMP}/wizard" <<WIZARD
+#!/bin/bash
+t="\$2"; mkdir -p "${ENROLL_RES}/sslcert"
+partial() { echo "id-\$t" > "${ENROLL_RES}/publisherid"; echo pem > "${ENROLL_RES}/sslcert/agent.pem"; echo '{}' > "${ENROLL_RES}/settings.json"; }
+case "\$t" in
+  bad) exit 3 ;;
+  partial) partial; exit 1 ;;
+esac
+partial; echo key > "${ENROLL_RES}/sslcert/agent.key"; echo ca > "${ENROLL_RES}/sslcert/tenantca.pem"
+WIZARD
+chmod +x "${ENROLL_TMP}/wizard"
+sed -e "s#/home/resources#${ENROLL_RES}#" \
+    -e "s#/home/npa_publisher_wizard#${ENROLL_TMP}/wizard#" \
+    -e "s#^cd /home#cd ${ENROLL_TMP}/home#" \
+    "${CHART_DIR}/files/k8s-token-enroll.sh" > "${ENROLL_TMP}/enroll.sh"
+
+enroll_case() {
+    local name="$1" token="$2" want_exit="$3" want_id="$4" got_exit=0 got_id
+    printf '%s' "${token}" > "${ENROLL_TMP}/tok/0"
+    NPA_TOKEN_KEY_BY=ordinal POD_NAME=sts-0 NPA_TOKEN_DIR="${ENROLL_TMP}/tok" \
+        bash "${ENROLL_TMP}/enroll.sh" >/dev/null 2>&1 || got_exit=$?
+    got_id="$(cat "${ENROLL_RES}/publisherid" 2>/dev/null || true)"
+    if [ "${got_exit}" -eq "${want_exit}" ] && [ "${got_id}" = "${want_id}" ]; then
+        echo -e "  ${GREEN}✓${NC} Enroll script: ${name}"
+    else
+        echo -e "  ${RED}✗${NC} Enroll script: ${name} (exit ${got_exit}, publisherid '${got_id}')"
+        exit 1
+    fi
+}
+
+enroll_case "failed first enrollment leaves no partial state" partial 1 ""
+enroll_case "retry after a failed first enrollment re-runs the wizard" tok-A 0 "id-tok-A"
+enroll_case "same token skips enrollment" tok-A 0 "id-tok-A"
+enroll_case "failed rotation restores the previous identity" bad 1 "id-tok-A"
+enroll_case "new token re-enrolls" tok-B 0 "id-tok-B"
+touch "${ENROLL_RES}/.k8s-enrollment-in-progress"
+echo junk > "${ENROLL_RES}/publisherid"
+rm -f "${ENROLL_RES}/.k8s-registration-token.sha256"
+enroll_case "interrupted first enrollment is discarded and redone" tok-C 0 "id-tok-C"
+rm -rf "${ENROLL_TMP}"
+
 if bash -n "${CHART_DIR}/files/k8s-token-enroll.sh"; then
     echo -e "  ${GREEN}✓${NC} k8s-token-enroll.sh syntax OK"
 else
