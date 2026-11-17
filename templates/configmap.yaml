@@ -196,7 +196,7 @@ data:
       log "Publisher name/common_name=${NPA_PUBLISHER_COMMON_NAME} not found; creating Publisher"
       jq -n --arg name "${NPA_PUBLISHER_COMMON_NAME}" \
         --argjson labels "${NPA_PUBLISHER_LABELS:-[]}" \
-        '{name: $name, labels: $labels}' \
+        '{name: $name, label_ids: $labels}' \
         | curl --fail --silent --show-error \
           --request POST \
           --header "Authorization: Bearer ${api_access_token}" \
