@@ -104,9 +104,9 @@ enrollment:
     # the safe default. If your tenant requires specific labels, list them
     # here as objects, for example:
     #   publisherLabels:
-    #     - id: 1
-    # Look up valid label IDs via
-    # GET /api/v2/infrastructure/publishers/labels on your tenant.
+    #     - "bbecc359-eef2-4c2a-b3c3-43f3ec64506d"
+    # Look up valid label IDs via:
+    # GET /api/v2/rbac/labels on your tenant.
     publisherLabels: []
     oauth2:
       # Required when authMode=oauth2. Full OAuth2 token endpoint URL for your tenant/identity provider.
